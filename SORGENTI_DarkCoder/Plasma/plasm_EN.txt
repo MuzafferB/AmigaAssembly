@@ -1,0 +1,174 @@
+
+Plasma        (Lesson by The Dark Coder)
+
+In this text we will talk about the ‘plasma’ effect. In particular, we will see how to
+create plasma effects using techniques that can be used on all
+Amiga computers. Nowadays, thanks to the AGA chipset and 68020
+and higher, it is also possible to create different plasmas based on 
+‘chunky pixel’ techniques. The effects we will discuss in this text, however, can
+also be used on the good old Amiga 500.
+The basic technique for creating plasma consists of using
+a copperlist that continuously changes some colour registers by means of
+consecutive ‘copper moves’. We have already seen how to build and use
+many copperlists of this type in lesson 11. In particular, in the examples
+lesson11g1.s, lesson11g2.s and lesson11g3.s, we created colour gradations
+using copperlists that changed the content of COLOR00. However,
+these are static copperlists. The main difference between those examples and a
+plasma is precisely this: in a plasma effect, a copperlist
+structured in this way is used, but it is dynamic, so that the colours written in the COLOR00 register change in each frame.
+Each ‘copper move’ consists of 2 words:
+
+dc.w    $180,COLOUR    ; structure of a ‘copper move’
+
+The first word contains the address of COLOR00 and the second the value to
+be written in that register. To obtain the plasma effect, we must vary
+this value at each frame, i.e. we must write a different value each time
+in the second word that constitutes the ‘copper move’.
+The problem is that we have to repeat this operation for all the ‘copper
+moves’ that are part of the copperlist.
+ This therefore involves a large amount of data to be modified. Since the copperlist is located in CHIP-RAM, we can
+use the blitter to make the changes. In conclusion, the plasma effect
+is achieved by a routine that (using the blitter) reads the colours from a
+table and copies them to the copperlist. By varying the copied colours at each frame,
+ the plasma effect is achieved. 
+Note that this effect does not require
+the use of bitplanes, since everything is done by changing the background colour.
+This is why it is referred to as ‘0-bitplane’ plasma, in contrast to other
+variants that we will see later. An example of 0-bitplane plasma is
+plasm1.s.
+A significant improvement on the effect is RGB plasma.
+This differs from normal plasma in that the colours are not
+simply copied from a table, but are ‘calculated’ in the following way:
+the R, G and B components of a colour are read separately (from 3 different sources)
+and then combined together with an OR. In this way, since
+the R, G and B components vary continuously between one ‘copper move’ and another
+,
+ a greater number of colours will be produced. In practice, instead of a copy operation,
+ a bitmap is used that performs an OR between 3 sources containing
+the R, G and B components respectively. A first example of RGB plasma
+is plasm2.s
+To further improve the effect, we try to make the plasma more varied.
+ A simple way to do this is to vary the starting position of
+each row of the plasma. This can be done very easily
+since the starting position is determined by the WAIT instruction that
+appears at the beginning of each row of the copperlist. A variation of this
+is shown in plasm3.s. Unfortunately, however, the horizontal positions of the
+WAIT have a resolution of 4 pixels, which means that it is possible to 
+vary the starting position of the plasma in ‘steps’ of 4 pixels. By varying
+the parameters of the example plasm3.s appropriately, you can highlight this
+phenomenon. To obtain less jerky oscillations, we will use a different technique,
+ which makes use of a bitplane, and is therefore called ‘1-bitplane’ plasma.
+The technique is as follows: use a bitplane with vertical ‘stripes’ 8
+pixels wide. In this way, the image will have 8 pixels coloured with COLOR00, then 8
+coloured with COLOR01, then again 8 with COLOR00 and so on. At the corresponding
+points, we use a copperlist similar to those seen in the previous examples, but which
+alternates a ‘copper move’ in COLOR00 with one in COLOR01. The situation is
+represented by the following figure:
+
+destination
+of the 
+‘copper move’:    | COL.0 | COL.1 | COL.0 | COL.1 | COL.0 | COL.1 - - -
+
+
+bitplane line:    000000001111111100000000111111110000000011111111 - - -
+as you can see, there is an exact correspondence between the colour displayed and
+the register modified by the copperlist.
+ A colour register keeps
+its value constant for a space of 16 pixels, but that colour is displayed only
+for the 8 pixels of the bitplane that select it (i.e. only for the 8 pixels at 0
+in the case of COLOR00 and only for the pixels at 1 in the case of COLOR01). So far, we have
+used our bitplane to do exactly the same thing we did before
+without it. Now, however, comes the new feature. We can use the hardware scroll
+to move the bitplane horizontally. Note that if the scroll value
+varies from 0 to 7, each group of 8 pixels always keeps the same
+colour. In fact, the value contained in a register varies every 16 pixels. With
+scroll values from 0 to 7, we always move the group of 8 pixels
+within this ‘band’ of 16 pixels. If, on the other hand, we use higher values,
+some of the pixels in the group will move outside the band, thus taking on
+a new colour.
+Let's look at this phenomenon in detail with the help of some figures. You can
+see how the colour registers maintain their value constant for bands
+of 16 pixels. The bands of the 2 registers overlap: the bands of COLOR01
+begin and end halfway through those of COLOR00, and vice versa.
+When we use a scroll value of 0, we have the following situation:
+
+value in
+COLOR01         | value 1 | value 2 | value 3 | - - 
+V     V     V     
+scroll=0:    000000001111111100000000111111110000000011111111 - - -
+^     ^     ^         ^
+value in    |     |     |         |
+COLOR00        | value 1 | value 2 | value 3 | - -
+
+As you can see, each group of 8 pixels with a value of 0 is located at the
+first 8 pixels (i.e. those furthest to the left) of each band of 16 for which
+COLOR00 takes on a constant value. The same applies to the groups of 8 pixels
+set to 1 in relation to the bands of 16 pixels for which COLOR01 remains
+constant. As the scroll value increases, the groups of 8 pixels move
+towards the right edges of the bands. For example, here is what happens when the scroll
+is 4 pixels:
+
+value in
+COLOR01         | value 1 | value 2 | value 3 | - - 
+V     V     V     
+scroll=4:    1111000000001111111100000000111111110000000011111111 - - -
+^     ^     ^         ^
+value in    |     |     |         |
+COLOR00        | value 1 | value 2 | value 3 | - -
+ 
+
+When the scroll is 7 pixels, the groups of 8 pixels are aligned with the right edges
+of the bands (respectively, the pixels at 0 with the COLOR00 bands and the
+pixels at 1 with the COLOR01 bands): 
+
+
+value in
+COLOR01         | value 1 | value 2 | value 3 | - - 
+V     V     V
+scroll=7:    1111111000000001111111100000000111111110000000011111111 - - -
+^     ^     ^         ^
+value in    |     |     |		 |
+COLOR00        | value 1 | value 2 | value 3 | - -
+ 
+
+
+As soon as the scroll exceeds the value 8, the groups of 8 pixels exceed the edges
+of the bands. This means that the 8 pixels in the group will no longer have the
+same value. The following figure shows the situation for a scroll of
+8 pixels.
+
+value in
+COLOR01         | value 1 | value 2 | value 3 | - -
+V     V     V
+scroll=8:	11111111000000001111111100000000111111110000000011111111 - - -
+^     ^     ^         ^
+value in    |     |     |         |
+COLOR00        | value 1 | value 2 | value 3 | - -
+
+In this situation, the first 7 pixels of each group of 8 fall within a
+range and therefore appear with the colour contained in the colour register in
+this range, while the last one falls within the next range and appears in the
+colour assumed by the colour register in the new range. This phenomenon creates
+abrupt colour changes that make the plasma unattractive, since 
+this effect is based on the impression of ‘mixing’ colours.
+This technique is applied in the example plasm4.s.
+The use of bitplanes also allows us to use masks to
+overlay the plasma. An example is shown in plasm5.s.
+The technique seen in the last two examples has the limitation that the horizontal oscillations
+are limited to a width of 8 pixels. This is due to the fact that
+each colour register remains constant in a 16-pixel band, and that each
+group of pixels is 8 pixels wide: for this reason, the group can move
+within the 16-8=8 pixel band. To increase the amplitude of the
+oscillations, it is necessary to widen the bands, and to do this it is necessary to
+use more colour registers, since it is always necessary to change a
+register every 8 pixels. In conclusion, it is therefore necessary to use a greater
+number of bitplanes. Note that in the previous examples we created the
+oscillations with hardware scrolling, which allows us to move a maximum of 16
+pixels. This additional limitation can be overcome by oscillating the bitplanes
+with the blitter. Of course, in this case the oscillation requires a
+much slower routine, and special tricks are used to achieve it.
+In the example plasm6.s, which concludes this ‘monograph’ on plasma, we will see
+how to create a plasma with a horizontal oscillation of 56 pixels.
+All the plasmas we have seen can be made more interesting by varying
+the parameters that distinguish them and the tables that
+contain the colours (or their components) during execution.

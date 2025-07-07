@@ -1,0 +1,18 @@
+
+** Blitterscreen package.
+
+use prec2 to get sources in normal format.
+bs2x2.s/bs2x1.s (called bs.s in docu) is example usage of the routines
+in bltscr.s
+
+read bltscr.doc for source explanations.
+
+all assembled with prec2 & a68k, link bs.o and bltscr.o together.
+  I hope XREF & XDEF work with your assembler. XDEF exports labels/EQUs,
+  XREF imports them.
+
+view EXCESS to see what the 2x2 mode looks like (hardwarehack, problems
+with 040 boards).
+
+** =:)
+

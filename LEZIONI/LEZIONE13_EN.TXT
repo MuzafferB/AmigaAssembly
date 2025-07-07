@@ -1,0 +1,2246 @@
+
+LESSON 13: OPTIMISING ASSEMBLY CODE
+
+Authors: Fabio Ciucci, Ugo Erra
+
+Acknowledgements: Michael Glew, 2-Cool/LSD, Subhuman/Epsilon
+
+
+Writing routines in assembly does not necessarily mean that your
+code will run at maximum speed. In fact, assembly code cannot always
+be classified as the best obtainable in terms of speed.
+Consider the numerous demos that exist,
+ especially those dealing with 3D graphics. In most cases
+(almost always), the routines behind effects such as rotations,
+zooming, world exploration, etc., are the same, but their implementation
+in assembly code is different, as each programmer tries to 
+implement them in the best possible way, i.e. so that they run at maximum
+speed. This is achieved with optimisation techniques that every
+good assembly coder must know. There are numerous techniques and it certainly
+takes quite a while before you start using them in a
+natural way. There are various types of optimisation, and many of the
+techniques I am going to explain are valid for the 68000, but they are
+also useless in microprocessors such as the 68040 or 68060.
+The first thing you need is a machine cycle table
+for each 68000 instruction, which you will find summarised in this lesson:
+taking a quick look at this table, you may be surprised to see
+the “time” each instruction takes to execute, and perhaps up to
+this point you believed that each instruction was executed at the same time;
+well, you were wrong!!!
+In fact, as a first approach, note the time it takes for a
+multiplication instruction (MULU) compared to an addition instruction (ADD), and you will immediately understand
+why optimisation is important:
+
+ADD    ; execution time: 6 to 12+ clock cycles
+
+MULS    ; execution time: 70+ clock cycles
+
+So, it is easy to see how to optimise this instruction:
+
+slow:        MULU.W    #2,D0	; 70+ cycles
+
+optimised:    ADD.W    d0,d0    ; 6+ cycles
+
+I'll tell you in advance that multiplication and division are the two slowest instructions.
+ Here is an approximate list of instructions sorted
+from fastest to slowest: (cycles are at best!)
+
+EXT, SWAP, NOP, MOVEQ    ; 4 cycles -> the fastest!
+
+TST, BTST, ADDQ, SUBQ, AND, OR, EOR    ; 4 + addressing, fast...
+
+MOVE, ADD, SUB, CMP, LEA    ; 4+ addressing, but often the
+; addressing is “heavy” to execute
+
+Then we have BCLR/BCHG/BSET with 8+, LSR/LSL/ASR/ASL/ROR/ROL with 6 +2n, where
+n is the number of shifts to be made, and finally we have:
+
+MULS/MULU    ; 70+ !
+DIVU        ; 140+ !!
+DIVS        ; 158+ !!!
+
+It should also be remembered that:
+
+BEQ,BNE,BRA...    ; 10
+DBRA        ; 10
+BSR        ; 18
+JMP        ; 12
+RTS        ; 16
+JSR        ; 16/20
+
+So, be careful not to make too many calls to subroutines, because each
+BSR+RTS to return eats up at least 18+16=34 cycles!
+Always put short subroutines in the main loop, as it is a waste
+to lose 34 BSR+RTS cycles to execute a handful of instructions!
+
+EXAMPLE:
+BSR.S    ROUT1
+BSR.S    ROUT2
+BSR.S    ROUT3
+RTS
+
+ROUT1:
+MOVE.W    d0,d1
+RTS
+ROUT2:
+MOVEQ    #0,d2
+MOVEQ    #0,d3
+RTS
+ROUT3:
+LEA    label1(PC),A0
+RTS
+
+Version that saves 34*3= 96 cycles:
+
+EXAMPLEFIX:
+MOVE.W    d0,d1
+MOVEQ    #0,d2
+MOVEQ    #0,d3
+LEA    label1(PC),A0
+RTS
+
+In addition to the instruction itself, the addressing mode used also matters.
+For example:
+
+MOVE.L    (a0),d0
+
+is slower than:
+
+MOVE.L    $12(a0,d1.w),LABEL1
+
+Yet these are still MOVE instructions. However, it may seem very
+logical why the second instruction is slower than
+the first: the processor must calculate the offset by adding the value of d1 plus $12 to a0,
+ then make the copy, and where? In memory, to a label,
+instead of in a register, which is much slower since the registers are INSIDE
+the processor, while the memory is outside, and to reach it, the data must
+pass through the motherboard wires!!!!!
+
+*****************************************************************************
+* FIRST-LEVEL OPTIMISATIONS: THE “EXCHANGE” AND “CHOICE” OF INSTRUCTIONS *
+*****************************************************************************
+
+Here are the addressing modes sorted from fastest to slowest:
+NOTE: the numbers after the ; are the clock cycles to be added to the time used
+by the instruction, in the case of byte-word/longword
+
+
+Direct data register                     Dn/An     ; 0
+
+Indirect address register (or with post-increment)     (An)/(An)+ ; 4/8
+Immediate                         #x     ; 4/8
+
+Indirect address register with Pre-Decrement         -(An)     ; 6/10
+
+Indirect address register with Offset (max 32767)     w(An)     ; 8/12
+Short absolute                         w     ; 8/12
+Program Counter with Offset (calculated by the asm name)	 w(PC)     ; 8/12
+
+Program Counter with Offset and Index            b(PC,Rx) ; 10/14
+Indirect address register with Offset and Index    b(An,Rx) ; 10/14
+
+Long absolute                         l	 ; 12/16
+
+
+As can be seen, while a ‘MOVE.L LABEL1,LABEL2’ addressing only
+takes 16+16 = 32 cycles, a ‘MOVE.L #1234,d0’ takes only 8+0 = 8 cycles.
+It is clear that .W instructions are faster than .L instructions, for
+example addressing (An), where .W takes 4 cycles and .L takes 8 cycles!
+
+However, these examples are VERY indicative; in fact, even studying
+the tables is difficult to truly calculate the execution time
+of the routine. But we can always be sure that BSR is faster
+than JSR, that ADDQ is faster than ADD, and above all that every time
+we manage to replace a MULU/DIVU/MULS/DIVS with something else, we have
+certainly speeded things up!
+
+Here we are talking about “instruction changes”, i.e. small modifications
+made by replacing slow instructions with faster ones. However, the art of
+optimisation, the true queen of the demo scene, also involves the use
+of a “precalculated” table instead of implementing a mega function that
+gives the same results, and countless other things.
+
+But there is also a downside: mega-optimised code with
+tables and other tricks often becomes less readable and understandable, and
+less “modifiable”. So, be careful to avoid the mistake that
+many of us have fallen into, which is wanting to optimise the routine before
+you have finished it, step by step, at all costs. This only slows down
+the development of the routine in question, especially if you are just starting out
+, after all, what use is a mega-optimised routine that calculates the 
+perspective if we can no longer write the routine for
+drawing and rotating the solid around it? Or if we no longer even understand why
+it is working? ---->>>>> NEVER OPTIMISE A ROUTINE THAT
+IS NOT COMPLETELY FINISHED AND WORKING; FURTHERMORE, ONCE IT IS READY
+FOR OPTIMISATION, REMEMBER TO KEEP COPIES OF THE LISTS OF THE VARIOUS
+STEPS OF THE OPTIMISATION, AS IT IS OFTEN NECESSARY TO ‘GO BACK’
+AND CHANGE SOMETHING!!! THEN WE WILL RE-OPTIMISE THE MODIFIED VERSION!
+
+This warning may sound strange, because it seems that a listing, once optimised,
+becomes unrecognisable and incomprehensible even to
+the author. Well, if it is VERY optimised, this can happen!
+However, remember that optimisations should be carried out on parts of the
+listing that actually take a long time to execute: for
+example, there is no point in optimising a routine that is executed only
+once at startup, or only once per frame. The first routines
+to be optimised are those that are executed many times per frame,
+i.e. those in dbra loops, or in various cycles. For example, let's look at
+this listing:
+
+Bau:
+cmp.w    #$ff,$dff006    ; Wait for Wblank
+bne.s    Bau
+bsr.s    routine1
+bsr.s    routine2
+btst    #6,$bfe001    ; Wait for mouse
+bne.s    Bau
+rts
+
+Routine1:
+move.w    #label2,d6
+move.w    d0,d1
+move.w    d2,d3
+and.w    d4,d5
+rts
+
+Routine2:
+move.w    #200,d7
+lea    label2(PC),a0
+lea    label3(PC),a1
+loop1:
+move.w    (a0)+,d0
+move.w    (a0)+,d1
+add.w    d0,d5
+add.w    d0,d6
+move.w    d5,(a1)+
+move.w    d5,(a2)+
+dbra    d7,loop1
+rts
+
+In this case, it is clear that 99% of the time is lost executing
+the routine2 loop 200 times. Consequently, if this
+loop were optimised to run twice as fast, the entire programme would run at twice
+the speed, whereas even if routine2 were run at three or four times
+the speed, you would not even notice the difference!
+To see how many ‘raster lines’ a routine occupies, just use the old
+system of changing the colour at the beginning of the routine and changing it again
+at the end. In this way, the “strip” of the changed colour will indicate
+the time in ‘video lines’ used for execution:
+
+Bau:
+cmp.w    #$90,$dff006    ; Wait for Wblank
+bne.s    Bau
+bsr.s    routine1
+move.w    #$F00,$dff180    ; Colour0: RED
+bsr.s    routine2
+move.w    #$000,$dff180    ; Colour0: BLACK
+btst    #6,$bfe001    ; Wait for the mouse
+bne.s    Bau
+rts
+
+In this case, we wait for line $90, towards the middle of the screen,
+we execute routine1, which is not very important, then we change colour (red),
+we execute routine2, and we change colour back (black).
+A red streak will appear on the screen... that is the ‘time’ in which
+routine2 is executed. To see if the speed improves or worsens,
+just see if the streak gets longer or shorter.
+Some maniacs (like my friend hedgehog) stick a piece of
+adhesive tape on the monitor at the height of thelast coloured line, so
+that they can see every slight improvement or deterioration.
+Personally, I use my finger or just eyeball it... it's up to you!
+We have already seen this system in the lesson on the blitter and
+in Lesson 11n1.s and following, to “visualise” the expected time using
+the CIAA/CIAB chips. By the way, you could also use timers to calculate the
+times “numerically”, but the colour change system is more immediate.
+
+But first, let's start with the basic optimisations, which you should know how to
+do “live” while writing. The simplest thing is to know which
+instruction to choose from among the possible ones when you want to perform a given
+task. In fact, the same operation can be done in several ways!
+For example, let's look at this listing:
+
+lea    LABEL1,a0
+move.l    0(a0),d0
+move.l    2(a0),d1
+ADD.W    #5,d0
+SUB.W    #5,d1
+MULU.W    #2,d0
+MOVE.L    #30,d2
+RTS
+
+The same thing can be done by choosing these instructions:
+
+lea    LABEL1(PC),a0    ; Faster (PC) addressing
+move.l    (a0),d0        ; The offset 0 was not necessary!
+move.l    2(a0),d1    ; Leave this as it is
+ADDQ.W    #5,d0        ; Number less than 8, you can use ADDQ!
+SUBQ.W	#5,d1        ; same as above, for SUBQ!
+ADD.W    d0,d0        ; saved 60 cycles!! D0*2 is equal to D0+D0!!!
+MOVEQ    #30,d2        ; number less than 127, I can use MOVEQ!
+RTS
+
+The routine is much faster, and is still very readable. So, the
+first thing to learn is to be careful to use dedicated Quick instructions
+such as ADDQ/SUBQ/MOVEQ if the number is small enough, to remove
+multiplications and divisions when possible, to use addressing
+relative to (PC) or registers+offset, rather than bare LABEL,
+etc. With a little experience, choosing the fastest instructions will come naturally,
+and you will write listings like the second one on your first try, rather than
+listings like the first one, which I hope you don't write already!!!!
+Here is another example of instruction ‘swap’ optimisation:
+
+Move.l    #3,d0        ; 12 cycles
+Clr.l    d0        ; 6 cycles
+Add.l    #3,a0        ; 16 cycles
+;
+Move.l    #5,Label    ; 28 cycles
+
+Optimised ‘exchange’ version:
+
+Moveq    #3,d0        ; 4 cycles
+Moveq    #0,d0        ; 4 cycles
+Addq.w    #3,a0        ; 4 cycles
+;
+Moveq    #5,d0        ; 4 cycles
+Move.l    d0,Label	; 20 cycles, total 24 cycles
+
+I could go on and on with examples like these, but you don't need to
+know all the possible cases by heart, of course!
+What you need to understand is ‘the method’, the philosophy of optimised coding.
+For example, there are techniques for speeding up the loading of
+32 bits in registers:
+
+move.l    #$100000,d0    ; 12 cycles
+
+Optimised version:
+
+moveq    #10,d0        ; 4 cycles
+Swap    d0        ; 4 cycles, total 8 cycles
+
+Another VERY IMPORTANT thing is that access to memory (i.e. to labels)
+is much SLOWER than access to data and address registers. Therefore, it is
+a good habit to tend to use all registers and take care to touch
+labels as little as possible. For example, the listing:
+
+MOVE.L	#200,LABEL1
+MOVE.L    #10,LABEL2
+ADD.L    LABEL1,LABEL2
+
+You can optimise this GREATLY by writing:
+
+move.l    #200,d0
+moveq    #10,d1
+add.l    d0,d1
+
+Don't mind the stupidity of the example, but note that while in the first
+we made four accesses to the very slow RAM, passing the data through the
+tangled wires of the motherboard, in the second case everything took place
+inside the CPU, cluttering everything up. If you run out of data registers,
+also use address registers to hold data, rather than accessing labels!
+Also, if possible, use .W instructions instead of .L, for example, the
+previous listing could be re-optimised as follows:
+
+move.w    #200,d1
+moveq    #10,d0
+add.w    d0,d1
+
+In this case, the instructions take up 8 cycles instead of 12... which is not insignificant!
+However, be careful that the high word is reset and/or is never needed!
+
+In any case, the most profitable ‘exchange’ optimisations are those that
+eliminate multiplication (70 cycles) and division (158 cycles) instructions,
+and it can be said that a science has been born in this regard.
+The simplest case is when we have to divide or multiply by numbers
+that are powers of 2, because we can use shift instructions
+that use exactly the following machine cycles:
+
+Lsl.w    6+2n        ; n = number of shifts
+Asr.w    6+2n
+Lsr.l    8+2n
+Asr.l    8+2n
+
+Here n indicates the number of bits, and the number of cycles refers
+to when registers are used.
+The rule to follow is generally as follows: (for MULS or MULU)
+
+Note: sometimes an EXT.L D0 is needed before the ASLs that replace the MULS,
+while before those that replace the MULU, it may be necessary to clear
+the upper word with ‘swap d0, clr.w d0, swap d0’.
+
+MULS.w    #2,d0        | ADD.L d0,d0 ; seems clear to me!
+
+MULS.w    #4,d0        | ADD.L d0,d0 ; this too!
+| ADD.L d0,d0
+
+MULS.w    #8,d0		| ASL.l #3,d0 ; from 8 to 256, it is better to use asl
+MULS.w    #16,d0        | ASL.l #4,d0
+MULS.w    #32,d0        | ASL.l #5,d0
+MULS.w    #64,d0        | ASL.l #6,d0
+MULS.w    #128,d0		| ASL.l #7,d0
+MULS.w    #256,d0        | ASL.l #8,d0
+
+If there are problems with MULU, you could clear the high word:
+
+mulu.w #n,dx ->    swap dx        ;n is 2^m, 2..2^8
+clr.w dx    ;(2,4,8,16,32,64,128,256)
+swap dx
+asl.l #m,dx
+
+For muls, it may be sufficient to put an ‘ext.l’ before the asl.
+
+muls #n,dx ->    ext.l dx    ;n is 2^m, 2..2^8
+asl.l #m,dx
+
+For DIVISIONS:
+
+DIVS.w    #2,d0        | ASR.L #1,d0    ; attention: IGNORE THE REST!!!!!!!
+DIVS.w    #4,d0        | ASR.L #2,d0
+DIVS.w    #8,d0        | ASR.L #3,d0
+DIVS.w    #16,d0        | ASR.L #4,d0
+DIVS.w    #32,d0        | ASR.L #5,d0
+DIVS.w    #64,d0        | ASR.L #6,d0
+DIVS.w	#128,d0        | ASR.L #7,d0
+DIVS.w    #256,d0        | ASR.L #8,d0
+DIVU.w    #2,d0        | LSR.L #1,d0    ; attention: IGNORE THE REST!!!!!!!!
+DIVU.w    #4,d0        | LSR.L #2,d0
+DIVU.w    #8,d0        | LSR.L #3,d0
+DIVU.w    #16,d0        | LSR.L #4,d0
+DIVU.w    #32,d0		| LSR.L #5,d0
+DIVU.w    #64,d0        | LSR.L #6,d0
+DIVU.w    #128,d0        | LSR.L #7,d0
+DIVU.w    #256,d0        | LSR.L #8,d0
+
+As you know, after a division, the result remains in the lower word and
+the remainder in the upper word; if you replace DIVS/DIVU with a shift, you will have
+the result in the low word and the high word reset to zero... so it is NOT THE
+SAME THING, be careful!
+In the worst case where n=8, you will get exactly
+6+2*8=22 cycles for the words and 8+2*8=24 cycles for the longwords, so the
+saving is guaranteed. Also, bear in mind that on a 68020, the number of cycles
+for shift instructions is the same regardless of the number of
+bits to be shifted. Also keep in mind the Swap instruction, which
+takes 4 cycles to execute, as it can be useful in many
+situations where the number of bits to be shifted is large. Let's look
+at a series of examples:
+
+; Shift 9 bits to the left
+
+Lsl.l    #8,d0
+Add.l    d0,d0
+
+; Shift 16 bits to the left
+
+Swap    d0
+Clr.w    d0
+
+; Shift 24 bits to the left
+
+Swap    d0
+Clr.w    d0
+Lsl.l    #8,d0
+
+; Shift 16 bits to the right
+
+Clr.w    d0
+Swap    d0
+
+; Shift 24 bits to the right
+
+Clr.w    d0
+Swap	d0
+Lsr.l    #8,d0
+
+As you can see, there are many techniques for shifting, and you can
+come up with many more. As always, it is up to you to get into the right mindset
+and try to achieve the optimisation you are looking for. So, for powers of 2,
+ you won't have any major problems multiplying and dividing in a reasonable amount of time.
+Problems could arise if the number is not 
+a power of two; this is true, but for many values we can
+still get around the problem. Let's consider the case where we have to
+multiply the value contained in a register by 3: well, think
+that you have to execute an expression such as 3*x, which you can also
+write as 2*x+x. At this point, you have solved your problem because your
+code will be:
+
+Move.l    d0,d1
+Add.l     d0,d0 ; d0=d0*2
+Add.l     d1,d0 ; d0=(d0*2)+d0
+
+Let's consider another case, for example, for n=5, then we have 5*x, i.e.
+4*x+x: as code we will have:
+
+Move.l    d0,d1
+Asl.l    #2,d0 ; d0=d0*4
+Add.l    d1,d0 ; d0=(d0*4)+d0
+
+Finally, let's consider another case where n=20, so we have 20*x, but
+20*x = 4*(5*x) = 4*(4*x+x)
+
+Move.l    d0,d1
+Asl.l	#2,d0 ;d0=d0*4
+Add.l    d1,d0 ;d0=(d0*4)+d0
+Asl.l    #2,d0 ;d0=4*((d0*4)+d0)
+
+In short, we can try to do something like this. If we break down the
+number into prime factors, we notice that there are many 2s; but always
+count the number of cycles to see if it is worth it or not.
+Many of you may be surprised to see here how to
+optimise a simple Mulu or Divu, but think of cases where these
+are found in cycles, in which case these techniques are really very
+useful, even if the Mulu is not in a cycle. What does it cost you to
+replace it with something better?
+While we are on the subject, let's talk briefly about the implementation 
+of expressions in Assembly.
+What I am about to tell you is nothing special, but often we do not pay
+attention to trivial facts.
+When we have to implement a function, what we usually do is
+load the values into the registers and perform all the operations.
+In general, to save machine time in evaluating the function,
+it is best to use the collection methods you learn in high school.
+Let's consider a trivial expression:
+
+a*d0+b+d1+a*d3+b*d5 can be written as:
+
+a*(d0+d3)+b*(d1+d5)
+
+This saves us two multiplications.
+
+Since, in order to choose the right instruction, we only need to know which of each
+pair of equivalent instructions is the fastest, I present a
+table similar to the one at the end of 68000-2.txt, with “slow” instructions and
+equivalent ‘fast’ ones to use:
+
+INSTRUCTION example    | EQUIVALENT, BUT FASTER
+------------------------|-----------------------------------------------
+add.X #6,XXX        | addq.X #6,XXX        (maximum 8)
+sub.X #7,XXX        | subq.X #7,XXX        (maximum 8)
+MOVE.X LABEL,XX        | MOVE.X LABEL(PC),XX    (if in the same SECTION)
+LEA LABEL,AX        | LEA LABEL(PC),AX    (if in the same SECTION)
+MOVE.L #30,d1        | moveq #30,d1        (min #-128, max #+127)
+CLR.L d4        | MOVEQ #0,d4		(only for data registers)
+ADD.X/SUB.X #12000,a3    | LEA (+/-)12000(a3),A3    (min -32768, max 32767)
+MOVE.X #0,XXX        | CLR.X XXX        ; moving #0 is stupid!
+CMP.X #0,XXX        | TST.X XXX        ; where do you leave the TST?
+To reset a register Ax    | SUB.L A0,A0        ; better than ‘LEA 0,a0’.
+JMP/JSR    XXX        | BRA/BSR XXX        (If XXX is nearby)
+MOVE.X #label,AX	| LEA label,AX        (address registers only!)
+MOVE.L 0(a0),d0        | MOVE.L (a0),d0    (remove the offset if it is 0!!!)
+LEA    (A0),A0        | HAHAHAHA! ; Remove it, it has no effect!!
+LEA    4(A0),A0    | ADDQ.W #4,A0        ; up to 8
+addq.l #3,a0        | addq.w #3,a0        ; Only address registers, max 8
+Bcc.W label		| Bcc.S label ; Beq,Bne,Bsr... dist. <128
+
+For multiplication and division of multiples of 2 converted to ASL/ASR
+see the table above.
+Here are some special cases for changing MULS/MULU to something else:
+
+NOTE: If it is a ‘MULS’, it is often necessary to add an ‘ext.l dx’
+as the first instruction to extend the sign to longword.
+
+mul*.w #3,dx -> move.l dx,ds
+add.l dx,dx
+add.l ds,dx
+------------------------------------
+mul*.w #5,dx -> move.l dx,ds
+asl.l #2,dx
+add.l ds,dx
+------------------------------------
+mul*.w #6,dx -> add.l dx,dx
+move.l dx,ds
+add.l dx,dx
+add.l ds,dx
+------------------------------------
+mul*.w #7,dx -> move.l dx,ds
+asl.l #3,dx
+sub.l ds,dx
+------------------------------------
+mul*.w #9,dx -> move.l dx,ds
+asl.l #3,dx
+add.l ds,dx
+------------------------------------
+mul*.w #10,dx -> add.l dx,dx
+move.l dx,ds
+asl.l #2,dx
+add.l ds,dx
+------------------------------------
+mul*.w #12,dx -> asl.l #2,dx
+move.l dx,ds
+add.l dx,dx
+add.l ds,dx
+------------------------------------
+mulu.w #12,dx -> swap dx    ; HEY! You often need to reset the word
+clr.w dx    ; high for MULU... consider this too
+swap dx    ; for mulu #3, #5, #6....
+
+asl.l #2,dx    ; normal mulu #12
+move.l dx,ds
+add.l dx,dx
+add.l ds,dx
+------------------------------------
+
+If you need to reset the upper word of the registers many times, you can also use:
+
+move.l    #$0000FFFF,ds    ; you need 1 register to hold $FFFF
+
+and.l    ds,dx        ; this is faster than swapping, but
+; requires a register containing $0000FFFF,
+; otherwise ‘AND.L #$FFFF,dx’ is no longer
+; faster...
+
+In summary, remember that in the case of MULS, since it is SIGNED, it may be
+necessary to execute an ‘EXT.L’ at the beginning. Instead, in the case of MULU, it may 
+be necessary to reset the high word of the register.
+
+Now for ‘compound’ swaps:
+
+asl.x #2,dy -> add.x dy,dy
+add.x dy,dy
+------------------------------------
+asl.l #16,dx -> swap dx
+clr.w dx
+------------------------------------
+asl.w #2,dy -> add.w dy,dy
+add.w dy,dy
+------------------------------------
+asl.x #1,dy -> add.x dy,dy
+------------------------------------
+asr.l #16,dx -> swap dx
+ext.l dx
+------------------------------------
+bsr label -> bra label
+rts
+------------------------------------
+clr.x n(ax,rx) -> move.x ds,n(ax,rx)    ; ds must be 0, of course!
+------------------------------------
+lsl.l #16,dx -> swap dx
+clr.w dx
+------------------------------------
+move.b #-1,(ax) -> st (ax)
+------------------------------------
+move.b #-1,dest -> st dest
+------------------------------------
+move.b #x,mn -> move.w #xy,mn
+move.b #y,mn+1
+------------------------------------
+move.x ax,ay -> lea n(ax),ay        ; -32767 <= n <= 32767
+add.x #n,ay
+------------------------------------
+move.x ax,az -> lea n(ax,ay),az        ; az=n+ax+ay, n<=32767
+add.x #n,az
+add.x ay,az
+------------------------------------
+sub.x #n,ax -> lea -n(ax),ax        ; -32767 <= n <= -9, 9 <= n <= 32767
+------------------------------------
+
+At this point, check the execution time of the various instructions.
+To the execution time of the instruction, add the time spent on the
+various addressing operations, whose execution time was seen earlier.
+Be careful that these are the execution times of the normal 68000!
+For example, in the 68040, MULS/MULU are implemented via hardware and take
+only a few cycles!
+
+>>>				MOVE.B and MOVE.W                 <<<
+
++-------------+---------------------------------------------------------------+
+| | DESTINATION |
++ SOURCE +---------------------------------------------------------------+
+| | Dn | An |(An)|(An)+|-(An)|(d16,An)|(d8,An,Xn)*|(xxx.W)|(xxx).L|
++-------------+----+----+----+-----+-----+--------+-----------+-------+-------+
+| Dn / An | 4 | 4 | 8 | 8 | 8 | 12 | 14 | 12 | 16 |
+| (An) | 8 | 8 | 12 | 12 | 12 | 16 | 18 | 16 | 20 |
++-------------+----+----+----+-----+-----+--------+-----------+-------+-------+
+| (An)+ | 8 | 8 | 12 | 12 | 12 | 16 | 18 | 16 | 20 |
+| -(An) | 10 | 10 | 14 | 14 | 14 | 18 | 20 | 18 | 22 |
+| (d16,An) | 12 | 12 | 16 | 16 | 16 | 20 | 22 | 20 | 24 |
++-------------+----+----+----+-----+-----+--------+-----------+-------+-------+
+| (d8,An,Xn)* | 14 | 14 | 18 | 18 | 18 | 22 | 24 | 22 | 26 |
+| (xxx).W | 12 | 12 | 16 | 16 | 16 | 20 | 22 | 20 | 24 |
+| (xxx).L | 16 | 16 | 20 | 20 | 20 | 24 | 26 | 24 | 28 |
++-------------+----+----+----+-----+-----+--------+-----------+-------+-------+
+| (d16,PC) | 12 | 12 | 16 | 16 | 16 | 20 | 22 | 20 | 24 |
+| (d8,PC,Xn)* | 14 | 14 | 18 | 18 | 18 | 22 | 24 | 22 | 26 |
+| #(data) | 8 | 8 | 12 | 12 | 12 | 16 | 18 | 16 | 20 |
++-------------+----+----+----+-----+-----+--------+-----------+-------+-------+
+* The size of the index register (Xn) (.w or .l) does not change the speed.
+
+
+>>>                 MOVE.L             <<<
+
++-------------+---------------------------------------------------------------+
+| | DESTINAZIONE |
++ SORG. +---------------------------------------------------------------+
+| | Dn | An |(An)|(An)+|-(An)|(d16,An)|(d8,An,Xn)*|(xxx.W)|(xxx).L|
++-------------+----+----+----+-----+-----+--------+-----------+-------+-------+
+| Dn or An | 4 | 4 | 12 | 12 | 12 | 16 | 18 | 16 | 20 |
+| (An) | 12 | 12 | 20 | 20 | 20 | 24 | 26 | 24 | 28 |
++-------------+----+----+----+-----+-----+--------+-----------+-------+-------+
+| (An)+ | 12 | 12 | 20 | 20 | 20 | 24 | 26 | 24 | 28 |
+| -(An) | 14 | 14 | 22 | 22 | 22 | 26 | 28 | 26 | 30 |
+| (d16,An) | 16 | 16 | 24 | 24 | 24 | 28 | 30 | 28 | 32 |
++-------------+----+----+----+-----+-----+--------+-----------+-------+-------+
+| (d8,An,Xn)* | 18 | 18 | 26 | 26 | 26 | 30 | 32 | 30 | 34 |
+| (xxx).W | 16 | 16 | 24 | 24 | 24 | 28 | 30 | 28 | 32 |
+| (xxx).L | 20 | 20 | 28 | 28 | 28 | 22 | 34 | 32 | 36 |
++-------------+----+----+----+-----+-----+--------+-----------+-------+-------+
+| (d,PC) | 16 | 16 | 24 | 24 | 24 | 28 | 30 | 28 | 32 |
+| (d,PC,Xn)* | 18 | 18 | 26 | 26 | 26 | 30 | 32 | 30 | 34 |
+| #(data) | 12 | 12 | 20 | 20 | 20 | 24 | 26 | 24 | 28 |
++-------------+----+----+----+-----+-----+--------+-----------+-------+-------+
+* The size of the index register (Xn) (.w or .l) does not affect the speed.
+
+And now the other instructions.
+Notes:
+
+# - Immediate operand
+An - Address register
+Dn - Data register
+ea - An operand specified by an effective address
+M - Effective address
++ - Add the time spent calculating the address (addressing)
+
++-------------+-----------+------------+-----------+-----------+
+| Instruction | Size | op<ea>,An¹ | op<ea>,Dn | op Dn,<M> |
++-------------+-----------+------------+-----------+-----------+
+| | Byte,Word | 8+ | 4+ | 8+ |
+| ADD/ADDA +-----------+------------+-----------+-----------+
+| | Long | 6+ | 6+ | 12+ |
++-------------+-----------+------------+-----------+-----------+
+| | Byte,Word | - | 4+ | 8+ |
+| AND +-----------+------------+-----------+-----------+
+| | Long | - | 6+ | 12+ |
++-------------+-----------+------------+-----------+-----------+
+| | Byte,Word | 6+ | 4+ | - |
+| CMP/CMPA +-----------+------------+-----------+-----------+
+| | Long | 6+ | 6+ | - |
++-------------+-----------+------------+-----------+-----------+
+| DIVS | - | - | 158+ | - |
++-------------+-----------+------------+-----------+-----------+
+| DIVU | - | - | 140+ | - |
++-------------+-----------+------------+-----------+-----------+
+| | Byte,Word | - | 4 | 8+ |
+| EOR +-----------+------------+-----------+-----------+
+| | Long | - | 8 | 12+ |
++-------------+-----------+------------+-----------+-----------+
+| MULS/MULU | - | - | 70+ | - |
++-------------+-----------+------------+-----------+-----------+
+| | Byte,Word | - | 4+ | 8+ |
+| OR +-----------+------------+-----------+-----------+
+| | Long | - | 6+ | 12+ |
++-------------+-----------+------------+-----------+-----------+
+| | Byte,Word | 8+ | 4+ | 8+ |
+| SUB +-----------+------------+-----------+-----------+
+| | Long | 6+ | 6+ | 12+ |
++-------------+-----------+------------+-----------+-----------+
+
++-------------+-----------+---------+---------+--------+
+| Instruction | Size | op #,Dn | op #,An | op #,M |
++-------------+-----------+---------+---------+--------+
+| | Byte,Word | 8 | - | 12+ |
+| ADDI +-----------+---------+---------+--------+
+| | Long | 16 | - | 20+ |
++-------------+-----------+---------+---------+--------+
+| | Byte,Word | 4 | 4 | 8+ |
+| ADDQ +-----------+---------+---------+--------+
+| | Long | 8 | 8 | 12+ |
++-------------+-----------+---------+---------+--------+
+| | Byte,Word | 8 | - | 12+ |
+| ANDI +-----------+---------+---------+--------+
+| | Long | 14 | - | 20+ |
++-------------+-----------+---------+---------+--------+
+| | Byte,Word | 8 | - | 8+ |
+| CMPI +-----------+---------+---------+--------+
+| | Long | 14 | - | 12+ |
++-------------+-----------+---------+---------+--------+
+| | Byte,Word | 8 | - | 12+ |
+| EORI/SUBI +-----------+---------+---------+--------+
+| | Long | 16 | - | 20+ |
++-------------+-----------+---------+---------+--------+
+| MOVEQ | Long | 4 | - | - |
++-------------+-----------+---------+---------+--------+
+| | Byte,Word | 8 | - | 12+ |
+| ORI +-----------+---------+---------+--------+
+| | Long | 16 | - | 20+ |
++-------------+-----------+---------+---------+--------+
+| | Byte,Word | 4 | 8 | 8+ |
+| SUBQ +-----------+---------+---------+--------+
+| | Long | 8 | 8 | 12+ |
++-------------+-----------+---------+---------+--------+
+
++-------------+-----------+----------+--------+
+| Instruction | Size | Register | Memory |
++-------------+-----------+----------+--------+
+| NBCD | Byte | 6 | 8+ |
++-------------+-----------+----------+--------+
+| | Byte,Word | 4 | 8+ |
+| CLR/NEG +-----------+----------+--------+
+| NEGX/NOT | Long | 6 | 12+ |
++-------------+-----------+----------+--------+
+| | Byte,False| 4 | 8+ |
+| Scc +-----------+----------+--------+
+| | Byte,True | 6 | 8+ |
++-------------+-----------+----------+--------+
+| TAS | Byte | 4 | 14+ |
++-------------+-----------+----------+--------+
+| TST | Byte,Word,Long | 4 | 4+ |
++-------------+-----------+----------+--------+
+| LSR/LSL | Byte,Word | 6 + 2n | 8+ |
+| ASR/ASL +-----------+----------+--------+
+| ROR/ROL | Long | 8 + 2n | - |
+| ROXR/ROXL | | | |
++-------------+-----------+----------+--------+
+note: n is the number of shifts!
+
+Bit Manipulation Instruction Execution Times
++-------------+-----------+-------------------+-------------------+
+| | | Dynamic | Static |
+| Instruction | Size +----------+--------+----------+--------+
+| | | Register | Memory | Register | Memory |
++-------------+-----------+----------+--------+----------+--------+
+| | Byte | - | 8+ | - | 12+ |
+| BCHG/BSET +-----------+----------+--------+----------+--------+
+| | Long | 8 | - | 12 | - |
++-------------+-----------+----------+--------+----------+--------+
+| | Byte | - | 8+ | - | 12+ |
+| BCLR +-----------+----------+--------+----------+--------+
+| | Long | 10 | - | 14 | - |
++-------------+-----------+----------+--------+----------+--------+
+| | Byte | - | 4+ | - | 8+ |
+| BTST +-----------+----------+--------+----------+--------+
+| | Long | 6 | - | 10 | - |
++-------------+-----------+----------+--------+----------+--------+
+
++-------------+-------------------+--------+-----------+
+| | | Branch | Branch |
+| Instruction | Displacement | Taken | Not Taken |
++-------------+-------------------+--------+-----------+
+| | Byte | 10 | 8 |
+| Bcc +-------------------+--------+-----------+
+| | Word | 10 | 12 |
++-------------+-------------------+--------+-----------+
+| | Byte | 10 | - |
+| BRA +-------------------+--------+-----------+
+| | Word | 10 | - |
++-------------+-------------------+--------+-----------+
+| BSR | Byte,word | 18 | - |
++-------------+-------------------+--------+-----------+
+| | cc true | - | 12 |
+| +-------------------+--------+-----------+
+| | cc false, Count | | _ |
+| DBcc | Not Expired | 10 | |
+| +-------------------+--------+-----------+
+| | cc false, Counter | _ | |
+| | Expired | | 14 |
++-------------+-------------------+--------+-----------+
+
++----+----+---+-----+-----+--------+-----------+------+-------+-------+-------+
+|Ins.|Sz|(An)|(An)+|-(An)|(d16,An)|(d8,An,Xn)+|(x).W|(x).L|(d16,PC)|(d8,PC,Xn)*
++----+---+----+-----+-----+-------+-----------+-----+-----+--------+----------+
+| JMP| - | 8 | - | - | 10 | 14 | 10 | 12 | 10 | 14 |
++----+----+----+-----+----+-------+-----------+-----+-----+--------+----------+
+| JSR| - | 16 | - | - | 18 | 22 | 18 | 20 | 18 | 22 |
++----+----+----+-----+----+-------+-----------+-----+-----+--------+----------+
+| LEA| - | 4 | - | - | 8 | 12 | 8 | 12 | 8 | 12 |
++----+----+-----+-----+----+------+-----------+-----+-----+--------+----------+
+| PEA| - | 12 | - | - | 16 | 20 | 16 | 20 | 16 | 20 |
++-----+----+-----+-----+----+-----+-----------+-----+-----+--------+----------+
+| |Word|12+4n|12+4n| _ |16+4n| 18+4n |16+4n|20+4n| 16+4n | 18+4n |
+| | | | | | | | | | | |
+|MOVEM+----+-----+-----+----+-----+-----------+-----+-----+--------+----------+
+|M->R |Long|12+8n|12+8n| _ |16+8n| 18+8n |16+8n|20+8n| 16+8n | 18+8n |
+| | | | | | | | | | | |
++-----+----+-----+-----+----+-----+-----------+-----+-----+--------+----------+
+| |Word| 8+4n| _ |8+4n|12+4n| 14+4n |12+4n|16+4n| _ | _ |
+| | | | | | | | | | | |
+|MOVEM+----+-----+-----+----+-----+-----------+-----+-----+--------+----------+
+|R->M |Long| 8+8n| _ |8+8n|12+8n| 14+8n |12+8n|16+8n| _ | _ |
+| | | | | | | | | | | |
++-----+----+-----+-----+----+-----+-----------+-----+-----+--------+----------+
+note: n is the number of registers to be moved.
+
+
+EXT/SWAP/NOP    4
+EXG        6
+UNLK        12
+LINK/RTS    16
+RTE        20
+
+Finally, keep in mind that exceptions require 44 cycles if they are
+interrupts, 34 if they are TRAPs. Plus 20 for the RTE!!!
+Please ALWAYS comment on an optimisation. For example, suppose
+you want to optimise this routine:
+
+movem.l    label1(PC),d1-d4
+mulu.w    #16,d1
+mulu.w    #3,d2
+muls.w    #5,d3
+divu.w    #8,d4
+rts
+
+Optimising it, the result would be:
+
+movem.l    label1(PC),d1-d4
+asl.l    #4,d1        ; mulu.w #16,d1
+move.l    d2,d5        ; \
+add.l    d2,d2        ; > mulu.w #3,d2
+add.l    d5,d2		; /
+move.l    d3,d5        ; \
+asl.l    #2,d3        ; > muls.w #5,d3
+add.l    d5,d3        ; /
+asr.l	#3,d4        ; divu.w #8,d4
+rts
+
+In addition to using the d5 register, we have made the listing more difficult to read.
+ At first glance, if we hadn't added comments, would you understand
+what happens to registers d1, d2, d3 and d4? And imagine if we had also had to
+clear the high word before the MULU and extend before the MULS:
+
+movem.l    label1(PC),d1-d4
+swap    d1
+clr.w    d1
+swap    d1
+asl.l    #4,d1
+swap    d2
+clr.w    d2
+swap    d2
+move.l    d2,d5
+add.l    d2,d2
+add.l    d5,d2
+ext.l    d3
+move.l    d3,d5
+asl.l    #2,d3
+add.l    d5,d3
+asr.l    #3,d4
+rts
+
+Alternatively, you can reset the high word in the fastest way:
+
+move.l    #$FFFF,d6
+...
+movem.l    label1(PC),d1-d4
+and.l    d6,d1
+asl.l    #4,d1
+and.l    d6,d2
+move.l    d2,d5
+add.l    d2,d2
+add.l    d5,d2
+ext.l    d3
+move.l    d3,d5
+asl.l    #2,d3
+add.l    d5,d3
+asr.l    #3,d4
+rts
+
+If you return to your listing one month after writing it, how long would it take you to realise that all these incomprehensible instructions do nothing more than three multiplications and one division? Would it take you a long time, or would you even have to delete the listing and start again from scratch?
+take to realise that all these incomprehensible instructions do
+nothing more than 3 multiplications and a division? IT WOULD TAKE YOU A LONG TIME, or you would even have to
+delete the listing and start again from scratch in case of changes.
+I did not include comments in this latest version precisely to make you understand
+how ESSENTIAL it is to include comments in optimisations, as in the
+previous listing. So: ALWAYS COMMENT ON OPTIMISATIONS!!!!!!!!!!!!
+
+Another example: look at these three instructions:
+
+move.l    a1,a0
+add.w    #80,a0
+add.l    d0,a0
+
+The same thing can be done with:
+
+lea    80(a1,d0.l),a0    ; or d0.w if the lower word of d0 is sufficient.
+
+*****************************************************************************
+* SECOND LEVEL OPTIMISATIONS: ‘TABELLING’ -> PRECALCULATION! *
+*****************************************************************************
+
+Let's now talk about tables, one of the most important topics for
+Optimisation, with a capital O, which allows you to go faster
+than any C compiler, BASIC, etc.
+Tables for optimisation are ‘similar’ to those used to contain
+the coordinates of sprite waving or other things, which we saw
+in previous lessons: in that case, we could say that we ‘precalculated’ the
+various positions that the objects would take, but here the table is
+used to “pre-calculate” the results of a given multiplication, division,
+or entire mathematical functions, so the case is a little different.
+Let's take a concrete example.
+Suppose we have a routine that processes a series of values between 0
+and 100, and at some point we need to perform a multiplication by a
+constant c. Now, if that routine has to be performed many times, then
+that multiplication will cause us to lose a lot of time.
+How can we get around this problem? We create a table containing all the values
+in our ‘range’ (series) from 0 to 100 already multiplied by c, something
+like this:
+
+Table:
+dc.w    0*c
+dc.w    1*c
+dc.w    2*c
+dc.w    3*c
+.
+dc.w    n*c
+.
+dc.w    100*c
+
+At this point, it is easy to access the table, because given the value
+to be multiplied by c in d0, we will have that:
+
+Lea    Table,a0    ; Table address
+Add.w    d0,d0        ; d0 * 2, to find the offset in the table,
+; given that each value is 1 word long.
+Move.w    (a0,d0.w),d0    ; Copy the correct value from the table to d0
+
+Easy, isn't it? The only disadvantage is that we have a 100-word longer listing
+to contain the table. If this table were no longer than 256
+bytes, we could write:
+
+Add.w    d0,d0			; d0*2, each value 1 word, i.e. 2 bytes
+Move.w    Table(pc,d0.w),d0    ; copy the correct value from the table
+
+If the listing were for 68020+, a single instruction would suffice:
+
+Move.w    Table(pc,d0.w*2),d0    ; instruction for 68020 or higher
+
+However, this is a preview, as we will discuss the specific optimisations
+for 68020 later on.
+In any case, the most commonly used solution for tables is to
+build them in a BSS section using a routine. This way, the
+executable file is not longer, but only takes up a little more
+memory (unless you make a 500Kb long table, in which case
+it takes up a LOT more memory, heheheeh!).
+
+If you have been paying attention, in the previous lessons we have already ‘tabulated’ a
+couple of listings: one to remove a ‘MULU.W #40’, which is very common since
+40 is the length of a low-resolution screen line. Take a close look at
+that example, it is Lesson8n2.s, where both the optimised
+and normal versions are shown for comparison. Also review the previous listings
+to see the normal and optimised routines on their own.
+The problem was:
+
+mulu.w    #largschermo,d1		; That is, mulu.w #40,d1
+
+To ‘solve’ it, here's the trick:
+
+; PRECALCULATE A TABLE WITH MULTIPLES OF 40, i.e. the width of the
+; screen, to avoid multiplying for each plot.
+
+-.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-
+
+lea    MulTab,a0    ; Address space of 256 words where to write
+; the multiples of 40...
+moveq    #0,d0        ; Let's start from 0...
+move.w    #256-1,d7    ; Number of multiples of 40 needed
+PreCalcLoop
+move.w	d0,(a0)+    ; Save the current multiple
+add.w    #LargSchermo,d0    ; add larghschermo, next multiple
+dbra    d7,PreCalcLoop    ; Create the entire MulTab
+....
+
+SECTION    Precalc,bss
+
+MulTab:
+ds.w    256    ; note that the bss section, consisting of zeros, does not
+; extend the actual length of the executable file.
+
+-.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-
+
+That's it for calculating the table. Then, instead of mulu:
+
+-.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-
+
+lea    MulTab,a1    ; Address of the table with the multiples of
+; screen width precalculated in a1
+add.w    d1,d1        ; d1*2, to find the offset in the table
+add.w    (a1,d1.w),d0    ; copy the correct multiple from tab to d0
+
+-.-    -.-    -.-    -.-    -.-    -.-	-.-    -.-    -.-    -.-
+
+This, in short, is the method for tabulating a multiplication.
+Of course, here we knew that d1 could only go from 0 to 255, so
+we precalculated only 256 multiples. If, on the other hand, d1 had
+had a range from 0 to 65000, we would have had to make a table 128Kb long,
+which might not have been practical!
+If the maximum result in the table does not exceed $FFFF, i.e. 65535, just
+make a table with .Word values. If, on the other hand, the highest values exceed
+this value, the table must be made of longwords. In this case,
+we will have to change the way we find the offset: no longer *2, but *4!
+
+lea    MulTab,a1    ; Address of the table with the multiples of
+; screen width precalculated in a1
+add.w    d1,d1        ; d1*4, to find the offset in the table
+add.w    d1,d1        ;
+move.l    (a1,d1.w),d0    ; copy the correct multiple from tab to d0
+
+
+As for the tabulation of divisions, the process is similar.
+just create a routine with a loop that divides each cycle by an increasing number
+and save the results in the table. In this case, you can
+choose to save only the low word, with the result, or also the
+high word with the remainder, if it serves our purpose.
+
+One fundamental thing is to create the table ‘in loco’, NEVER INSERT A
+TABLE, ESPECIALLY IF IT IS LONGER THAN A FEW KB, ALREADY CALCULATED.
+For example, if we pre-calculate a 20KB multitab, imagine the difference
+between an executable that calculates it at startup and one that has it included with
+incbin or include already pre-calculated: (example)
+
+file1    ->    length = 40K		; calculates the tab at the beginning
+file1    ->    length = 60K        ; has the tab included with incbin
+
+In terms of memory consumption, they are equal, but if you had to make a 
+40K intro or a 64K intro, imagine the huge space savings, at
+the expense of 1 or 2 seconds of pre-calculation at the beginning.
+But even if you had made a game or a program, the fact that it costs 20k (or more) less would allow you to put more things on the disc and
+have a greater diffusion in BBSs given its brevity.
+a wider distribution on BBSes given its brevity.
+Then there is still an incentive to precalculate the tables on the spot: the fact that
+you can easily modify the listing, for example if you want to multiply by
+80 instead of 40. The FOOL who included a table of
+multiples of 40 with INCBIN would have to rewrite the multiplication routine for 80,
+run it, save the binary file, while the SMART person who has the creation routine
+in the listing simply has to change 40 to 80, and it does everything by itself.
+Finally, especially for complex routine precalculations, it is MUCH
+clearer how it works if you have the original routine that
+creates the table in front of you. Therefore, ALWAYS PRECALCULATE TABLES IN ZEROED SPACES,
+ ESPECIALLY IN THE BSS SECTION IF THEY ARE LARGE TABLES.
+
+The advice I can give you is to always try always try to tabulate EVERYTHING.
+
+If you have been paying close attention, you should also remember that in Lesson 11, a
+listing underwent a tabulation optimisation, much more daring than
+the one we have just seen. In fact, an entire routine is tabulated, rather than a single
+multiplication. It is no coincidence that I put it in Lesson 11 and not in Lesson 8!
+The “normal” listing is Lesson 11l5.s, the “tabulated” one is Lesson 11l5b.s
+Take another look at how the significant optimisation was achieved, which I will show you again.
+
+This is the “normal” routine:
+
+-.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-	-.-
+
+Animloop:
+moveq    #0,d0
+move.b    (A0)+,d0    ; Next byte in d0
+MOVEQ    #8-1,D1        ; 8 bits to check and expand.
+BYTELOOP:
+BTST.l    D1,d0        ; Test the current loop bit
+BEQ.S    bitclear    ; is it zero?
+ST.B	(A1)+        ; If not, set the byte (=$FF)
+BRA.S    bitset
+bitclear:
+clr.B    (A1)+        ; If it is zero, reset the byte
+bitset:
+DBRA    D1,BYTELOOP    ; Check and expand all bits of the byte
+DBRA    D7,Animloop    ; Convert the entire frame
+
+-.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-
+
+All that has been done is to precalculate all the possibilities:
+
+-.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-
+
+****************************************************************************
+; Routine that precalculates all possible 8 bytes paired with possible
+; 8 bits. All refers to $FF, i.e. 255.
+****************************************************************************
+
+PrecalcoTabba:
+lea    Precalctabba,a1    ; Destination
+moveq    #0,d0        ; Start from zero
+DoTabba:
+MOVEQ    #8-1,D1        ; 8 bits to check and expand.
+BYTELOOP:
+BTST.l    D1,d0        ; Check the current loop bit
+BEQ.S    bitclear    ; Is it zero?
+ST.B	(A1)+        ; If not, set the byte (=$FF)
+BRA.S    bitset
+bitclear:
+clr.B    (A1)+        ; If it is zero, reset the byte
+bitset:
+DBRA    D1,BYTELOOP    ; Check and expand all bits of the byte:
+; D1 decrements each time, causing btst to be performed on
+; all bits.
+ADDQ.W    #1,D0		; Next value
+CMP.W    #256,d0        ; Have we done them all? (max $FF)
+bne.s    FaiTabba
+rts
+
+-.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-
+
+And change the ‘execution’ routine:
+
+-.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-    -.-
+
+Animloop:
+moveq    #0,d0
+move.b    (A0)+,d0    ; Next byte in d0
+lsl.w    #3,d0        ; d0*8 to find the value in the table
+; (i.e. the offset from its start)
+lea    Precalctabba,a2
+lea    0(a2,d0.w),a2    ; In a2, the address in the table of the 8 bytes
+; needed for the 8-bit ‘expansion’.
+move.l    (a2)+,(a1)+    ; 4 bytes expanded
+move.l    (a2),(a1)+    ; 4 bytes expanded (total 8 bytes!!)
+
+DBRA    D7,Animloop    ; Convert the entire frame
+
+-.-    -.-    -.-	-.-    -.-    -.-    -.-    -.-    -.-    -.-
+
+As you can see, here we are entering a type of optimisation that requires
+a certain amount of experience and intuition.
+Mechanically, it is easy to say, ‘I'll try to table all the multiplications
+and divisions, and put all the possible addq and moveq’.
+But when we are faced with ‘strange’ routines like the one we have already seen
+that makes a whole byte of btsts and expands it to 8 bytes, you need to have
+a keen eye to intuit how to optimise it.
+It is this keen eye that makes the difference between a 3D routine that
+jerks when it runs 10 points, and one that runs in 50ths of a second even
+when rotating 8192. And of course, it is impossible to list all the
+possible routines with all the possible optimisations next to them.
+You need to develop a keen eye by looking at the few examples presented.
+
+******************************************************************************
+*        MISCELLANEOUS OPTIMISATIONS - MIXED GROUP             *
+******************************************************************************
+
+Let's consider the case where we have to execute a certain routine for each
+value in d0, and also suppose that these possible values are between
+0 and 10. Well, we might be tempted to do something like this:
+
+Cmp.b    #1,d0
+Beq.s    Rout1
+Cmpi.b    #2,d0
+Beq.s    Rout2
+...
+Cmp.b    #10,d0
+Beq.s    Rout10
+
+This is a very bad idea. At the very least, we could have done this:
+
+Subq.b    #1,d0    ; remove 1. If d0=0, then set the Z flag
+Beq.s    Rout1    ; Consequently, d0 was 1, and we jump to Rout1
+Subq.b    #1,d0    ; etc...
+Beq.s    Rout2
+...
+Subq.b    #1,d0
+Beq.s    Rout10
+
+Actually, this is already better, but we are perfectionists and with the help
+of a table we do it like this:
+
+Add.w    d0,d0         ;\ d0*4, to find the offset in the table,
+Add.w    d0,d0		 ;/ consisting of longwords (4 bytes!)
+Move.l    Table(pc,d0.w),a0 ; In a0, the address of the correct routine
+Jmp    (a0)
+
+Table:
+dc.l    Rout1    ; 0 (value in d0 to call the routine)
+dc.l    Rout2    ; 1
+dc.l    Rout3	; 2
+dc.l    Rout4    ; 3
+dc.l    Rout5    ; 4
+dc.l    Rout6    ; 5
+dc.l    Rout7    ; 6
+dc.l    Rout8    ; 7
+dc.l    Rout9    ; 8
+dc.l    Rout10    ; 9
+
+This way, we don't make comparisons, and it's obviously an excellent technique
+if we know the values to compare and they are consecutive.
+I would also like to point out that if we use tables intensively,
+ we could even work with powers of two, thus saving ourselves
+those two Add.w. So, when you want routine 1, you will need d0=0,
+when you want Rout2, you need d0=4, when you want Rout3, you need d0=8, and so on.
+
+There are also variations of this system, for example:
+
+move.b    Table(pc,d0.w),d0    ; Get the right offset from the table
+jmp    Table(pc,d0)        ; add it to Table, and jump!
+
+Table:
+dc.b    Rout1-Table    ; 0
+dc.b    Rout2-Table    ; 1
+dc.b    Rout3-Table    ; 2
+...
+even
+
+With this system, we don't have to multiply d0, because we have created a
+table of routine offsets from the table itself.
+Here the offsets are .byte, because we assume that the routines are small and
+close together. Otherwise, the offsets could be .word:
+
+add.w    d0,d0            ; d0*2
+move.w    Table(pc,d0.w),d0    ; Get the right offset from the table
+jmp    Table(pc,d0)        ; add it to Table, and jump!
+
+Table:
+dc.w    Rout1-Table    ; 0
+dc.w    Rout2-Table    ; 1
+dc.w    Rout3-Table    ; 2
+...
+
+The advantage of this system is that you don't need to multiply the
+d0 register by 4, but only by 2.
+If you can't place the table close enough, you can do this:
+
+add.w    d0,d0            ; d0*2
+lea    Table(pc),a0
+move.w    (a0,d0.w),d0
+jmp    (a0,d0.w)
+
+Table:
+dc.w    Rout1-Table    ; 0
+dc.w    Rout2-Table    ; 1
+dc.w    Rout3-Table    ; 2
+...
+
+Now that we have implemented the jump to routines using Subq.b #1,d0
+followed by BEQ, without either CMP or TST, let's look at the uses of this
+feature, which is linked to Condition Codes (take a good look at them in 68000-2.txt)
+We assembly programmers can afford the luxury of testing three
+conditions at a time. Consider the following example:
+
+Add.w    #x,d0        ; the cc are set in some way
+Beq.s    Zero        ; the result is zero
+Blt.s    Negative    ; the result is less than zero
+...            ; Otherwise, the result is positive...
+
+So, if you need to test a result, always try to do so after
+the last mathematical operation, and not at the end when the CCs will indicate
+something completely different. It would be good if you knew which cc affect the various
+instructions.
+I also recommend placing the Bcc according to their probability
+of being executed first, i.e. those that are most likely to transfer
+control.
+For example, another interesting case is this: we have a certain number of
+values, we don't know how many, but we know that they end with a zero....
+Let's suppose we have to copy them from one memory area to another.
+We could do something like this:
+
+Lea	Source,a0
+Lea    Dest,a1
+CpLoop:
+Move.b    (a0)+,d0    ; source -> d0
+Move.b    d0,(a1)+    ; d0 -> destination
+Tst.b    d0        ; d0=0?
+Bne.s    CpLoop        ; If not yet, continue
+
+But we can do better in the following way:
+
+Lea	Source,a0
+Lea    Dest,a1
+CpLoop:
+Move.b    (a0)+,(a1)+    ; source -> destination
+Bne.s    CpLoop        ; flag 0 set? If not, continue!
+
+As you can see, the 68000 does everything by itself in this case.
+
+Let's now talk about subroutine calls, and therefore Movem.
+The use of subroutines is obviously very useful when writing
+programs, but when optimising your code, it should be noted that
+instead of using the BSR label/RTS pair of instructions, you could also
+use BRA label, followed at the end of the subroutine with another
+BRA at the end of the subroutine, which takes you back to the instruction immediately following JMP label, but
+this optimisation is at your discretion.
+However, if possible, always use BSR instead of JSR and BRA
+instead of JMP, whenever possible.
+Returning to the use of routines, it is often necessary to
+clear the contents of the registers before starting to work on them,
+but we can save ourselves a string of ‘Moveq #0,Dx’ and
+‘Sub.l Ax,Ax’ every time. In fact, we do this at the beginning of the main programme
+and see what happens when we call our subroutines,
+for example:
+
+Moveq    #0,d0    ;
+Moveq    #0,d1
+...
+Moveq    #0,d7
+Move.l    d0,a0
+..
+Move.l    d0,a6
+Main:
+Bsr.s    Pippo
+Bsr.s    Pluto
+Bsr.s    Paperino
+...
+Bra.s    Main
+
+Well, if we save the contents of the registers used at each call,
+ we will have that every time a routine ends, we will go to the next one already
+with the registers ‘cleaned’. It is obvious that you still need to organise
+your code properly. Otherwise, you could clean
+all the registers with a single instruction, namely:
+
+movem.l    TantiZeri(PC),d0-d7/a0-a6
+
+TantiZeri:
+dcb.b	15,0
+
+Let's now look at the Movem instruction and examine its advantages and disadvantages.
+First, let's look at the number of machine cycles of Movem, especially
+in longword transfers: in transfers from registers to memory
+it takes 8+8n, where n indicates the number of registers. Let's also look at the
+number of cycles that a simple Move.l takes Dx,(Ax): 12 cycles. 
+The typical engineer might then ask the following question: if
+I need to transfer multiple longwords contained in different registers,
+to what extent is it advisable to use the classic Move.l Dx,(Ax) ?
+Well, once again, the engineer has made a valid point.
+Let's consider an extreme case in which we need to transfer the contents
+ofregisters D0..D7 and A0..A6: we would need exactly 8+7=15 Move.l
+for a total of 15*12=180 cycles.
+Instead, if we use Movem, we would have 8+8*15=128 cycles, i.e. a saving
+of 52 cycles!
+At this point, it is clear that the mammoth Movem must be used when
+large amounts of data need to be transferred, but if only two registers are involved,
+ the normal Move.l can still be used.
+Let's now look at a series of practical applications that start with
+unoptimised code and end up with optimised code.
+Suppose, for example, that we need to clear 1200 bytes starting from location
+Table; beginners would do it this way:
+
+Lea    Table,a0    ; 12 cycles
+Move.w    #1200-1,d7    ; 8 cycles
+CleaLoop:
+Clr.b    (a0)+		; 8 cycles 
+Dbne    d7,CleaLoop
+
+This type of code is horrible! In fact, let's see how long it takes... the first
+two instructions take 20 cycles, while Clr.b must be executed
+1200 times, therefore 1200*8=9600 cycles. Furthermore,we have to add Dbne
+, which will have to be executed 10*1199=11990 cycles plus 14 at the end, so
+to sum up, 20+9600+11990+14=21624 cycles!!! Well, all this is not worth 
+commenting on. We could at least have done something like this:
+
+Lea    Table,a0
+Move.w    #(1200/4)-1,d7    ; number of bytes divided by 4, for clr.L!!
+Clr:
+Clr.l    (a0)+        ; we reset 4 bytes at a time...
+Dbra    d7,Clr        ; and we do 1/4 of loops.
+
+In fact, with a Clr.l, we at least delete 4 bytes at a time, and since
+we have to delete 1200, we would do 1200/4=300 cycles, saving quite a
+bit compared to before (do the maths yourselves, please).
+To optimise even more, we can do this:
+
+Lea    Table,a0
+Move.w    #(1200/16)-1,d7    ; number of bytes divided by 16, for clr.L!!
+Clr:
+Clr.l    (a0)+        ; we reset 4 bytes
+Clr.l    (a0)+        ; reset 4 bytes
+Clr.l    (a0)+        ; reset 4 bytes
+Clr.l    (a0)+        ; reset 4 bytes
+Dbra    d7,Clr        ; and we do 1/16 of loops.
+
+However, even this type of code can be classified as poor.
+Let's try to optimise it further, using a data register:
+
+Lea    Table,a0
+moveq    #0,d0        ; faster than ‘CLR’!
+Move.w    #(1200/32)-1,d7    ; number of bytes divided by 32
+Clr:
+move.l    d0,(a0)+        ; reset 4 bytes
+move.l    d0,(a0)+
+move.l    d0,(a0)+
+move.l    d0,(a0)+
+move.l    d0,(a0)+
+move.l    d0,(a0)+
+move.l    d0,(a0)+
+move.l    d0,(a0)+
+Dbra    d7,Clr        ; and we do 1/32 of loops.
+
+With this version, we have increased optimisation due to the decrease in
+dbra to be executed, and we have taken advantage of the fact that using registers is
+megafast, even faster than ‘CLR’.
+
+Let's now use Movem and see what happens:
+
+movem.l	TantiZeri(PC),d0-d6/a0-a6    ; we reset all registers
+; except d7 and a7, of course,
+; which is the stack. You can
+; reset them like this or with
+; many moveq #0,Dx...
+
+; Now we have 7+7=14 registers reset, for a total of 14*4=56 bytes.
+; We need to do 1200 bytes/56 bytes = 21 transfers, but 21*56 = 1176 bytes, and
+; there are another 1200-1176 = 24 bytes left to do, which we will do separately.
+
+Move.l    a7,SalvaStack    ; Save the stack in a label
+Lea    Table+1200,a7    ; Put in A7 (or SP, it's the same register)
+; the address of the end of the area to be cleared.
+Moveq    #21-1,d7    ; Number of moves to make (2100/56=21)
+CleaLoop:
+Movem.l    d0-d6/a0-a6,-(a7) ; We reset ‘backwards’ 56 bytes.
+; If you remember, the movem in writing
+; works ‘backwards’ for the stack.
+Dbra    d7,CleaLoop
+Movem.l    d0-d5,(a7)+     ; Reset the last 24 bytes
+Move.l    SalvaStack(PC),a7 ; Put the stack back in SP
+rts
+
+SalvaStack:
+dc.l    0
+
+Let's do some maths, the internal Movem will take exactly 8+8*14=120
+cycles, it will have to be executed 21 times, so 21*120=2520 cycles, to which
+we will have to add the entire initialisation and closure phase, but don't
+worry, it will never exceed the above cases. We can be even
+more perfectionist by expanding the code, i.e. eliminating the cycles and
+ 
+placing as many Movem as we need; don't be alarmed,
+code expansion is a widely used technique, especially when
+you don't know what else to optimise. We will see a series of examples later on.
+In the first case, however, here is what would happen:
+
+Move.l    a7,SalvaStack    ; Save the stack in a label
+Lea    Table+1200,a7    ; Put in A7 (or SP, it's the same register)
+; the address of the end of the area to be cleaned.
+CleaLoop:
+
+rept    20         ; repeat 20 movem...
+Movem.l    d0-d7/a0-a6,-(a7) ; We reset 60 bytes “backwards”.
+endr
+
+Move.l    SalvaStack(PC),a7 ; We put the stack back in SP
+rts
+
+Note that, having eliminated the dbra, we can also use the d7 register,
+which allows us to zero 4 more bytes for each movem. In this way, 1200/60
+is exactly 20. Demos usually use this system, which is the fastest!
+
+Let's take a closer look at the code expansion technique. Observe this routine:
+
+ROUTINE2:
+MOVEQ    #64-1,D0    ; 64 cycles
+SLOWLOOP2:
+MOVE.W    (a2),(a1)
+ADDQ.w    #4,a1
+ADDQ.w    #8,a2
+DBRA    D0,SLOWLOOP2
+
+And here is the greatly sped-up routine:
+
+ROUTINE2:
+MOVE.W    (a2),(a1)
+MOVE.W    8(a2),4(a1)
+MOVE.W    8*2(a2),4*2(a1)
+MOVE.W	8*3(a2),4*3(a1)
+MOVE.W	8*4(a2),4*4(a1)
+MOVE.W	8*5(a2),4*5(a1)
+MOVE.W	8*6(a2),4*6(a1)
+MOVE.W    8*7(a2),4*7(a1)
+.....
+MOVE.W    8*63(a2),4*63(a1)
+
+We have removed the time used for the DBRA and the 2 addq!
+However, it should be noted that 68020 and higher processors have
+cache instructions, which speed up loops shorter than 256 bytes.
+Therefore, it is possible to optimise for 68000 and make it slower on
+a 68020. Consequently, it would be a good idea to take the following approach:
+
+ROUTINE2:
+MOVEQ    #4-1,D0        ; only 4 cycles (64/16)
+FASTLOOP2:
+MOVE.W    (a2),(a1)        ; 1
+MOVE.W    8(a2),4(a1)        ; 2
+MOVE.W    8*2(a2),4*2(a1)		; 3
+MOVE.W    8*3(a2),4*3(a1)        ; 4
+MOVE.W    8*4(a2),4*4(a1)        ; 5
+MOVE.W    8*5(a2),4*5(a1)        ; ...
+MOVE.W    8*6(a2),4*6(a1)
+MOVE.W	8*7(a2),4*7(a1)
+MOVE.W	8*8(a2),4*8(a1)
+MOVE.W	9*9(a2),4*9(a1)
+MOVE.W	8*10(a2),4*10(a1)
+MOVE.W	8*11(a2),4*11(a1)
+MOVE.W	8*12(a2),4*12(a1)
+MOVE.W	8*13(a2),4*13(a1)
+MOVE.W	8*14(a2),4*14(a1)
+MOVE.W    8*15(a2),4*15(a1)    ; 16
+ADD.w    #4*16,a1
+ADD.w    #8*16,a2
+DBRA    D0,FASTLOOP2
+
+This also applies to clearing with movem and other routines where we repeat
+blanket.
+
+Now let's make a couple of useful observations:
+the indirect addressing method with auto-increment is something to
+always keep in mind. In fact, indirect addressing, both without increment
+and with increment, takes the same number of cycles. An excellent example
+of this is in the use of the Blitter, and we will see an example of this later
+on.
+However, the second method we used to copy the 1200 bytes is not
+completely useless: if we had to make a copy
+we could do much better, but think about the case where we need to mask 
+1200 bytes: we are forced to use a Dbcc cycle.
+In these cases, try to make extensive use of the Dbcc instruction and remember that on a
+680xx with cache, these types of cycles are executed at TURBO speed.
+DBcc instructions are also excellent for comparing, here is an example:
+
+Move.w    Len(PC),d0    ; Max length to search <> 0
+Move.l    String(PC),a0    
+Moveq    #Char,d1    ; Character to search for
+FdLoop:
+Cmp.b    (a0)+,d1
+Dbne.s    d0,FdLoop
+
+The following cycle checks two things at the same time. In fact, the cc EQ
+will be set if we have examined all the Len (number of characters), or
+if the character has been found, in which case we would also be able to say
+where it is located.
+At this point, I would like to give some final examples of Movem, specifically
+copying memory areas: unlike zeroing, here we have to
+retrieve data and then download it, but let's look at an example:
+
+Lea    Start,a0
+Lea    Dest,a1
+FASTCOPY:                ; Use 13 registers
+Movem.l    (a0)+,d0-d7/a2-a6
+Movem.l    d0-d7/a2-a6,(a1)
+Movem.l    (a0)+,d0-d7/a2-a6
+Movem.l    d0-d7/a2-a6,$34(a1)    ; $34
+Movem.l    (a0)+,d0-d7/a2-a6
+Movem.l    d0-d7/a2-a6,$34*2(a1)    ; $34*2
+Movem.l    (a0)+,d0-d7/a2-a6
+Movem.l    d0-d7/a2-a6,$34*3(a1)
+Movem.l    (a0)+,d0-d7/a2-a6
+Movem.l    d0-d7/a2-a6,$34*4(a1)
+Movem.l    (a0)+,d0-d7/a2-a6
+Movem.l    d0-d7/a2-a6,$34*5(a1)
+Movem.l    (a0)+,d0-d7/a2-a6
+Movem.l    d0-d7/a2-a6,$34*6(a1)
+Movem.l    (a0)+,d0-d7/a2-a6
+
+First of all, here we have adopted the technique (if you can call it that)
+of code expansion: it may seem excessive, but it is very efficient.
+So, what have we done? We take 13*4 bytes from the memory location
+pointed to by a0, and copy them to the memory location pointed to by a1, 
+taking care to increase the offset of a1 after each
+copy. If you want to expand the code but don't like
+seeing all those instructions, you can use the rept directive:
+
+REPT        100
+And.l        (a0)+,(a1)+
+ENDR
+
+The assembler will then generate them for you. Finally, let's look at an example
+related to colour registers:
+
+Lea    $dff180,a6
+Movem.l    Colours(pc),d0-a5    ; load 14 longwords or 28 words
+Movem.l    d0-a5,(a6)        ; set 28 colours in one go!
+
+Colours:    dc.w    ...
+
+
+Or when you need to load many registers at the beginning of a routine:
+
+
+MOVE.L    #$4232,D0
+MOVE.W    #$F20,D1
+MOVE.W    #$7FFF,D2
+MOVEQ    #0,D3
+MOVE.L    #123456,D4
+LEA    $DFF000,A0
+LEA    $BFE001,A1
+LEA    $BFD100,A2
+LEA    Screen,A3
+LEA    BUFFER,A4
+...
+
+All this can be summarised with a single routine:
+
+
+MOVEM.L    VariaRoba(PC),D0-D4/A0-A4
+...
+
+VariaRoba:
+dc.l    $4243        ; d0
+dc.l    $f20        ; d1
+dc.l    $7fff        ; d2
+dc.l    0        ; d3
+dc.l    $123456        ; d4
+dc.l    $dff000        ; a0
+dc.l    $bfe001        ; a1
+dc.l    $bfd100        ; a2
+dc.l    Screen        ; a3
+dc.l    Buffer        ; a4
+
+We could give many other examples of the Movem instruction, but I think you have
+understood its usefulness in certain cases.
+
+Calls related to the Program Counter (PC) are faster than
+normal label calls because they are ‘smaller’. In fact, normal calls
+must contain the 32-bit address of the label, while (PC) calls
+only contain the 16-bit offset from the PC register, which saves 2
+bytes and time. Unfortunately, it is precisely the fact that the offset is 16
+bits that prevents labels more than 32k
+forward or backward from being made relative to the PC.
+Now let's look at a trick to make the entire programme relative to the (PC),
+which also speeds up execution. As you know, it is possible to do:
+
+move.l    label1(PC),d0
+
+But it is impossible to make this instruction relative to the PC:
+
+move.l    d0,label1
+
+
+How can we do this? It is not a very important problem, but let's say we have
+this instruction executed many times in a loop.
+If we cannot make the label relative to the PC, we can make it relative
+to a common address register!
+The most obvious method is this:
+
+move.x    XXXX,label    ->    lea    label(PC),a0
+move.x XXXX,(a0)
+
+tst.x    label        ->    lea	label(PC),a0
+tst.x    label
+
+Note that you also save by replacing the immediate values with
+values loaded into data registers, provided that the values are between -80 and +7f
+to allow the ‘moveq’:
+
+move.l    #xx,dest    ->    moveq    #xx,d0
+move.l    d0,dest
+
+
+ori.l    #xx,dest    ->    moveq    #xx,d0
+or.l    d0,dest
+
+
+addi.l    #xx,dest    ->    moveq    #xx,d0
+add.l    d0,dest
+
+In particular, if it is possible to load all registers before a loop,
+and then save on loading, you can also do ‘MOVE.L #xx,Dx’
+without any problems, as the loop without #immediate will pay off!
+
+Example:
+
+RoutineSchifosa:
+move.w    #1024-1,d7        ; number of loops
+LoopSquallido:
+add.l    #$567,label2
+sub.l    #$23,label3
+move.l    label2(PC),(a0)+
+move.l    label3(PC),(a0)+
+add.l    #30,(a0)+
+sub.l    #20,(a0)+
+dbra    d7,LoopSquallido
+rts
+
+This can be optimised as follows:
+
+RoutineDecente:
+moveq    #30,d0        ; load the necessary registers...
+moveq    #20,d1
+move.l    #$567,d2
+moveq    #$23,d3
+lea    label2(PC),a1
+lea    label3(PC),a2
+move.w    #1024-1,d7        ; number of loops
+NormalLoop:
+add.l    d2,(a1)
+sub.l    d3,(a2)
+move.l    (a1),(a0)+
+move.l    (a2),(a0)+
+add.l    d0,(a0)+
+sub.l    d1,(a0)+
+dbra    d7,NormalLoop
+rts
+
+To exaggerate, we can finally save on the number of dbra to be executed:
+
+RoutineOK:
+moveq    #30,d0
+moveq    #20,d1
+move.l    #567,d2
+moveq    #23,d3
+lea    label2(PC),a1
+lea    label3(PC),a2
+move.w    #(1024/8)-1,d7        ; number of loops = 128
+LoopOK:
+
+rept    8        ; replicate the piece 8 times...
+
+add.l    d2,(a1)
+sub.l    d3,(a2)
+move.l    (a1),(a0)+
+move.l    (a2),(a0)+
+add.l    d0,(a0)+
+sub.l    d1,(a0)+
+
+endr
+
+dbra    d7,LoopNormale
+rts
+
+However, there is a quick way to make everything PC relative.
+If we put the address
+of the beginning of the program, or any other address known in our
+program, in a fixed address register, for example a5, we can simply indicate our label as a5+offset to find the
+label in question. But do we have to do this ‘BY HAND’?
+Nooooo! Here is a very quick way to do this:
+
+S:                ; Reference label
+MYPROGGY:
+LEA    $dff002,A6    ; In a6 we have the custom register
+LEA    S(PC),A5    ; In a5 the register for the label offset
+
+MOVE.L	#$123,LABEL2-S(A5)    ; label2-s = offset! E.g.: ‘$364(a5)’
+
+MOVE.L    LABEL2(PC),d0        ; Here we proceed as normal
+
+MOVE.L    d0,LABEL3-S(A5)        ; same as above.
+
+move.l    #$400,$96-2(a6)        ; Dmacon (in a6 there is $dff002!!!)
+
+...
+
+; Let's say we have ‘dirty’ the A5 register... just reload it!
+
+LEA    S(PC),A5
+move.l    $64(a1),OLDINT1-S(A5)
+CLR.L    LABEL1-S(A5)
+
+I think it's clear, isn't it? You could have called the label BAU instead of S:, but I think
+it's useful to call it S:, E:, I:, which is shorter to write.
+The only limitation is that if the label is more than 32K away from the reference label,
+ we go outside the addressing limits. This is not an
+insurmountable problem; in fact, just put a reference label
+every 30K and refer to the nearest one, for example:
+
+B:
+...
+LEA    B(PC),A5
+MOVE.L	D0,LABEL1-B(A5)
+...
+
+; pass 30K
+
+C:
+
+LEA    C(PC),A5
+MOVE.L    (a0),LABEL40-C(A5)
+...
+
+This system also makes it difficult to disassemble your code, in
+case someone wants to ‘steal’ your routines with a disassembler.
+
+Another thing that may be useful is the use of bits as flags. For example,
+if in our program we have variables that must be TRUE or
+FALSE, i.e. ON or OFF, it is useless to waste a byte for each of
+them. One bit will suffice, and we will save space. For example:
+
+Option1    =    0
+GoRight    =    1    ; Go right or left?
+Approach    =    2    ; Approach or retreat?
+Music        =    3    ; Music on or off?
+Candles        =    4    ; Candles on or off?
+FirePressed    =    5    ; Has someone pressed fire?
+Water        =    6    ; The pond below?
+Grasshoppers    =    7    ; Are there grasshoppers?
+
+Check:
+move.w    MyFlags(PC),d0
+btst.l    #Option1,d0
+...
+
+
+ChangeFlags:
+lea    MyFlags(PC),a0
+bclr.b    #Option1,(a0)
+...
+
+MyFlags:
+dc.b    0
+even
+
+However, if you don't like btst and bclr/bset/bchg, you can do it this way:
+
+bset.l    #Option1,d0    ->    or.b	#1<<Option1,d0
+
+bclr.l    #Option1,d0    ->    and.b    #~(1<<Option1),d0
+
+bchg.l    #Option1,d0    ->    eor.b    #1<<Option1,d0
+
+Note the usefulness of the asmone shift functions ‘>>’ and ‘<<’, as well as
+the eor ‘~’.
+
+To conclude the section on CPU optimisations, I would like to point out
+some tricks that only speed things up on 68020 and above, but since
+they cost nothing, they may be useful to see
+our routines run faster on faster computers.
+First of all, there are caches, which allow you to load loops up to
+256 bytes long, so from the second cycle onwards they will be read from
+the CPU's internal memory!!!!!!!!!!!!!! And not from the slow memory (especially
+if chip-ram!). Consequently, it is a good idea to repeat the operations as we have
+seen, in the various loops, so that they are around 100-150 bytes in size.
+This way, on 68020+ they will run much faster than routines in which
+many instructions are queued up, as many as there are loops to be done.
+To be clear, if we have:
+
+Routine1:
+move.w    #2048-1,d7
+loop1:
+< block of instructions >
+dbra    d7,loop1
+
+We can optimise it to:
+
+Routine1:
+rept    2048
+< block of instructions >
+endr
+
+This is much faster on a basic 68000, but slower on a 68020!
+To optimise for maximum speed in all cases:
+
+Routine1:
+move.w    #(2048/16)-1,d7
+loop1:
+rept    16
+< instruction block >
+endr
+
+dbra    d7,loop1
+
+Let's assume that the instruction block is 12 bytes long, so 12*16 is
+192, which fits in the cache and runs very fast on the 68020, while on the 68000
+the difference with the version with 2048 rept is imperceptible, and you also save
+on the length of the executable. Just be careful not to make long loops
+of 250 or 256 bytes, because the cache can only be filled under
+certain ‘block’ and ‘alignment’ conditions. So always stay below
+180-200 bytes, to be on the safe side.
+
+Another thing to keep in mind is that, if possible, you should avoid
+accessing memory consecutively. For example:
+
+move.l    d0,(a0)
+move.l    d1,(a1)
+move.l    d2,(a2)
+sub.l    d2,d0
+eor.l    d0,d1
+add.l    d1,d2
+
+This should be ‘rewritten’ as:
+
+move.l    d0,(a0)
+sub.l    d2,d0
+move.l    d1,(a1)
+eor.l    d0,d1
+move.l    d2,(a2)
+add.l    d1,d2
+
+In fact, when accessing memory (especially chip memory), there are so-called
+WAIT STATES, i.e. waiting times before it can be rewritten. In the first
+example, between one write and another there is a dead time in which the processor
+waits for the RAM to be rewritable. In the second case, however, after
+writing to RAM, an operation is performed between registers, internal to the CPU,
+after which the chip RAM is accessed again, once the access time has elapsed.
+If you access 32-bit FAST RAM, the problem is much less severe, but it still exists.
+
+Finally, the 68020+ really likes routines and labels aligned to
+addresses that are multiples of 32, i.e. aligned to longwords.
+To align to 32 bits, just use:
+
+CNOP    0.4
+
+Before the routine or label. There are no improvements on the 68000, but
+there are on the 68020+, especially if the aligned code goes into fast RAM or
+cache. Here is an example:
+
+Routine1:
+bsr.s    rotation
+bsr.s    projection
+bsr.s    drawing
+rts
+
+cnop    0,4
+rotation:
+...
+rts
+
+cnop    0,4
+projection:
+...
+rts
+
+cnop    0,4
+drawing:
+...
+rts
+
+For labels, make sure you don't access odd addresses, which slows things down
+a lot. Instead, align these to long as well:
+
+Original version:
+
+Label1:
+dc.b    0
+Label2:
+dc.b    0    ; odd address! ‘move.b xx,label1’ will be slow!
+Label3:
+dc.w    0
+Label4:
+dc.w	0
+Label5:
+dc.l    0
+Label6:
+dc.l    0
+Label7:
+dc.l    0
+
+Aligned version:
+
+cnop    0.4
+Label1:
+dc.b    0
+cnop    0.4
+Label2:
+dc.b    0
+cnop    0.4
+Label3:
+dc.w    0
+cnop    0.4
+Label4:
+dc.w    0
+cnop    0.4
+Label5:
+dc.l    0
+Label6:
+dc.l    0 ; these 2 are definitely aligned, no need for cnop
+Label7:
+dc.l    0
+
+To check if a label is aligned to 32 bits, assemble, then check
+the address of that label with the ‘M’ command, then divide the address
+by 4, and multiply the result by 4 again.
+If the original address returns, it means that it is a multiple of 4, and everything is
+OK. If it is different, it means that there is a remainder and it is not a multiple of 4.
+Then put some ‘dc.w 0’ above the address and try to align it ‘by hand’
+and send the assembler to hell, because it's a bit crazy.
+However, if your routine already works at fifty without jerking
+on an A500, save yourself the trouble of putting all those ‘cnop 0.4’ to mess up your
+listing. Only cnop listings with very heavy routines that don't fit
+within a frame, such as fractal routines, or ‘exaggerated’ 3D, etc.
+
+******************************************************************************
+*            BLITTER OPTIMISATIONS             *
+******************************************************************************
+
+Finally, we will give another example related to the Blitter.
+The optimisations we have discussed so far were
+only related to the 68000, and therefore independent of the machine they
+refer to. Now we will discuss optimisations related to the Amiga hardware
+, specifically the Blitter.
+As you know, the Blitter is a powerful coprocessor for moving
+data much faster than the basic 68000 (note, however, that it is slower
+than a 68020+!). It is a good idea to get the most out of the Blitter.
+In general, the philosophy adopted for the Blitter is to start
+the data transfer, the sooner you finish. However, you must always keep in mind
+the bit called blit nasty, which is able to give higher priority
+to the Blitter than to the CPU. In practice, the bus for data transfer
+will be used by the Blitter most of the time. Let's look at an example:
+
+a6=$dff000
+; Let's assume we have initialised all the registers
+
+Move.w    d0,$58(a6)    ; BLTSIZE - The Blitter starts
+Wblit:
+Move.w    #$8400,$96(a6)    ; Enable the blit nasty
+Wblit1:
+Btst    #6,2(a6)    ; Wait for the blitter to finish
+Bne.s    Wblit1
+Move.w    #$400,$96(a6)    ; Disable nasty blit
+....
+
+This is a trivial case, because while the blitter is working, the CPU could
+be doing something else, so that wait cycle is counterproductive.
+In fact, on computers with only CHIP RAM, this function completely blocks
+the processor, and should probably never be used.
+However, there are cases where we can and must enable nasty blit, such as when
+we need to copy a bitplane to the screen bitplane by bitplane, then, since
+the CPU usually has to wait between one blit and another, we can
+safely enable the nasty blit. Let's look at an example:
+
+BLITZ:                ; The registers have already been enabled
+Move.w    #$8400,$96(a6)	; Enable nasty
+Move.l    Plane0,$50(a6)    ; Pointer to channel A
+Move.l    a1,$54(a6)    ; Pointer to channel D
+Move.w    d0,$58(a6)    ; Go Blitter!!!
+WBL1:
+Btst    #6,2(a6)    ; Here the CPU must wait for the end...
+Bne.s    WBL1        ; then the blitter must go full speed!
+Move.l    Plane1,$50(a6)    ; Pointer to channel A
+Move.l    a2,$54(a6)    ; Pointer to channel D
+Move.w    d0,$58(a6)    ; Go Blitter!!!
+WBL2:
+Btst    #6,2(a6)    ; As above
+Bne.s    WBL2
+Move.l    Plane2,$50(a6)    ; Same as above
+Move.l    a3,$54(a6)
+Move.w    d0,$58(a6)
+WBL3:
+Btst    #6,2(a6)
+Bne.s    WBL3
+Move.w    #$400,$96(a6)    ; At this point, the nasty can also be
+Rts            ; disabled.
+
+
+This example gives me the opportunity to point out a feature
+of the blitter, which is that it does not modify certain values in its registers,
+for example in the module registers (BltAMod, BltBMod, etc..). We will find
+the same values at the end of the blitter, so there is no need
+to initialise them if the module will be the same for the next blitter.
+The same applies to registers such as BltCon0, BltCon1, BltFWM, BltLWM, but
+this is no longer valid for pointer registers as these work with
+increment addressing.
+This suggests the following: suppose we have a bob of 5 bitplanes
+to be placed one by one in a ‘video’ bitplane, so each
+time we load the pointer to the ‘video’ bitplane in the D register and the
+pointer to the bob in A: after the first blitting, the D register will be
+loaded with the same value plus a certain amount to point to the next bitplane
+, but it will be useless to do so with channel A, because if
+our bob has been stored in memory as successive bitplanes,
+then after the first bleat, channel A will automatically point to the
+second bitplane of the bob.
+We can also obtain valid results by doing the following.
+We reserve a memory area with all the values to be passed to the blitter registers
+(in our case, the area starts from DataBlit).
+Then, in some address registers, we load the addresses of the blitter registers
+so that we can access them more quickly, and we copy the
+pre-packaged data to start the blitter, accessing the
+CPU registers directly. Let's look at an example:
+
+Lea    $dff002,a6    ; a6 = DMAConR
+Move.l    DataBlit(pc),a5    ; then a5 points to a table of
+pre-calculated
+
+; Now we load the address registers
+
+Lea    $40-2(a6),a0    ; a0 = BltCon0
+Lea    $62-2(a6),a1    ; a1 = BltBMod
+Lea    $50-2(a6),a2    ; a2 = BltApt
+Lea    $54-2(a6),a3    ; a3 = BltDpt
+Lea    $58-2(a6),a4    ; a4 = BltSize
+Moveq    #6,D0        ; d0 constant for checking the status
+of the blitter.
+Move.w    (a5)+,D7    ; Number of blits
+Move.w    #$8400,$96-2(a6) ; Enable the nasty
+BLITLOOP:
+Btst    d0,(a6)        ; Wait as usual for the end of some
+Bne.s    BLITLOOP    ; operation.
+; Before looking below, let's make an
+; observation: if in a0 I have the value $40000
+; and execute the instructions in three different cases
+; a)Move.b #‘1’,(a0)
+; b)Move.w #‘12’,(a0)
+; c)Move.l #‘1234’,(a0)
+; I will get the following:
+; (a)    (b)    (c)
+; $40000    “1”    ‘1’	‘1’
+; $40001    ‘0’    ‘2’    ‘2’
+; $40002    ‘0’    ‘0’    ‘3’
+; $40003    ‘0’    “0”    ‘4’
+; Now we will do something like this...
+Move.l    (a5)+,(a0)	; $dff040-42 i.e. Bltcon0-Bltcon1
+Move.l    (a5)+,(a1)    ; $dff062-64 i.e. BltBMod-BltAMod
+Move.l    (a5)+,(a2)    ; $dff050 - Channel A
+Move.l    (a5)+,(a3)    ; $dff054 - Channel D
+Move.l    (a5)+,(a4)    ; $dff058 - BLTSIZE... START!!
+Dbra    d7,BLITLOOP    ; This for d7 times.
+
+
+In this example, we have used various optimisation techniques, which
+we have already discussed, but let's look at a few of them.
+First of all, when we have to execute a cycle a large number of times and
+there is an operation within it that involves a constant (i.e. immediate data),
+ it is advisable to put this value in a register that will not be used
+in the loop, then perform the operation involving this value
+directly with the register that contains it, avoiding memory access.
+In our case, we used this strategy by loading the value of the
+bit to be tested, to check if the blitter had finished its task,
+into register d0.
+In practice, we adopted one of the first rules I mentioned
+at the beginning, i.e. always try to keep values in registers.
+In addition, we loaded $dff002 as the base and not $dff000. This is often done
+to eliminate the time spent in the waitblit calculating the offset:
+
+Btst    #6,2(a6)    ; a6 = $dff000
+
+is slower than:
+
+btst    d0,(a6)        ; a6 = $dff002, d0 = 6
+
+Just remember to put a -2 before (a6) to get the right offset:
+
+$54-2(a6)    ; BltDpt
+$58-2(a6)	; BltSize
+$96-2(a6)    ; DmaCon
+...
+
+It is important that the waitblit is fast, because the sooner it ‘realises’ that
+the blit is finished, the sooner the next one can start!
+For this reason, avoid calling the waitblit with a BSR, but always put it
+in the same place, even repeating it as many times as necessary.
+
+We have applied the same principle to the
+blitter registers by loading them into the CPU registers, thus avoiding access
+to memory (in practice, we still access the memory to initialise
+the blitter, but we avoid retrieving the address from memory each time).
+We have also used a trick that anyone who programs games or demos uses,
+i.e. instead of keeping the bob size in memory and then calculating the
+bltsize value, we keep the bltsize value directly, which we
+did using the DataBlit table.
+However, as I mentioned above, while the blitter is working, the 68000 can
+do something else. For example, if the blitter is clearing an area
+of memory, the 68000, being a good neighbour, can give it a hand, for example:
+
+
+btst    #6,2(a6)
+WaitBlit:
+btst    #6,2(a6)
+bne.s    WaitBlit
+Moveq    #-1,d0
+Move.l    d0,$44(a6)        ; -1 = $ffffffff
+Move.l    #$9f00000,$40(a6)
+Moveq    #0,d1
+Move.l    d1,$64(a6)
+Move.l    a0,$50(a6)
+Move.l    a1,$54(a6)
+Move.w    #$4414,$58(a6)        ; The blitter starts cleaning...
+Move.l    a7,OldSp
+Movem.l    CLREG(pc),d0-d7/a0-a6    ; Clear the registers
+Move.l    Screen(pc),a7        ; Address of the area to be cleared
+Add.w    #$a8c0,a7        ; Go to the end (+$a8c0)
+
+Rept		1024        ; The 68000 starts cleaning
+Movem.l    d0-d7/a0-a6,-(a7)    ; Clean 60 bytes 1024 times
+EndR
+
+Lea    $dff000,a6
+Movea.l    OLDSP(pc),a7
+Rts
+
+CLREG:
+ds.l    15
+
+
+As you can see, here the blitter and the CPU clean half the screen ‘simultaneously’.
+ Of course, in this case, the nasty bit must not be
+set, or the CPU cannot clean in peace.
+
+The best method to increase the performance of your program
+remains, however, to improve your algorithms, very often.
+Don't think, for example, that implementing a poor sorting algorithm
+such as Bubble Sort in assembly is faster than the best sorting algorithm
+such as Quick Sort, implemented in C.
+If your algorithm just won't run faster even after
+using the best optimisation techniques, 
+well, then delete it
+and rewrite it completely with a better algorithm FROM SCRATCH.
+And even if you have the best algorithm, always try to
+optimise it so that it will run on machines that are not so fast,
+unlike in the world of PCs, where a 486 programmer is only satisfied
+if his code runs fast on his own configuration.
+What's the point of making fast routines if the game or programme packaging says: MINIMUM CONFIGURATION: PENTIUM 60Mhz with 8MB of RAM.
+And then you find that the game doesn't run on a 100% Penti 400 machine with 128MB of RAM.

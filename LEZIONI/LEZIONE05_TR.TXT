@@ -1,0 +1,392 @@
+
+ASEMBLER KURSU - DERS 5
+
+Bu derste, şekillerin yatay ve dikey kaydırılması
+ve bazı özel efektler ele alınacaktır.
+
+Yatay kaydırma ile başlayalım: Amiga, kaydırmaya özel bir kayıt
+olan BPLCON1 ($dff102) içerir ve bu kayıt, bit düzlemlerini
+sağa doğru bir pikseler halinde en fazla 15 piksel kaydırabilir.
+Bu, bit düzlemlerinin veri aktarımını geciktirerek bakır tarafından gerçekleştirilir
+ve bir veya daha fazla piksel “sonra” gelir. Ayrıca, çift ve tek bit düzlemlerini ayrı ayrı kaydırabilirsiniz
+: tek bit düzlemleri
+PLAYFIELD 1 (1,3,5) olarak adlandırılırken, çift bit düzlemleri PLAYFIELD 2 (2,4,6)olarak adlandırılır.
+Bir kelime uzunluğundaki $dff102, 2 bayta bölünmüştür: üstteki, yani
+soldaki ($xx00), 15 ila 8 bitlerinden oluşan bayt kullanılmamaktadır ve
+sıfırda bırakılmalıdır, alt bayt ($00xx) ise kaydırmayı kontrol eder:
+
+$dff102, BPLCON1 - Bit Plane Control Register 1
+
+BİT        AD-İŞLEV
+
+15    -    X
+14    -    X
+13    -    X
+12    -    X
+11    -    X
+10    -    X
+09	-    X
+08    -    X
+07    -    PF2H3    \
+06    -    PF2H2     \ 4 bit kaydırma ÇİFT PLANLAR (oyun alanı 2)
+05    -    PF2H1     /
+04    -    PF2H0    /
+03    -    PF1H3    \
+02    -    PF1H2     \4 bit kaydırma için TEK PLANES (oyun alanı 1)
+01    -    PF1H1     /
+00    -    PF1H0    /
+
+Pratikte, renk kayıtlarında olduğu gibi kelime üzerinde benzer şekilde işlem yapılmalıdır:
+renk kayıtlarında 0 ile 15 arasında değişen 3 RGB bileşeni üzerinde işlem yapılır,
+yani 0 ile $F arasında, burada ise $0 ile $f arasında değişen sadece 2 bileşen üzerinde işlem yapılır,
+$dff180 (COLOR0) içindeki GREEN ve BLU gibi:
+
+dc.w    $102,$00XY    ; BPLCON1 - burada: X= ÇİFT bitplanes kaydırma
+;         Y= TEK bitplanes kaydırma
+
+Bazı örnekler: (Copperlist için)
+
+dc.w    $102,$0000    ; BPLCON1 - kaydırma sıfır, normal konum
+dc.w    $102,$0011    ; BPLCON1 - kaydırma = 1 her iki oyun alanında,
+; yani tüm şekil boyunca
+dc.w    $102,$0055    ; BPLCON1 - kaydırma = 5 tüm şekil için
+dc.w    $102,$00FF	; “” tüm şekil için maksimum kaydırma (15)
+dc.w    $102,$0030    ; ‘’ kaydırma = 3 sadece ÇİFT bit düzlemleri için
+dc.w    $102,$00b0    ; “” kaydırma = $B sadece TEK bit düzlemleri için
+dc.w    $102,$003e	; “” scroll = 3 ÇİFT bit düzlemleri için ve $e
+; tek bit düzlemleri için
+
+Daha kolay olamazdı! Her FRAME'de scroll değerini değiştirerek
+tek bir MOVE ile tüm ekranı kaydırabilirsiniz!!!
+
+Örneği Lezione5a.s yükleyin ve nasıl çalıştığını pratikte görün.
+
+Bu örnekte $dff102 (BPLCON1)
+COPPERLIST başlangıcında değiştirilir, böylece tüm şekil hareket eder. WAIT tekniği ile ekranın çeşitli satırlarına birçok
+$dff102 (BPLCON1) yerleştirebilirsiniz:
+Örnek Lezione5b.s'de iki tane vardır ve bunlar
+“COMMODORE” ve “AMIGA” yazısını ayrı ayrı kaydırır.
+WAIT ile her satıra bir $dff102 (BPLCON1) koyarak, şekillerin dalgalanma efektini yaratabilirsiniz.
+Şekillerin dalgalanma efektini yaratmak için
+
+Şimdi dikey kaydırmaya bakalım.
+Bu kaydırmayı yapmanın en basit yolu, copperlist'teki bitplanes işaretçilerini şeklin daha yukarısına veya
+daha aşağısına işaret etmektir, böylece
+şekil daha “yüksek” veya daha “alçak” görünür. Bir
+düzgün delikten, bir tür pencereden (video) bir görüntü gördüğümüzü hayal edelim:
+
+---------------
+|        | 1
+|        | 2
+| AMIGA    | 3
+|        | 4
+|		| 5
+---------------
+
+Bu durumda pencerenin ortasında AMIGA yazısını görüyoruz ve
+bitplane'leri 1. satıra işaret ettik (yani ekran 1. satırla başlıyor,
+bu nedenle AMIGA 3. satırda bulunuyor).
+Ekranı 2. satıra işaret edersek ne olur???
+
+---------------
+|        | 2
+| AMIGA    | 3
+|        | 4
+|        | 5
+|        | 6
+---------------
+
+AMIGA “yukarı çıkar” çünkü pencere (video) aşağı iner, yani
+şekilde daha aşağıya işaret eder. Hareket göreceli olduğundan, hareket göreli olduğundan, hareket eden bir trenin penceresinden
+hareket eden bir ağaç görürsek, aslında ağaç “hareketsizdir” ve
+biz hareket ediyoruz. Burada da benzer bir şey oluyor. Ancak bir şekli yukarı veya
+aşağı hareket ettirmek için, bit düzlemlerinin işaretçilerine ne kadar eklememiz veya çıkarmamız gerekir
+? Bir satırın baytları. Yani LOW RES 320x256
+bir şekil için 40 ve HIGH RES 640x256 bir şekil için 80. Aslında şu durumu inceleyelim:
+
+1234567890
+..........
+....++....
+...+..+...
+...++++...
+...+..+...
+...+..+...
+..........
+
+Satır başına 10 baytlık varsayımsal bir bit düzlemi var, bu sıfır (.)
+veya 1 (+) olabilir, bu durumda bir “A” harfini temsil eder. ‘A’ harfini yukarı taşımak için,
+ bir satırı daha aşağıya, yani 10 bayt aşağıya “işaretlemeliyiz” ve
+daha aşağıya işaretlemek için 10 EKLEYMELİYİZ (add.l #10,işaretçiler)
+
+1234567890
+....++....
+...+..+...
+...++++...
+...+..+...
+...+..+...
+..........
+..........
+
+Aynı şekilde, “aşağı” hareket ettirmek için, daha yukarıdaki bir satırı işaretlemeliyiz,
+ yani 10 bayt daha yukarı (SUB.L #10, işaretçiler):
+
+1234567890
+..........
+..........
+....++....
+...+..+...
+...++++...
+...+..+...
+...+..+...
+
+Pratikte bunu yapmak için, copperlist'teki işaretçilerin
+(bizim değiştireceğimiz) düzlem adreslerinin 2 kelimeye bölündüğünü hatırlamamız gerekir. Sorun
+, bitplane işaretleme rutininde küçük bir değişiklikle kolayca çözülebilir.
+ Aslında, bitplane adreslerini copperlist'ten “ALMAMIZ”
+(ters işlem), kaydırma için 40 eklememiz veya çıkarmamız
+ve eski işaretleme rutiniyle yeni adresi copperlist'e geri koymamız gerekir.
+ Bu sistemi kullanan Lezione5c.s örneğine bakın.
+
+Şimdi, yatay ve dikey kaydırma rutinlerinin aynı anda bulunduğu Lezione5d.s örneğini yükleyin.
+
+Lezione5d2.s'de, yatay kaydırmanın
+$dff102 (bplcon1) ile birlikte başka bir uygulaması, yani hareketli distorsiyon bulunmaktadır.
+
+Şimdi Amiga video özel efektleri için en önemli kayıtları göreceğiz,
+ yani MODÜLLER: $dff108 ve $dff10a (BPL1MOD ve BPL2MOD). İki modül kaydı vardır
+çünkü modülü çift bit düzlemleri
+ve tek bit düzlemleri için ayrı ayrı değiştirebilirsiniz, BPLCON1 ($dff102) gibi. 3 bit düzlemli
+şeklimizde işlem yapmak için her iki kayıt üzerinde de işlem yapmamız gerekecektir.
+LOW RES 320x256 çözünürlükte bir görüntü görüntülendiğinde,
+Fırça her 40 baytta bir satır başı yaparken, verilerin tümü arka arkaya gelir.
+Aynı şekilde, HI-RES 640x256 çözünürlüklü bir resimde fırça
+her 80 baytta satır başı yapar. Aslında modül,
+$dff100 (BPLCON0) ayarlandığında otomatik olarak atanır: LOWRES seçildiğinde, bakır
+düşük çözünürlüklü bir resmin satır başına 40 bayt olduğunu bilir, bu nedenle ekranın başından
+başlayarak görüntüleme (sol üstte) görüntülenmeye başlar, 40 bayt okunur ve
+elektronik fırça ile ilk satır yazılır, ardından “satır başı” yapılır ve takip eden veriler
+bir sonraki satıra yazılır, ve bu şekilde devam eder. Ancak bellekteki resimde tüm veriler
+ardışık, “kare” bir resim yoktur! Bellek, ardışık baytlardan oluşan bir dizi
+dir, bu nedenle her bit düzlemi ardışık bir veri satırıdır:
+ekranın 256 satırını, her biri 40 bayt uzunluğunda,
+birbirinin arkasına yerleştirerek 40*256 baytlık tek bir satır oluşturduğunuzu
+ve bunun yaklaşık yetmiş metre uzunluğunda olduğunu düşünün: bu,
+bellekteki gerçek satır olacaktır. Modülü sıfıra ayarlayarak,
+şimdiye kadar yaptığımız gibi, LOWRES veya HIGHRES komutunun belirttiği şekilde “satır başı” yapıyoruz, yani her 40
+veya 80 satırda, ve görüntüleme normal oluyor. Modüle koyduğumuz değer
+modülüne koyduğumuz değer, satırın SONUNDA bit düzlemlerine işaretçilere EKLENİR, yani
+40. bayta ulaşıldığında. Bu şekilde, görüntülenmeyen baytları “ATLAYABİLİRİZ”.
+ Örneğin, her satır sonuna 40 eklediğimizde, bir satırı atlarız, böylece her iki satırda bir görüntülenir,
+aslında:
+
+
+- NORMAL GÖRÜNTÜ -....................
+
+    ; bu satırın sonunda 40 baytı “atlarım”
+.........+..........
+........+++.........    ; ve bu satırı görüntülerim, sonra “atlarım”...
+.......+++++........
+......+++++++.......    ; ve bu satırı görüntülerim, sonra “atlarım”...
+.......+++++........
+........+++.........    ; ve bu satırı görüntülüyorum, sonra “atlıyorum”...
+.........+..............................
+    ; ve bu satırı görüntülüyorum, sonra “atlıyorum”...
+
+Sonuç olarak, her iki satırda bir sadece bir satır görüntülüyoruz:
+
+- MODÜL 40 GÖRÜNTÜ -
+
+....................    ; bu satırın sonunda “atlarım” 40 bayt
+........+++.........    ; ve bu satırı görüntülerim, sonra “atlarım”...
+......+++++++.......    ; ve bu satırı görüntülerim, sonra ‘atlarım’...
+........+++.........    ; ve bu satırı görüntülerim, sonra “atlarım”...
+....................    ; ve bu satırı görüntülerim, sonra “atlarım”...
+....................
+....................
+....................
+....................
+
+Şekil ezilmiş, yarısı kadar uzun görünecek, ayrıca ekran her zaman
+256. satırda bittiği için şeklin “altındaki” baytları da görüntüleyeceğiz
+: pratikte her zaman 256 satır görüntülüyoruz, ancak 512 satırlık bir yarıçap içinde
+her iki satırda bir sadece bir satır görüntülüyoruz.
+Lezione5b.s dosyasını yeniden yükleyin ve copperlist içindeki modülleri değiştirin:
+
+dc.w    $108,40        ; Bpl1Mod
+dc.w    $10a,40        ; Bpl2Mod
+
+Görüntünün beklendiği gibi yarı yarıya daha kısa olduğunu ve ekranın alt kısmının
+“ilerleyen” bit düzlemleriyle, yani birinci bit düzleminin altında görüntülenen ikinci
+bit düzlemi ve ikinci bit düzleminin altında görüntülenen üçüncü bit düzlemiyle doldurulduğunu
+fark edeceksiniz. Üçüncü bit düzleminin ardından şeklin ardından gelen bellek görüntülenir, yani
+512'lik bir yarıçap içinde 256 satır görüntülenir.
+40 görüntülenen her 80 baytı atlayarak 2 satır atlamayı deneyin:
+
+dc.w    $108,40*2	; Bpl1Mod
+dc.w    $10a,40*2    ; Bpl2Mod
+
+Şekil yine yarıya inecek ve altta başka baytlar görünecektir.
+40*3,
+40*4,40*5 vb. modülleriyle devam ederek, çizim okunamaz hale gelene kadar yüksekliğin yarıya indiğini göreceksiniz.
+40'ın katı olmayan bir modül seçerseniz, görüntünün “parçalanmasına” neden olursunuz,
+ çünkü bakır çizgileri başlangıçlarından değil,
+ her zaman farklı bir yerden görüntüler.
+
+Şekil 5e'ye bakın, modüle 40 ekleyerek
+şekli yarıya indiren hızlı bir rutin bulacaksınız.
+
+Modüller pozitif olabileceği gibi negatif de olabilir. 
+Bu durumda, görüntülenen her satırın sonuna söz konusu negatif sayı
+çıkarılır.
+Bu durumda garip efektler yaratılabilir: modülü -40 olarak ayarladığınızı düşünün: bu durumda, bakır 40 bayt okur, bunları
+bir satırda görüntüler, sonra 40 bayt geri gider, aynı verileri
+sonraki satırda görüntüler, sonra 40 bayt geri gider ve böyle devam eder.
+ Pratikte, ilk 40 baytı geçmez ve her satır ilk satırı kopyalar: örneğin
+ilk satır tamamen siyahsa, diğerleri bunu kopyalar ve
+ekran tamamen siyah olur. Satırın ortasında tek bir nokta olsaydı,
+bu her satırda yeniden çizilirdi ve dikey bir çizgi oluşurdu:
+
+..........+........    ; satır 1 (her zaman yeniden çizilir: mod -40!)
+..........+........    ; satır 2
+..........+........    ; satır 3
+..........+........    ; satır 4
+..........+........    ; satır 5
+..........+........    ; satır 6
+..........+........    ; satır 7
+..........+........    ; satır 8
+..........+........    ; satır 9
+..........+........    ; satır 10
+
+Aynı şekilde, her renk ekranın sonuna kadar bir tür “akma” etkisi yaratır.
+ Bu efekt Full Contact, red-sector demomaker ve birçok başka programda kullanılmıştır.
+Nasıl çalıştığını
+
+Bunun nasıl çalıştığını Lezione5f.s'de görelim.
+
+Etkileyici ve yapımı kolay, değil mi? Bu etkiye FLOOD etkisi de denir.
+Modül, her satırın sonunda, tüm şekli görüntülemek için bellekte “yürüyen” bit düzlemlerinin işaretçilerine eklenir.
+Böylece negatif bir sayı ekleyerek, çıkarma işlemi yaparız.
+Bu özel durumda, işaretçiler her satırı aktardıktan sonra X+40 değerini alır ve modülün değerinin (=-40: tek bir bit satırının bayt uzunluğu) kadar artar.
+Bu özel durumda, işaretçiler her satırı aktardıktan sonra
+X+40 değerini alır, ardından modülün değeri kadar artırılır (-40: 
+tek bir bitplane satırının bayt uzunluğu, negatif): ‘40’ bayt azaltılır
+ve sonunda başlangıçtaki X değerini tekrar alır.
+
++---->->->--------+
+| |
+|BPL POINTER= X+ 0......................................39 
+| | |
+|SATIR BAŞLANGICI -+---xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx---+- SON BYTE ->
+| (X) | | | |     (X+39)
+| +---+ +---+
+| |
+| SONRAKİ SATIR -+----xxxx[...]
+^ | |
+| +-X+ 40 (aktarımdan sonra, işaretçi
+^ | satırın tüm uzunluğu boyunca (40 bayt) ilerlemiş ve
+| | 40. bayta, yani bir sonraki satırın ilk baytına
+^ | ulaşmıştır)
+| +-> (Burada, her düzlemdeki işaretçiye kendisine atanan modülün 
+| | değeri EKLENİR: bu durumda ‘-40’)
+| +-> X=X+(-40) => X=X-40 => X=0 >-+
+| | |
++----------<-<-<--+------------<-<-<---------------+
+
+Gördünüz mü? İşin en güzel yerinde, X+40'a ulaşan işaretçi
+40 çıkarılır ve yeni aktarılan satırın başına geri döner,
+altındaki satırda aynı satırı tekrar görüntüler, çünkü elektronik fırça
+her zaman aşağı doğru ilerler ve bulunduğu noktada “söylenen” şeyi çizer,
+ bu durumda her zaman aynı satırı tekrarlar.
+
+Ders 5f.s'de ayna efekti, yani -80 modülünü de gördük.
+Bunu Ders 5g.s örneğinde tek başına görelim.
+
+Şimdi, copperlist'te
+dalgalanma efekti oluşturmak için birçok ardışık $dff102 (BPLCON1) nasıl kullanıldığını görelim: Lezione5h.s dosyasını yükleyin
+
+Bitplanes ile scroll'un özel bir kullanımını görelim: Lezione5i.s
+,
+ GFX-RIPPERS'ın atası olan GRAPHIC-SCANNER'dır, yani
+bellekten şekilleri “ÇALAN” programlardır. Bu kısa program,
+içinde bulunan tüm şekilleri görünür hale getirerek CHIP belleğini gösterir.
+
+Ders5l.s'de modüllerle ilgili bir örnek daha, bu sefer şekli yarıya indirmek yerine
+“uzatmak” için.
+
+Ders 5m.s'de, bu kez DIWSTART ($dff08e) değiştirilerek şekli aşağı ve yukarı hareket ettirmenin başka bir yöntemini göreceğiz.
+DIWSTART ve DIWSTOP kayıtları, “video penceresinin” başlangıcını ve sonunu, yani bitplanes'in görüntülendiği ekranın dikdörtgen kısmını belirler.
+DIWSTART, sol üst köşenin koordinatlarını içerir, “video dikdörtgeninin” başladığı yer, yani bitplanes'in görüntülendiği ekranın sol üst köşesi.
+DIWSTOP ise sağ alt köşenin koordinatlarını içerir: “video dikdörtgeninin” bittiği yer, yani bitplanes'in görüntülendiği ekranın sağ alt köşesi.
+ 
+DIWSTART, “video dikdörtgeninin” başladığı sol üst köşenin YYXX koordinatlarını içerir,
+DIWSTOP ise
+sağ alt köşenin koordinatlarını içerir:
+
+DIWSTART
+o----------------
+|        |
+|        |
+|        |
+|        |
+|        |
+----------------o
+DIWSTOP
+
+Ancak bu kayıtlarda tüm olası koordinatları
+XX ve YY belirtilemez, çünkü hem XX hem de YY konumu baytlardır ve bildiğimiz gibi baytlar
+256 farklı değere ulaşabilir ($00-$ff).
+DiwStart ile video penceresini hangi konumlarda başlatabileceğimizi
+ve DiwStop ile hangi konumlarda sonlandırabileceğimizi görelim.
+
+dc.w    $8e,$2c81    ; DiwStrt YY=$2c,    XX=$81
+dc.w    $90,$2cc1    ; DiwStop YY=$2c(+$ff), XX=$c1(+$ff)
+
+Normal video penceresi şu DIWSTRT ve DIWSTOP değerlerine sahiptir; dikey konum
+YY, bakır bekleme konumunun YY konumu ile tam olarak aynı şekilde çalışır
+: bakır ile $2c üzerinde bir satır bekler ve üzerinde gölgelendirme yaparsanız,
+ çok yüksekte oldukları için görünmezler veya her halükarda
+görünür herhangi bir şeklin üzerinde olacaktır; benzer şekilde, $FF satırından sonraki bekleme
+konumu $00'dan başlar, yani $FF+1'dir. Aslında ekran
+dikey konum $2c'den başlar ve 256 satırından sonra $2c'de, yani $FF+$2c'de,
+yani $12b'de biter ve beklendiği gibi toplam 256 satır görüntüler.
+Örneğin, 200 satır yüksekliğinde bir ekran için şu DiwStop'u koymamız gerekir:
+
+dc.w    $90,$f4c1    ; DiwStop YY=$2c(+$ff), XX=$f4
+
+Aslında $f4-$2c = 200'dür. $00,$01... gösterirsek, $ff satırından sonra bekleyeceğiz.
+Sınırlamalar şunlardır: DiwStart dikey olarak
+$00 ile $FF arasındaki YY konumlarından birine, yani 200. satıra kadar yerleştirilebilir.
+bu nedenle 201. satırdan veya sonraki satırlardan iletişim kuramaz, her zaman önce gelir.
+DIWSTOP için tasarımcılar bir hile kullandılar: YY değeri
+$80'in altında, yani 128 ise, $FF'nin altındaki satırları bekler, bu nedenle $2c
+$2c+$FF'ye, yani 256. satıra atıfta bulunur. Sayı $80'den büyükse
+, olduğu gibi alır (çünkü $80+$ff=383 satırları mevcut değildir!!)
+ve gerçekten 129,130 vb. satırları bekler. Dolayısıyla, DIWSTART
+SIFIR'dan başlayarak en fazla $FF satırına ulaşabilirse, DIWSTOP
+$FF satırını geçebilir ve ekranın alt sınırına ulaşabilir, ancak
+$80'den daha düşük satırlardan başlayamaz. Bu hile,
+bit 7'si sıfır olan sayıları (yani, $80'den önceki sayılar) dikkate alınarak yapılmıştır, sanki
+varsayımsal bir bit 8 ayarlanmış gibi, bu da her şeyi $FF artırır. Bit
+7 ayarlandığında (80'den sonraki sayılar bunu ayarlamıştır) hayalet bit
+kaybolur ve sayılar olduğu gibi alınır.
+Yatay satır için diwstart,
+00 ile FF arasındaki herhangi bir XX'den başlayabilir, yani 256 konumuna kadar (ancak ekranın
+00 konumundan değil, 81 konumundan başladığını unutmayın, bu nedenle ekranın başlangıcından itibaren 126 konumundadır
+!). DiwStop ise $00 ile
+127 satırını gösterir ve devam ederek ekranın sağ alt köşesine kadar ulaşabilir
+,
+ çünkü 8. “hayalet” biti her zaman 1'dir, bu nedenle XX değerine her zaman $FF
+eklenir.
+Sonuç olarak, DiwStart herhangi bir
+XX ve YY konumlarından herhangi birinde yer alabilir, DiwStop ise yatay olarak
+$FF satırından sonra ve dikey olarak $80 satırından $FF satırına kadar yer alabilir, ardından
+$00 ile $7f arasındaki sayılar, $FF satırından sonraki bekleme durumunda olduğu gibi, 201,202
+vb. hatlarda bulunur, dolayısıyla $2c, $2c+$ff'dir.
+
+Ders5m2.s, Ders5m3.s ve Ders5m4.s'te bu konu ele alınmaktadır.
+
+
+DERS 5'in sonunda, önceki derslerin özetini içeren Ders5n.s dosyasını yükleyin.
+Bu dosya aynı zamanda müziği çalan ilk listedir.
+
+Bu örneği anladıktan sonra, Ders6.TXT dosyasını yüklemeniz yeterlidir.

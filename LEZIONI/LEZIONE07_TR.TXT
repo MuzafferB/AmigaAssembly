@@ -1,0 +1,2046 @@
+
+ASEMBLER KURSU - DERS 7
+
+Bu derste sprite'lar, joystick ve
+68000 bit işlemleri ile ilgili AND, OR, EOR, NOT, LSR, ROL... komutları hakkında konuşacağız.
+
+.raw dosyalarını yükleyebilmek için “V df0:SORGENTI3” yazmayı unutmayın
+.
+
+Sprite'lar, en fazla
+16 piksel genişliğinde, bit düzlemlerinden bağımsız olarak ekran üzerinde hareket edebilen
+belirli boyutlarda grafik nesnelerdir. Örneğin, menüden seçim yapmak veya “düğmelere” basmak için fare ile hareket ettirdiğiniz ok imleci,
+tarafından yönetilen bir sprite'tır ve “altında” bulunan bitplanes'leri dikkate almadan istediği yere hareket edebilir
+.
+Sprite'lar, bitplanes'lerin ‘üzerinde’ dolaşan “hayalet” görüntüler olarak düşünülebilir,
+ ancak hareket eden her şey sprite değildir!
+Aslında, sprite'lar için copperlist'te sadece 8 işaretçi olduğundan, en fazla 8 sprite olabilir
+:
+
+COPPERLIST:
+SpritePointers:
+dc.w    $120,0,$122,0    ; Sprite 0 için işaretçi
+dc.w    $124,0,$126,0    ; Sprite 1 için işaretçi
+dc.w    $128,0,$12a,0    ; “”    ‘’    “”	 2
+dc.w    $12c,0,$12e,0    ; “”    “”    “”     3
+dc.w    $130,0,$132,0    ; “”    “”    ‘’     4
+dc.w    $134,0,$136,0    ; “”	“”    “”     5
+dc.w    $138,0,$13a,0    ; “”    “”    “”     6
+dc.w    $13c,0,$13e,0    ; “”    ‘’    “”     7
+
+Sprite işaretçileri SPRxPT kayıtları olarak adlandırılır (“x” yerine
+sprite numarası yazılır: dolayısıyla SPR0PT, SPR1PT, .. SPR7PT vardır ve
+SPRxPT'den bahsettiğimizde genel olarak 8 işaretçinin tümüne atıfta bulunuruz)
+Şimdilik bunları copperlist'e sıfırlanmış olarak ekledik, sadece bu
+“hayalet” nesnelerin kontrolsüz bir şekilde figürlerimizin üzerinde zıplamasını önlemek için sıfırladık.
+Sprite'lar ekranın geri kalanından izole edilmiştir, sanki monitörün üzerine yerleştirilmiş “şeffaf bir zarf” içindeymiş gibi.
+ Aslında sprite'ların çözünürlüğü
+her zaman düşük çözünürlüktedir, 320x256, altta yatan bit düzlemleri yüksek çözünürlüklü
+veya taramalı olsa bile.
+Sprite'ların bit düzlemlerinin bir parçası olmadığını doğrulamak için, bunları hareket ettirmek için
+her seferinde silip yeniden çizmek gerekmez, aksi takdirde
+bir grafik parçasını bir bit düzlemine taşımak için yapmamız gerekirdi.
+Bir sprite'ı hareket ettirmek için, sprite'ın veri yapısının başında bulunan ve bu göreve ayrılmış özel baytlar üzerinde birkaç hızlı komutla koordinatlarını değiştirmek yeterlidir.
+Sprite'lar bir oyunda uzay gemileri ve adamlar yapmak için yeterli olmadığında
+blitter kullanılarak grafik blokları kopyalanır
+(bob), bunu daha sonra göreceğiz. Daha önce de belirtildiği gibi, bir sprite'ın boyutu 16 piksel genişliğindedir, yüksekliği ise istenildiği gibi seçilebilir, hatta tüm ekran olabilir.
+ (bob) kopyalamak için kullanılır, bunu daha sonra göreceğiz.
+Daha önce de belirtildiği gibi, bir sprite'ın boyutu 16 piksel genişliğindedir,
+yüksekliği ise isteğe göre seçilebilir, hatta tüm ekran, yani
+256 satır olabilir. Seviye sonu canavarı yapmak için 8 sprite'ın tümünü
+yan yana kullanarak toplam 16*8=128 piksel genişliğe ulaşabilirsiniz.
+Sorun, bu canavarın günümüz için çok renksiz olacağıdır,
+çünkü bir sprite en fazla 3 renge sahip olabilir, çünkü “dördüncü” renk
+“şeffaf” kısımdır, yani arka planın göründüğü kısım, yani
+bitplanes.
+Sprite'ların özelliği, yapımı ve canlandırılmasının kolay olmasıdır.
+Aslında sprite, bir çizim programı ile çizilebilir,
+genişliği 16 pikselden fazla olmaması ve 3 renk artı arka plan, yani 4 renk içermesi yeterlidir
+ve IFFCONVERTER KEFCON tarafından SPRITE'a dönüştürülebilir.
+Ya da 8x8 fontunda gördüğümüz gibi doğrudan ikili olarak çizilebilir
+:
+
+- düzlem 1 -	 - kat 2 -     ;
+; bu 2 bit “katmanı”
+dc.w    %0111110000000000,%0111110000000000 ; rengi belirler.
+dc.w    %1000001000000000,%1111111000000000 ; Bu ok
+dc.w    %1111010000000000,%10001100000000000 ; varsayılan
+dc.w    %1111101000000000,%1000011000000000 ; kickstart 1.3,
+dc.w    %1111110100000000,%1001001100000000 ; tanıyor musunuz?
+dc.w	%1110111010000000,%1010100110000000
+dc.w	%0100011101000000,%0100010011000000
+dc.w	%0000001110100000,%0000001001100000
+dc.w	%0000000111100000,%0000000100100000
+dc.w	%0000000011000000,%0000000011000000
+dc.w	%0000000000000000,%0000000000000000
+
+dc.w    0,0    ; İki sıfırlanmış kelime sprite'ın sonunu gösterir.
+
+Bu durumda genişlik 8 piksel değil, 8x8 fontunda olduğu gibi 16 pikseldir, bu nedenle
+onu bir bayt yerine bir kelime (dc.w) ile çiziyoruz.
+Ayrıca 3 renk ve şeffaf renk olmak üzere 4 olasılık vardır, yani 2 bit düzlemli bir şekil gibi,
+ bu nedenle bit düzlemlerinde olduğu gibi bir çift “düzlem” gerekir
+ve bunların üst üste binmesi rengi belirler, bu renk şunlar olabilir:
+
+Düzlem 1    - Düzlem 2
+
+ikili:     0    -    0    = RENK 0 (ŞEFFAF)
+ikili:     1    -    0    = RENK 1
+ikili:     0    -    1    = RENK 2
+ikili:     1    -    1    = RENK 3
+
+Aslında, daha önce gördüğümüz gibi, 2 bit düzlemi ile 4
+farklı kombinasyon oluşturulabilir: %00,%01,%10,%11
+
+Sprite'ın konumunu belirlemek için, sprite'ın ilk baytlarına X ve Y koordinatlarını girmeniz yeterlidir.
+ Aslında, çizim verilerinden önce,
+sprite 4 bayt, yani 2 kelimeden oluşur, bunlar KONTROL KELİMELERİ olarak adlandırılır ve
+bu baytlara sprite'ın ekran koordinatları yazılır.
+Daha kesin olmak gerekirse, VSTART olarak adlandırılan ilk bayt, sprite'ın
+sprite'ın başlangıç konumunu içerir; ikinci bayt ise
+yatay konumu (HSTART) içerir. Üçüncü bayt, sprite'ın
+dikey konumunu içerir: bunu belirlemek için sprite'ın yüksekliğini
+başlangıç konumuna eklemek yeterlidir ve sonuç olarak sprite'ın dikey olarak
+bittiği konumu elde ederiz.
+Dördüncü bayt, daha sonra göreceğimiz özel işlevler için bitler içerir.
+VSTART ve HSTART (Dikey Başlangıç ve Yatay Başlangıç) sprite'ın başladığı sol üst köşenin koordinatlarıdır
+:
+
+
+#....
+.....
+.....
+.....
+.....
+
+
+VSTOP ise sprite'ın bittiği dikey konumu gösterir:
+
+
+.....
+.....
+.....
+.....
+#####    -> VSTOP ile gösterilen dikey çizgi.
+
+
+Örneğin, XX=$90 ve YY=$50 konumunda görüntülenen, 20
+piksel uzunluğundaki bir sprite şöyle başlar:
+
+
+;IYIX FY    - IY=Y Başlangıcı, IX=X Başlangıcı, FY=Y Sonu
+SPRITE:
+dc.w    $5090,$6400	;Y=$50, X=$90, yükseklik= $50+20, yani $64
+; buradan sprite'ın 2 katının verileri başlar
+dc.w    %0000000000000000,%0000110000110000
+dc.w	%0000000000000000,%0000011001100000
+...
+dc.w	0,0	; sprite sonu
+
+
+Aslında ilk bayt, VSTART, $50'de, ikincisi, HSTART, $90'da,
+üçüncüsü, sprite sonunun dikey konumu, $64'te, yani $50+20'de,
+başlangıç konumu+sprite uzunluğu. Dördüncü baytı şimdilik
+sıfırda bırakıyoruz, ne işe yaradığını daha sonra göreceğiz. HSTART baytının,
+yani yatay konumu belirleyen baytın, sprite'ı
+2 piksel'lik “adımlarla” hareket ettirdiğini, dolayısıyla bir sprite'ı
+50 konumundan 51 konumuna hareket ettirirseniz, 1 piksel değil, 2 piksel sağa kayar
+: dördüncü baytın bir bitini kullanarak sprite'ı
+yatay olarak bir pikseler halinde kaydırabileceğinizi göreceğiz.
+Dikey konumda ise, kaydırma zaten
+VSTART/VSTOP ile bir piksel atlamalar halinde gerçekleşir, ancak sınırlama video satırı $FF'dir
+ve bu sınırın ötesine dördüncü baytın başka bir biti kullanılarak geçilebilir.
+Basitlik amacıyla ilk örneklerde sprite'ları sadece
+HSTART,
+ VSTART ve VSTOP, yani iki piksel “adımlarla” yatay kaydırma sınırlamalarıyla hareket ettireceğiz.
+Daha sonra daha akıcı kaydırmaların nasıl yapıldığını göreceğiz.
+Örneğin,
+
+ADDQ.B #1,HSTART
+
+ile sprite'ı bir piksel değil, iki piksel hareket ettirdiğimizi unutmayın.
+
+
+3 bayt VSTART/HSTART/VSTOP üzerinde işlem yapmak için şöyle yapabilirsiniz:
+
+MOVE.B	#$50,SPRITE    ; VSTART = $50
+MOVE.B    #$90,SPRITE+1    ; HSTART = $90
+MOVE.B    #$64,SPRITE+2    ; VSTOP     = $64 ($50+20)
+
+Veya daha açık hale getirmek için her bayt için bir etiket tanımlayabilirsiniz:
+
+
+SPRITE:
+VSTART:            ; DİKEY başlangıç konumu
+dc.b $50
+HSTART:            ; YATAY başlangıç konumu
+dc.b $90
+VSTOP:
+dc.b    $64        ; DİKEY bitiş konumu
+dc.b    $00        ; özel işlevler için sıfırlanmış bayt
+
+; buradan sprite'ın 2 planının verileri başlar
+
+dc.w    %0000000000000000,%0000110000110000
+dc.w    %0000000000000000,%0000011001100000
+...
+dc.w    0,0    ; sprite sonu
+
+
+Bu durumda VSTART, HSTART ve VSTOP etiketleri üzerinde işlem yapacağız:
+
+ADDQ.B    #1,HSTART    ; sprite'ı 2 piksel sağa kaydır
+; (açıklanan nedenlerden dolayı 1 piksel değil 2 piksel)
+
+SUBQ.B    #1,HSTART    ; sprite'ı 2 piksel sola kaydır
+
+Sprite'ı aşağı veya yukarı kaydırmak için
+hem VSTART hem de VSTOP'u değiştirmemiz gerektiğini unutmamalıyız, çünkü sprite'ı aşağı veya
+yukarı kaydırırsak, soldaki ilk piksel ile son piksel de kayar:
+
+ADDQ.B    #1,VSTART    ; \ sprite'ı 1 piksel aşağı kaydır
+ADDQ.B    #1,VSTOP    ; /
+
+SUBQ.B    #1,VSTART    ; \ sprite'ı 1 piksel yukarı kaydır
+SUBQ.B    #1,VSTOP    ; /
+
+
+Özetle, sprite'ın yapısı şöyledir:
+
+
+ilk kontrol kelimesi,     ikinci kontrol kelimesi
+birinci    çizgi (.w) düzlem 1, birinci     çizgi (.w) düzlem 2
+ikinci çizgi (.w) düzlem 1, ikinci çizgi (.w) düzlem 2
+üçüncü    çizgi (.w) düzlem 1, üçüncü	 satır (.w) 2. katman
+dördüncü satır (.w) 1. katman, dördüncü satır (.w) 2. katman
+beşinci satır (.w) 1. katman, beşinci satır (.w) 2. katman
+...
+DC.W    0,0 ; son satır iki sıfır içermelidir
+
+
+Sprite verileri, sadece üst üste binmelerinin
+üst üste binmeleri, ekranın bit düzlemlerine benzer şekilde 3 renk artı şeffaflığı belirlediğini
+belirtmek içindir, ancak bunlar sonuncularla karıştırılmamalıdır!
+
+
+SPRITE RENKLERİ
+
+Sprite renklerini tanımlamak için, Amiga'nın sadece 32 renk kaydı olduğu için, bit düzlemlerinde kullanılan renk kayıtlarının aynısını kullanmak gerekir.
+Tasarımcılar, sprite'lara 16 ila 31 arası renkleri almasını düşündüler, bu nedenle şekiller 32 renkli, yani 5 bit düzlemli değilse, sprite'lar farklı renklere sahip olabilir.
+Tasarımcılar, sprite'lara 16 ila 31 arasındaki renkleri atamayı düşündüler,
+ böylece şekiller 32 renkli, yani 5 bit düzlemli değilse,
+sprite'lar şekillerden farklı renklere sahip olabilir. Aksi takdirde sprite'lar,
+ altındaki 32 renkli şekille 16 ortak renge sahip olur.
+Şimdilik ilk sprite'ın renklerini nasıl tanımlayacağımıza bakalım:
+
+(Sprite'lar 0'dan 7'ye kadar numaralandırılmıştır)
+
+Sprite 0'ın RENK 0 = ŞEFFAFLIK, tanımlanmamalıdır
+Sprite 0'ın RENK 1 = COLOR17 ($dff1a2)
+Sprite 0'ın RENK 2 = COLOR18 ($dff1a4)
+Sprite 0'ın RENK 3 = COLOR19 ($dff1a6)
+
+Renk 0, yani dördüncü renk, şeffaflıktır ve tanımlanmasına gerek yoktur.
+
+Devam etmeden önce, Sprite
+'nin ilk örneğini Ders 7a'da görelim.s. Bu örnekte, ilk sprite işaretlenirken, diğer 7 sprite
+sıfırlanmış olarak bırakılmıştır. Bir sprite'ı işaretlemek için bitplanes'te olduğu gibi
+sprite'ın da aynı şekilde çalışan işaretçileri olduğu için
+
+MOVE.L	#MIOSPRITE,d0        ; d0'daki sprite adresi
+LEA    SpritePointers,a1    ; Copperlist'teki işaretçiler
+move.w    d0,6(a1)
+swap    d0
+move.w    d0,2(a1)
+
+Sprite'ları görüntülemek için en az bir
+bitplane'in “açık” olması gerektiğini unutmayın, bitplane'ler devre dışı bırakıldığında sprite'lar da devre dışı kalır.
+Aynı şekilde, bir sprite, DIWSTART ve DIWSTOP ile tanımlanan video penceresinin dışına çıkarsa “kesilir” ve
+sadece pencerenin içinde görüntülenebilir.
+Sprite'ı 320x256 ekranına yerleştirmek için, örneğin
+merkez koordinatında 160,128, video penceresinin başladığı sol üstteki ilk koordinatın
+0,0 değil, $40,$2c olduğunu dikkate almak gerekir, bu nedenle
+X koordinatına $40 ve Y koordinatına $2c eklemek gerekir.
+Aslında $40+160, $2c+128, 320x256
+overscan olmayan bir ekranın 160,128 koordinatına karşılık gelir.
+Henüz 1 piksel düzeyinde yatay konumu kontrol edemediğimizden,
+ 2 pikselde bir, ekranın merkezini bulmak için 160 değil, 160/2 eklememiz gerekir
+:
+
+
+HSTART:
+dc.b $40+(160/2)    ; ekranın ortasına yerleştirilir
+...
+
+
+İşte ekranın bir şeması, burada görünen kısım, yani video penceresi
+beyazdır, kenarların dışında,
+0,0 koordinatlarından başlayan tüm ekran ise #### ile gösterilmiştir. Video penceresinin
+$40 XX ve $2c YY koordinatlarından başladığına dikkat edin.
+
+(0,0) __
+\
+\
++---------------------------+
+|###########################|
+/\    |###########################|
+||    |###+-------------------+###|
+||    |###| $40,$2c        |###| __ Ekran kenarları
+||    |###|     ______        |###| / görünür (video penceresi)
+||    |###|    /Sprite\    |###|/
+||    |###|    |++XX++|    |###/
+||    |###|    \/\/\/\/    |##/|
+|###|            |#/#|
+Y Eksen |###|             |/##|
+|###|            |###|
+||    |###|            |###|
+||    |###|			|###|
+||    |###|            |###|
+||    |###|            |###|
+||    |###+-------------------+###|
+\/    |###########################|
+|###########################|
++--------------------------+
+<----- X EKSENİ ----->
+
+Sprite'ın YATAY konumu 0 ile 447 arasında olabilir, ancak
+320 piksel genişliğindeki ekranda görünür olması için 64 ile 383 arasında olması gerektiği açıktır.
+Sprite'ın DİKEY konumu ise 0 ile 262 arasında olabilir, ancak
+ 
+PAL geniş ekranında (256 satır) görünür olması için 44 ($2c) ile ekranın
+sonu, 44+256= 300 ($12c). Şu anda sadece 
+$FF konumuna ulaştık, $12c'ye nasıl ulaşacağımızı daha sonra göreceğiz.
+
+Ders 7b.s'de sprite, iki kontrol kelimesi üzerinde ADD ve SUB
+ile ekranda kaydırılır.
+
+Ders 7c.s'de sprite, ADD ve SUB yerine
+önceden tanımlanmış değer tabloları kullanılarak yatay olarak hareket ettirilir.
+Ders 7d.s'de dikey olarak zıplatılır.
+Ders 7e.s'de, XX ve YY koordinatları, dairesel, elips vb. hareketler oluşturmak için iki tablo ile tanımlanır.
+ Bu örnekte
+kendi tablolarınızı nasıl oluşturacağınız da açıklanmaktadır!
+
+Okumaya devam etmeden önce, bu örnekleri başka metin tamponlarına yükleyin ve çalıştırın,
+ son yorumları okuyun.
+
+Şu ana kadar tek bir sprite görüntüledik, şimdi 8 sprite'ın tümünü görüntülemek için neleri bilmemiz gerektiğini görelim.
+Öncelikle, her sprite diğerlerinden bağımsız bir konuma sahiptir ve
+ilk 2 kelimede kendine ait bir VSTART, HSTART ve VSTOP değerine sahiptir.
+Renkler ise (ve daha sonra göreceğimiz sprite'ların diğer özellikleri, örneğin çarpışmalar) sprite'lar tamamen bağımsız değildir, ikişer ikişer eşleştirilir. (ve daha sonra göreceğimiz sprite'ların diğer özellikleri
+, örneğin çarpışmalar)
+sprite'lar tamamen bağımsız değildir, ancak ikişer ikişer eşleştirilmiştir. 
+Dolayısıyla 4 çift sprite vardır: Sprite0+Sprite1, Sprite2+Sprite3,
+Sprite4+Sprite5 ve son olarak Sprite6+Sprite7. Dersin geri kalanında
+“sprite çifti” dediğimizde, herhangi 2 sprite'ı değil,
+bu 4 çiftten birini kastedeceğiz.
+Renkler için, bir çiftin sprite'larının
+ortak renklere sahip olduğunu, yani her sprite çiftinin diğer çiftlerden farklı bir
+paletine sahip olduğunu dikkate almak gerekir.
+Sprite 0'ın 3 renginin COLOR17,
+COLOR18 ve COLOR19 kayıtlarıyla tanımlanabileceğini biliyoruz. Bu 3 renk, “kardeş” sprite için de geçerlidir,
+yani sprite 1.
+Her çiftin farklı bir renk paleti vardır çünkü
+16 ila 31 arası renk kayıtları, yani 16 kayıt mevcuttur.
+Her sprite'ın 4 rengi (1'i şeffaf) olduğunu düşünürsek,
+8*4=32 kayıt gerekir, ancak sadece 16 kayıt kalmıştır.
+Dolayısıyla, her biri 4 renge sahip 8 sprite olduğundan, sprite çiftlerinin renkleri hangi kayıtlardan
+alır:
+
+
+Sprite    İkili değer    Renk kaydı:
+------    --------------    ------------------
+Çift 1:    0 veya 1        00    Şeffaf olduğu için kullanılmıyor
+01    Renk17 - $dff1a2
+10    Renk18 - $dff1a4
+11    Renk19 - $dff1a6
+
+Çift 2:    2 veya 3        00    Şeffaf olduğu için kullanılmıyor
+01    Renk21 - $dff1aa
+10    Renk22 - $dff1ac
+11    Renk23 - $dff1ae
+
+Çift 3:    4 veya 5        00    Şeffaf olduğu için kullanılmıyor
+01    Renk25 - $dff1b2
+10    Renk26 - $dff1b4
+11    Renk27 - $dff1b6
+
+Çift 4:    6 veya 7        00    Şeffaf olduğu için kullanılmıyor
+01    Renk29 - $dff1ba
+10    Renk30 - $dff1bc
+11    Renk31 - $dff1be
+
+Pratik bir örnek verelim: copperlist'te 8
+sprite'ın rengini tanımlamak için şunu yapmanız gerekir:
+
+
+dc.w    $1A2,$F00    ; color17, - sprite0/1'in COLOR1 -KIRMIZI
+dc.w    $1A4,$0F0    ; color18, - sprite0/1'in COLOR2 -YEŞİL
+dc.w    $1A6,$FF0    ; color19, - sprite0/1'in COLOR3 -SARI
+
+dc.w    $1AA,$FFF    ; renk21, - sprite2/3'ün RENK1 -BEYAZ
+dc.w    $1AC,$0BD    ; renk22, - sprite2/3'ün RENK2 -SU
+dc.w    $1AE,$D50	; renk23, - sprite2/3'ün COLOR3 -TURUNCU
+
+dc.w    $1B2,$00F    ; renk25, - sprite4/5'in COLOR1 -MAVİ
+dc.w    $1B4,$F0F	; renk26, - sprite4/5'in RENK2 -MOR
+dc.w    $1B6,$BBB    ; renk27, - sprite4/5'in RENK3 -GRİ
+
+dc.w    $1BA,$8E0    ; renk29, - sprite6/7'nin RENK1 -YEŞİL CH.
+dc.w    $1BC,$a70    ; renk30, - sprite6/7'nin RENK2 -KAHVERENGİ
+dc.w    $1BE,$d00    ; renk31, - sprite6/7'nin RENK3 -KIZIL
+
+NOT: 2,4,8 veya 16 renkli bir figürü arka plan olarak ayarlarsanız, paletle ilgili
+bir sorun olmaz, ancak 32 renkli bir ekranı etkinleştirmeye karar verirseniz,
+yani 5 bit düzlemi, figür sprite'larla son renkleri paylaşacaktır,
+bu nedenle renklerin hem figür hem de sprite için doğru olduğundan emin olmalısınız
+sprite için de doğru olduğundan, yani rengin “çok amaçlı” olduğundan emin olmalısınız.
+
+
+
+SPRITE'LAR ARASINDA VİDEO ÖNCELİĞİ.
+
+Ekranda iki veya daha fazla sprite olduğunda, sprite'lar
+üst üste gelebilir. Bu durumda, önceliği daha düşük olan sprite
+örtülür. Sprite'lar arasındaki öncelik her zaman aynıdır, numarası daha düşük olan sprite
+her zaman numarası daha yüksek olanlara göre önceliklidir ve bunlar
+“arkada” kalır. Sonuç olarak, sprite0 diğer tüm sprite'ları kaplayabilir,
+sprite 7 ise diğer tüm sprite'lar tarafından kaplanabilir. İşte bir şema:
+
+_______
+|     |
+___|___7 |
+|     |___|
+__|___6 |
+|     |__|
+__|___5 |
+| |__|
+___|___4 |
+|     |___|
+___|___3 |
+| |___|
+___|___2 |
+|     |___|
+___|___1 |
+|    |___|
+| 0 |
+|_______|
+
+
+Başka bir metin tamponunda Lezione7f.s dosyasını yükleyip çalıştırarak bunu kontrol edelim.
+Bu dosya 8 sprite görüntüler ve farenin sol tuşuna basıldığında bunları üst üste bindirerek önceliklerini vurgular.
+Çıkmak için farenin sağ tuşuna basın.
+
+
+SPRITE “ATTACHED”
+
+Sprite'ları 2'şerli olarak üst üste ekleme modu da vardır.
+Bu mod, kullanılabilir sprite sayısını yarıya indirir, yani
+dört adede, ancak her biri 4 yerine 16 renge sahiptir.(15 renk artı şeffaf)
+Yalnızca şu şekilde birleştirilebilirler:
+
+SPRITE0+SPRITE1 - SPRITE ATTACCHED (bağlı) Numara 1
+SPRITE2+SPRITE3 - SPRITE ATTACCHED (bağlı) Numara 2
+SPRITE4+SPRITE5 - SPRITE ATTACCHED (bağlı) Numara 3
+SPRITE6+SPRITE7 - SPRITE ATTACCHED (bağlı) Numara 4
+
+Pratikte, normal modda zaten çift olan sprite'lar
+aynı palete sahip oldukları için birbirine bağlanır. “Eklenmiş” 4 sprite, aynı 16 renkli
+paleti paylaşır, çünkü sadece
+Color16'dan Color31'e kadar renk kayıtları mevcuttur.
+ATTACCHED sprite'lar şu şekilde çalışır: normalde bir sprite, küçük “bitplanes” için
+en fazla 4 üst üste binme olasılığına sahiptir,
+yani %00 şeffaf ve %01,%10,%11 diğer 3 renk için.
+ATTACCHED modu, iki sprite'ın bit planlarını üst üste bindirerek
+16 olasılık oluşturur, aslında ilk sprite'ın iki düzlemini ikinci sprite'ın 2 düzleminin üzerine yerleştirerek
+%11 olasılık yerine %1111 olasılık elde edilebilir, yani 4 yerine 16
+.
+Aşağıdaki tabloda, “ikili değer” sütununda, çeşitli
+üst üste binme olasılıkları ve bunlardan elde edilen renkler listelenmiştir.
+
+
+Renk    Değer     Sprite numarası
+İkili     Renk kaydı
+-------    ------    --------------
+0    0000    Renk16 - KULLANILMAZ, ŞEFFAFTIR
+1    0001    Renk17 - $dff1a2
+2    0010    Renk18 - $dff1a4
+3    0011    Renk19 - $dff1a6
+4    0100    Renk20 - $dff1a8
+5	0101    Renk21 - $dff1aa
+6    0110    Renk22 - $dff1ac
+7    0111    Renk23 - $dff1ae
+8    1000    Renk24 - $dff1b0
+9    1001    Renk25 - $dff1b2
+10    1010    Renk26 - $dff1b4
+11    1011    Renk27 - $dff1b6
+12    1100    Renk28 - $dff1b8
+13    1101    Renk29 - $dff1ba
+14    1110    Renk30 - $dff1bc
+15    1111    Renk31 - $dff1be
+
+Bu nedenle COPPERLIST'te bunları şu şekilde tanımlamanız gerekir:
+
+dc.w    $1A2,$F00    ; renk17, ekli sprite'lar için RENK 1
+dc.w    $1A4,$0F0	; renk18, ekli sprite'lar için RENK 2
+dc.w    $1A6,$FF0	; renk19, ekli sprite'lar için RENK 3
+dc.w    $1A8,$FF0    ; renk20, ekli sprite'lar için RENK 4
+dc.w    $1AA,$FFF    ; renk21, ekli sprite'lar için RENK 5
+dc.w    $1AC,$0BD	; color22, BAĞLI sprite'lar için RENK 6
+dc.w    $1AE,$D50    ; color23, BAĞLI sprite'lar için RENK 7
+dc.w    $1B0,$D50    ; color24, BAĞLI sprite'lar için RENK 7
+dc.w    $1B2,$00F	; color25, COLORE 9 bağlı sprite'lar için
+dc.w    $1B4,$F0F    ; color26, COLORE 10 bağlı sprite'lar için
+dc.w    $1B6,$BBB    ; color27, COLORE 11 bağlı sprite'lar için
+dc.w    $1B8,$BBB	; color28, Eklenen sprite'lar için RENK 12
+dc.w    $1BA,$8E0    ; color29, Eklenen sprite'lar için RENK 13
+dc.w    $1BC,$a70	; color30, Eklenen sprite'lar için RENK 14
+dc.w    $1BE,$d00    ; color31, Eklenen sprite'lar için RENK 15
+
+İki sprite'ı “eklemek” için, çiftin tek sprite'ını kontrol eden ikinci kelimenin 7. bitini 1'e ayarlamak yeterlidir
+(yani özel fonksiyonların dördüncü baytında).
+Örneğin, sprite 0 ve 1'i eklemek için bu biti sprite 1'e ayarlamak yeterlidir. Sprite 4 ve 5'i eklemek için ise bu biti 5'e ayarlamak yeterlidir. Bu bitin sprite 1'e ayarlanması gerektiği açıktır.
+Örneğin, sprite 0 ve 1'i eklemek için bu biti
+sprite 1'e ayarlamak yeterlidir, sprite 4 ve 5'i eklemek için ise 5'e ayarlamak yeterlidir.
+Ekli sprite'ların aynı koordinatlara sahip olması, yani
+birbirinin üzerinde olmalıdır, böylece 4
+düzlemin doğru şekilde üst üste binmesi sağlanır.
+Bir örnek verelim: Sprite 0 ve 1'i eklemek için, sprite1'in dördüncü baytının 7. bitini 1'e ayarlamak gerekir
+:
+
+
+SPRITE0:
+VSTART0:        ; DİKEY başlangıç konumu
+dc.b $50
+HSTART0:        ; YATAY başlangıç konumu
+dc.b $90
+VSTOP0:
+dc.b	$64    ; DİKEY son konumu
+dc.b    $00    ; çift sprite'larda bit 7'yi ayarlamaya gerek yoktur.
+; buradan sprite'ın 2 katının verileri başlar
+dc.w    %0000000000000000,%0000110000110000
+dc.w    %0000000000000000,%0000011001100000
+...
+dc.w    0,0    ; sprite0 sonu
+
+
+SPRITE1:
+VSTART1:        ; DİKEY başlangıç konumu
+dc.b $50
+HSTART:            ; YATAY başlangıç konumu
+dc.b $90
+VSTOP:
+dc.b    $64        ; DİKEY bitiş konumu
+
+;76543210
+dc.b    %10000000    ; BIT 7 AYARLANDI! ATTACCHED MODE sprite 0/1 için
+
+; buradan sprite'ın 2 planının verileri başlar
+dc.w    %0000000000000000,%0000110000110000
+dc.w    %0000000000000000,%0000011001100000
+...
+dc.w    0,0    ; sprite1 sonu
+
+
+Dolayısıyla, tüm sprite'ların “ATTACCHED” modunda olmasını sağlamak için
+sprite 1,3,5 ve 7'nin dördüncü baytının 7 bitini, yani tek sayı olanları 1'e ayarlamak yeterlidir.
+
+16 renkli bir sprite oluşturmak için, bir çizim programı kullanarak sprite'ı çizip
+ve KEFCON iffconverter ile SPRITE formatına dönüştürmek gerekir, çünkü
+4 bit katmanından ve iki sprite'a bölünmüş renkleri gözle “hesaplamak” zordur!
+Lezione7g.s dosyasını indirin ve çalıştırın. Bu dosya, ATTACCHED modunda 16 renkli bir sprite görüntüler ve bir sprite'ı KEFCON ile nasıl dönüştüreceğinizi de gösterir.
+
+Lezione7g.s listesini yükleyin ve çalıştırın. Bu liste, ATTACCHED modunda 16 renkli bir sprite görüntüler ve
+KEFCON ile 4 renkli ve 16 renkli bir sprite'ı nasıl dönüştürebileceğinizi de açıklar.
+Böylece, 16 renkli sprite'lar ve 4 renkli sprite'lar aynı anda görüntülenebilir, örneğin sprite 0 ve 1 “yapıştırılmış” ve diğerleri değil, veya herhangi bir başka kombinasyon.
+
+16 renkli sprite ve 4 renkli sprite'leri aynı anda görüntüleyebilirsiniz,
+ örneğin sprite 0 ve 1 “bağlı” ve diğerleri değil, veya herhangi bir
+başka kombinasyon.
+
+Örnek listede Lezione7h.s, 16 renkte bağlı 4 sprite görüntülenir,
+ her biri diğerlerinden bağımsız hareket eder.
+
+Bu noktada, neden 2 piksel adımlarla
+yerine bir adımla kayan yatay kayma sorununun hala giderilmediğini merak ediyor olabilirsiniz.
+İşte, sorunu çözme zamanı geldi, ancak
+bunu yapmak için 68000'in yeni bir komutunu öğrenmek gerekiyor, bu komut
+bir sayının tek tek bitleri üzerinde çalışır: --- LSR ---
+Bu komut “LOGIC SHIFT RIGHT” anlamına gelir, yani “BITLERİ SAĞA LOJİK KAYDIR”, başka bir deyişle, d0'daki bir ikili sayı %00111 ise,
+LSR #1,d0 komutundan sonra sonuç %00011 olur, LSR #2,d0 komutundan sonra ise %00001 olur.
+Aynı şekilde, %00110010, LSR #1,d0 komutundan sonra %00011001 olurken,
+bir LSR #5,d0 işleminden sonra %00000001 olur. Dolayısıyla,
+ikili formda ele alınan sayı, bitler bir masa örtüsü üzerindeymiş gibi sağa kaydırılır
+: #1 çekildiğinde, üzerindeki tüm BitPiatti ile birlikte masa örtüsü kayar
+ve ilk BitPiatti yere düşer... Çok fazla çekersek her şeyi kaydırabiliriz
+ve her şeyi yere düşürerek masayı sıfırlayabiliriz.
+Peki bu assembler komutu HSTART baytı ile ne alakası var???
+Sorun şu: Bildiğiniz gibi, yatay konumlar
+$FF (255) 'den çok daha fazladır, çünkü ekran
+320 piksel genişliğindedir. 255'ten (8 bit, sıfırdan
+yediye) en az bir bit daha, dokuzuncu bit, yani bit 8 eklenmelidir,
+böylece maksimum %11111111 ($ff) yerine maksimum
+%111111111, yani 511 elde edilebilir, ki bu HSTART için gayet uygundur. Peki bu
+bit nereye konulacak?? Şakacı tasarımcılar onu
+kötü şöhretli dördüncü kontrol baytına koymayı uygun gördüler, daha önce
+sprite'ları eklemek için gördüğümüz bayt (bu baytın 7. biti aslında sprite'ları
+16 renge ayarlamak için kullanılır).
+Çeşitli amaçlar için 6 bit daha boş olduğu için, bit 0'ı yatay koordinatın 9 bitlik koordinatının
+DÜŞÜK biti olarak kullanmaya karar verdiler ve
+9 bitlik sayıyı şu şekilde böldüler:
+
+;876543210    ; HSTART koordinatını temsil eden 9 bitlik sayı
+%111111111
+\_____/ \/
+|     |
+8 bit yüksek |
+yerleştirilir |
+HSTART baytına |
+|
+|
+|
+|
+|
+|
+bit 0
+9 bitlik sayının
+bit 0'ına
+dördüncü kontrol baytının
+ 
+bit 0'ına
+
+9 bitlik bir sayının en alt bitini çıkarırsanız, her zaman çift sayılar elde edersiniz
+çünkü 0 bit her zaman sıfırdır. 0 bit 1 olduğunda sayı
+tek olur, “?100” ile bir deneme yapın ve “?101” ile deneyin, çift sayıların
+bit 0'ı her zaman sıfır, tek sayıların ise bit 0
+olarak ayarlı olduğunu göreceksiniz. Şimdiye kadar, her seferinde 2 piksel atlayarak ilerleyebiliyorduk ve
+bu nedenle HSTART'a gerçek değerin yarısını koymak zorundaydık.
+Tek sayılara da ulaşabilmek ve gerçek koordinatı girişe girebilmek için,
+ bu gerçek koordinatı düşük bit ve yüksek bayta bölmeniz yeterlidir, ardından
+düşük biti yerine ve yüksek baytı yerine koyun. Bunu yapmak için
+tek koordinatın 35 olduğunu düşünün: (%00100011)
+Öncelikle, dördüncü
+kontrol baytının 0 bitinin ayarlanıp ayarlanmadığını kontrol etmeliyiz. Bunu yapmak için, söz konusu sayının
+söz konusu sayının 0 bitinin bir BTST ile ayarlanmış olup olmadığını test etmek yeterlidir, ardından
+sonuçlara göre hareket edilir: koordinatın D0'da olduğunu varsayalım:
+
+btst    #0,D0        ; X koordinatının düşük biti sıfırlandı mı?
+beq.s    BitBassoZERO
+bset    #0,MIOSPRITE+3    ; HSTART'ın düşük bitini ayarlayalım
+bra.s    PlaceCoords
+
+BitBassoZERO:
+bclr    #0,MIOSPRITE+3    ; HSTART'ın düşük bitini sıfırlayalım
+PlaceCoords:
+....
+
+Şimdi HSTART'ın düşük bitini ayarladık veya sıfırladık, geriye
+her zamanki gibi sayının geri kalanını, en yüksek 8 biti, HSTART baytına koymak kaldı.
+Ancak bir sorun var: sayı 9 bitlik ve bizim sadece en yüksek 8 bite ihtiyacımız var!
+Bu noktada LSR komutu devreye giriyor!!! Aslında bu komut, sayının bitlerini bir pozisyon sağa kaydırarak
+alt biti ortadan kaldırıp ihtiyacımız olan 8 biti doğru yere yerleştirme
+görevini yerine getiriyor.
+PlaceCoords etiketinin altında rutinin devamını görelim:
+
+lsr.w    #1,D0        ; SHIFTIAMO, yani 1 bit sağa kaydırıyoruz
+; HSTART değerini, “dönüştürmek” için
+; HSTART baytına yerleştiriyoruz, yani
+; düşük bit olmadan.
+move.b    D0,HSTART    ; XX değerini HSTART baytına yerleştiriyoruz
+rts
+
+Bu durumda %00100011 (35) koordinatına sahiptik, LSR.W #1,d0: %00010001!!!!
+sonrası nasıl olduğunu görelim. Yani HSTART'a konulacak doğru bayt.
+
+Ders 7i.s'de bu rutin, bir
+sprite'ı SADECE Amiga'nın yapabileceği şekilde AKICI bir şekilde kaydırmak için çalıştırılır.
+
+Bu noktada son kısıtlamayı, yani dikey yöndeki kısıtlamayı da ortadan kaldırabiliriz
+: aslında sprite'ı dikey yönde
+bir piksel atlamalarla kaydırabiliriz, ancak sadece $FF çizgisine kadar.
+ Amiga tasarımcıları, VSTART/VSTOP için HSTART'tan farklı bir çözüm tercih ettiler:
+VSTART ve VSTOP da 8 bit yerine 9 bitlik bir sayıya ihtiyaç duyar, ancak
+en düşük biti (sıfır) diğer 8 yüksek bitten ayırmak yerine,
+en yüksek biti (dokuzuncu) sekiz düşük bitten ayırdılar, Böylece VSTART ve
+VSTOP'ta sayı $FF'ye, yani 255'e kadar geçerlidir. daha sonra, kontrolün dördüncü baytına yerleştirilen dokuzuncu biti
+ayarlamak gerekir
+,
+ çünkü $ff'den sonra $100, $101 vb. gelir, bu nedenle düşük bayt
+sıfırdan başlar, ancak dokuzuncu bit ayarlanmış olarak. Yatay konum için gördüğümüze benzer bir rutin
+nasıl yapılacağını görelim, yani
+gerçek koordinattan (bir kelime gereklidir) ve onu yüksek bit ve
+düşük bayta böler. Bu durumda, her seferinde VSTART'ın yanı sıra VSTOP'u da güncellememiz gerektiğini unutmayın
+! VSTOP'un yüksek biti dördüncü kontrol baytının 1. biti,
+ VSTART'ın ise 2. biti olduğunu unutmayın:
+
+MOVE.w    (A0),d0        ; kelimeyi tablodan d0'a kopyalar
+ADD.W	#$2c,d0        ; ekranın başlangıcının ofsetini ekler
+MOVE.b    d0,VSTART    ; baytı VSTART'a kopyalar
+btst.l    #8,d0        ; $FF'den büyük sayı mı?
+beq.s    NonVSTARTSET
+bset.b    #2,MIOSPRITE+3	; VSTART'ın 8. bitini ayarla (sayı > $FF)
+bra.s    ToVSTOP
+NonVSTARTSET:
+bclr.b    #2,MIOSPRITE+3    ; VSTART'ın 8. bitini sıfırla (sayı < $FF)
+ToVSTOP:
+ADD.w    #13,D0        ; Son konumu (VSTOP) belirlemek için sprite uzunluğunu ekle
+;
+move.b    d0,VSTOP    ; Doğru değeri VSTOP'a taşı
+btst.l    #8,d0
+beq.s    NonVSTOPSET
+bset.b	#1,MIOSPRITE+3    ; VSTOP'un 8. bitini ayarla (sayı > $FF)
+bra.w    VstopFIN
+NonVSTOPSET:
+bclr.b    #1,MIOSPRITE+3    ; VSTOP'un 8. bitini sıfırla (sayı < $FF)
+VstopFIN:
+rts
+
+Bu rutin, “ayrık” bitini ayarlamak için öncekiyle benzer şekilde çalışır,
+ ancak hem VSTART hem de VSTOP üzerinde işlem yapması ve burada gereksiz olan LSR'nin olmaması ile farklılık gösterir.
+Bunu pratikte denemek için Lezione7l.s dosyasını yükleyin.
+
+Bunu Lezione7l.s dosyasını yükleyerek deneyebilirsiniz.
+
+Artık sprite'lar üzerinde tam kontrolümüz olduğuna göre,
+sprite'ları kontrol ettiğimiz rutinleri optimize edelim: öncelikle, yapılması gereken ilk şey
+, sprite'ları kontrol etmek için evrensel bir rutin oluşturmaktır, böylece
+8 sprite'ın her biri için “ayrık” bitinin yerleştirilmesini yeniden yazmak
+gerekmez. Girişte ilgili sprite'ın adresini ve alması gereken X ve Y koordinatlarını gerektiren parametrik bir rutin gerekir
+.
+alması gerekir. Bu şekilde, her sprite için bir “BSR Rutini” çalıştırmak
+yerine her şeyi yeniden yazmak yeterli olacaktır. Böylece, sprite'ları programlamak istediğimiz her seferinde
+bu rutini, en fazla küçük değişikliklerle yeniden kullanabiliriz.
+Böyle bir rutinin örneğini lezione7m.s'de bulabilirsiniz.
+Evrensel rutin UniMuoviSprite olarak adlandırılmıştır ve çalışması için
+hareket ettirilecek sprite'ın adresi ve
+alması gereken yeni koordinatların yanı sıra, rutin tarafından VSTOP bayt değerini hesaplamak için gerekli olan sprite'ın yüksekliğinin de belirtilmesi gerekir
+.
+Bu değerler, rutini çalıştırmadan önce bazı kayıtlara yerleştirilerek rutine iletilir veya daha doğrusu “aktarılır”.
+Daha kesin olarak, sprite'ın adresini a1 kaydına, yüksekliğini d0 kaydına, Y koordinatını d2 kaydına ve X koordinatını d1 kaydına yerleştirmek gerekir.
+Daha kesin olarak, sprite adresi a1 kaydına,
+yüksekliği d2 kaydına, Y koordinatı d0 kaydına ve
+X koordinatı d1 kaydına yazılmalıdır.
+Rutine “aktarılan” sprite koordinatları, ekrandaki değerlerdir
+320x256'daki değerlerdir. Aslında rutin, sprite'ı ekranda “ortalamak” için
+X koordinatına $40 ve Y koordinatına $2c ekler.
+Ayrıca HSTART'ın düşük bitini ve VSTART
+ve VSTOP'un yüksek bitlerini düzeltmeyi unutmayın.
+
+Kısaca:
+
+;
+;    UniMuoviSprite'ın giriş parametreleri:
+;
+;    a1 = Sprite'ın adresi
+;    d0 = Sprite'ın ekrandaki dikey konumu Y (0-255)
+;    d1 = Sprite'ın ekrandaki yatay konumu X (0-320)
+;    d2 = sprite'ın yüksekliği
+;
+
+Sprite'ların konumlandırılmasıyla ilgili sorunları bir kez ve sonsuza kadar çözen bu rutini elimizde bulundurduğumuzdan,
+ sprite'larla biraz deneyim kazanmamızı sağlayacak bazı uygulamalarda kullanarak eğlenebiliriz.
+ Ancak devam etmeden önce Lezione7m.s dosyasını yükleyin ve çalıştırın,
+dersi TAMAMEN anlamadan Lezione7.txt dosyasını okumaya devam ederseniz veya listeleri yüklemeden devam ederseniz başınız belaya girer. Sprite'larla ilgili diğer tüm örneklerde bu rutin kullanılacağından,
+ders7.txt dosyasını okumaya veya listeleri yüklemeye devam ederseniz,
+tamamen anlamadan devam etmeyin. Bu rutin, sprite ile ilgili diğer tüm örneklerde kullanılacağından,
+ sürekli karşınıza çıkacak bir rutini anlamadan devam etmek verimsiz olacaktır
+.
+
+
+Ders7n.s'de, ekranda düz bir yörünge izleyerek hareket eden bir sprite görüyoruz.
+ Sprite'ın konumları bir tabloda bulunmuyor,
+ ancak sprite'ı sabit bir hızla hareket ettirerek her seferinde hesaplanıyor.
+ Bunu yükleyin ve çalıştırın, ayrıca bir sprite'ı ekranın kenarlarına çarptırmayı da göreceğiz
+.
+
+
+Ders 7o.s'de ise, her ikisi de
+evrensel rutin tarafından hareket ettirilen iki sprite göreceğiz. Bu,
+parametrelerin kullanımı sayesinde evrensel rutinimizin, herhangi bir
+değişiklik yapmadan farklı şekil ve boyutlardaki sprite'ları hareket ettirebildiğinin
+çok iyi bir örneğidir. Parametreleri kullanmasaydık, her sprite için bir rutin yazmamız gerekirdi
+ve bu da zaman ve bilgisayar belleği kaybına neden olurdu (8 sprite için
+8 rutin yazmamız gerekirdi).
+
+
+Ders 7p.s'de yine evrensel rutini kullanarak, yan yana yerleştirilmiş sprite'lar kullanarak
+16 pikselden daha geniş nesneler nasıl oluşturulabileceğini göreceğiz.
+ “BAĞLI” sprite'ları “YAN YANA” sprite'larla karıştırmamaya DİKKAT EDİN: ilki,
+“bağlı” modunda kullanılan aynı çiftin 2 sprite'ıdır
+attached“ modunda kullanılan aynı çiftin 2 sprite'ıdır, aynı koordinatlara sahiptir (
+tamamen üst üste gelirler) ve tek sprite'ın ”attach" biti 1 olarak ayarlanmıştır;
+“yan yana” sprite'lar ise, ekran üzerinde yan yana,
+ aralarında bir piksel sütunu bile bırakılmadan,
+ tek bir 16 pikselden daha geniş nesne gibi görünecek şekilde
+aynı anda hareket ettirilen iki veya daha fazla sprite'ın birleşimidir.
+Yan yana spriteler için ayarlanacak herhangi bir bit yoktur, bu özel bir
+sprite “modu” değil, sadece normal spritelerin
+ekranda özel bir şekilde düzenlenmesidir. İşte tek bir sprite'tan yapılmış bir uzay gemisi
+ve iki sprite'tan yapılmış bir uzay gemisini gösteren küçük bir şema:
+
+
+(128,65)         (128,65)     (144,65)
+|_ _ _ __ _ _ _    |_ _ _ _ _ _ __|__ _ _ _ _ _ _
+| / \    |	|     / | \     |
+__/____\__             /     \
+| |     |    |    |     / | \     |
+|     |         ____/___________\____
+| |__________| |    | |     |     | |
+\     /         |			 |
+|_ _ _\__/_ _ _|    | |     |     | |
+|             |
+| |__________|__________| |
+\     /
+|     \ | /     |
+\     /
+|_ _ _ _ _ _\__|__/_ _ _ _ _ _|
+
+Sprite 0     Sprite 1
+
+
+Bu teknikle, 3 renkli sprite kullanılarak
+128 piksel (16*8) genişliğinde veya 15 renkli sprite kullanılarak 64
+piksel (16*4) genişliğinde seviye sonu canavarları yapılabilir. Canavar
+daha uzunsa, örneğin insan şekilli ise, ekranın tüm uzunluğunu kullanabilirsiniz
+çünkü sprite'ların yüksekliği için bir sınır yoktur
+ve paleti dikey olarak değiştirerek
+copper ile örneğin ayakkabıları kot pantolonundan farklı bir renkle boyayabilirsiniz.
+
+
+MOUSE VE JOYSTICK
+
+Amiga'da sprite'ları nasıl hareket ettireceğimizi öğrendiğimize göre,
+onları nasıl hareket ettireceğimizi öğrenelim mi? Tabii ki bir joystick veya mouse yardımıyla!
+
+Bu cihazların nasıl kullanıldığını görmeden önce,
+bir kaydın bitlerini işlemekle ilgili NOT, AND, OR, EOR adlı
+yeni assembler komutlarını öğrenmek gerekir.
+Bu komutlar, hem kaynak kayıt hem de hedef kayıt için bir kaydın (veya bir bellek konumunun) tek tek bitleri üzerinde çalışır.
+Örneğin, bu komutlar bir baytı 8 bitlik bir sayı olarak değil, birbirinden bağımsız 8 bitlik bir grup olarak ele alır.
+Örneğin, bu komutlar bir baytı 8 bitlik (ikili sayı) bir sayı olarak değil,
+ birbirinden bağımsız 8 bitlik bir küme olarak ele alır.
+ Pratikte bu, komutun kayıtta tek bir bit üzerinde yarattığı etkinin,
+ kaydın diğer bitlerinde olanlardan bağımsız olduğu anlamına gelir
+.
+
+Önce NOT komutuna bakalım. Bu komut tek bir işlenen üzerinde çalışır ve etkisi
+işlenenin bitlerini tersine çevirmektir, yani 1'leri 0'larla ve 0'ları
+1'lerle değiştirmektir. Örneğin, d0 kaydında %01001100 sayısını varsa,
+NOT.B d0
+yazarsak, sonuç %10110011 olacaktır.
+
+Diğer 3 komut ise 2 operand ile çalışır, 
+biri kaynak, diğeri 
+hedef, operandların içerikleri arasında bir işlem yapar ve
+sonucu hedef operand'a yerleştirir. İşlemler (her komut için farklıdır)
+ bit-bit'tir, yani kaynak operand'ın her biti ile hedef operand'ın karşılık gelen biti arasında gerçekleşir
+ve sonuç da hedef operand'a yerleştirilir.
+ 
+Dolayısıyla D0 AND D1
+yapmak pratikte şu anlama gelir:
+(D0'ın 0. biti) AND (D1'in 0. biti)
+(D0'ın 1. biti) AND (D1'in 1. biti)
+(D0'ın 2. biti) AND (D1'in 2. biti) ve böylece D0 ve D1'in tüm bitleri için devam eder
+
+Şimdi 2 bit arasında AND'nin nasıl çalıştığını görelim. Bir bit 0 veya 1 değerinde olduğundan
+4 olası durum vardır:
+
+0 AND 0 = 0
+0 AND 1 = 0
+1 AND 0 = 0
+1 AND 1 = 1
+
+AND, yalnızca ilk işlenenin biti
+ve ikinci işlenenin biti 1 olduğunda 1 sonucunu verir. Aslında AND, İngilizce'de
+“ve” anlamına gelir, bu nedenle ilk ve ikinci bit 1 ise sonuç 1 olur.
+Şu şekilde çevrilebilir:
+"İLK VE İKİNCİ BIT 1 Mİ? EVETSE 1, HAYIRSA
+SIFIR CEVAP VERİRİM".
+AND, bir sayının belirli bitlerini sıfırlamak için yararlı olabilir:
+
+AND.W #%1111111111111011,LABEL
+
+LABEL'deki sayının 2. bitini sıfırlar, çünkü bu, işlenen içinde
+sıfırlanan tek bit ve hedefte değiştirilecek tek bit olduğu için sıfırlanır, çünkü
+diğerleri 1'dir, bu nedenle bunlar hedefi değiştirmez.
+Hedef bit 0 ise, 1 AND 0 yapıldığında sonuç 0 olur,
+aynı şekilde 1 ise, 1 AND 1 yapıldığında sonuç 1 olur. 
+0 olan bit ise, hedefi 0 olarak belirler,
+çünkü hedefe 1 vermek için her iki operandın da 1 olması gerekir,
+bu durumda ilki 0 olduğundan, ikincisi 0 veya 1 olsa da sonuç
+0 olacaktır. Bazı örnekler:
+
+1111001111 AND 0011001100 = 0011001100 - Değişiklik yok
+1101011011 AND 0001110001 = 0001010001 - 1 bit sıfırlandı
+1111101101 AND 0011111111 = 0011101101 - 2 bit sıfırlandı
+
+Bu sıfırlama işlemi MASKERLEME olarak adlandırılır:
+
+AND #%11110000,LABEL    (%11110000 maskedir, aslında
+LABEL'deki sayının üzerine bir SIFIR maskesi koymak gibidir,
+ bu durumda ilk 4 biti “kapamak” gibidir
+ilk 4 biti tıpkı bir kızın fondöten sürerek
+bir benini “kapattığı” gibi kapatırız. Ben,
+maskenin 0'ların bulunduğu konumunda bulunan
+1'dir ve makyajla “kaplanan”
+yani sıfırlanan ben olur).
+
+OR ise şu şekilde davranır:
+
+0 OR 0 = 0
+0 OR 1 = 1
+1 OR 0 = 1
+1 OR 1 = 1
+
+Bu durumda, 2 bitten 1'inin 1 olması yeterlidir.
+Dolayısıyla, her iki bit de sıfır olmadığı sürece sonuç her zaman 1'dir.
+Burada da OR'un İngilizce'de “veya” anlamına geldiğini bilmek,
+ilk O ve ikinci bit 1 ise sonucun 1 olduğunu hatırlamamıza yardımcı olur.
+Bu, “BİR VEYA DİĞER BİT 1 OLMALIDIR, 1'İ VERMEK İÇİN” olarak çevrilebilir.
+Bu komut, AND'nin tersine, bitleri AYARLAMAK, yani
+1'e koymak için kullanışlıdır: bazı örnekler:
+
+0000000001 OR 1101011101 = 1101010001 - Değişiklik yok
+1000000000 OR 0010011000 = 1010011000 - 1 bit ayarlandı
+0001111000 OR 1111100000 = 1111111000 - 2 bit ayarlandı
+
+Bu durumda, önceki kız, siyah benekleri (yani 1'leri) kapatmak için
+kırmızı fondöten (0'lar) sürmek yerine,
+Marilyn Monroe'nun dudaklarının üzerinde olduğu gibi sahte benekler yapmak için siyah sürmüş gibi
+. Ya da sanki siyahi bir kız (yani tamamen 1)
+beyaz görünmek için pembe makyaj yapmış (Michael Jackson gibi), yani
+tamamen sıfır olmak için, OR sayısının
+bir olduğu yerlerde fondöteni çıkarıp siyahı ortaya çıkarmış gibi.
+
+Bunun yerine EOR komutu, yani özel OR, biti sadece 1 olduğunda
+veya birinci veya ikinci bit olduğunda ayarlar, her ikisi de 1 olduğunda değil,
+or komutunun yaptığı gibi:
+
+0 EOR 0 = 0
+0 EOR 1 = 1
+1 EOR 0 = 1
+1 EOR 1 = 0     ; OR ile farkı budur! Aslında 1 OR 1 = 1'dir.
+
+Bazı örnekler:
+0000000001 EOR 1101011101 = 1101010000 - 1 bit sıfırlandı
+1000000000 EOR 0010011000 = 1010011000 - 1 bit ayarlandı
+
+Bu son komut, joystick'i okumak için kullanışlı olacaktır.
+
+Bildiğiniz gibi Amiga, joystick veya fareyi bağlamak için kullanılan 2 bağlantı noktasına sahiptir.
+Bu bağlantı noktalarının her birine, joystick veya fare bağlanabilir
+. Her bağlantı noktası için, joystick ve farenin hareket edip etmediğini ve nasıl hareket ettiğini
+öğrenmek için okunabilen bir donanım kaydı vardır. Bağlantı noktası 0 (
+genellikle farenin bağlandığı yer) JOY0DAT
+($dff00a) ile okunurken, bağlantı noktası 1 JOY1DAT ($dff00c) ile okunur.
+Öncelikle joystick'i nasıl okuyacağımızı görelim. Genellikle kullanılan
+JOY1DAT kaydına başvuracağız, ancak JOY0DAT da bir joystick bağladığımızda
+aynı şekilde çalışır.
+Joystick'i 4 anahtarın birleşimi olarak düşünebiliriz (her yön için bir anahtar),
+ her biri 2 durum alabilir: kapalı (1) veya
+açık (0), joystick'in kolu anahtarla ilişkili yönde basılı olup olmadığına bağlı olarak.
+ Joystick'in hangi yönde hareket ettiğini bilmek için
+anahtarların durumlarını bilmemiz gerekir.
+Bu anahtarların 2'si için bu çok basittir, çünkü durumları
+JOY1DAT kaydının bir bitinde gösterilir:
+- JOY1DAT'ın 1. biti “sağ” anahtarın durumudur
+- JOY1DAT'ın 9. biti “sol” anahtarın durumudur.
+Bir bit 1 ise, ilgili anahtar kapalıdır, aksi takdirde açıktır.
+Diğer 2 yön için durum doğrudan bir bite eşlenmez,
+ ancak bir işlemin hesaplanmasıyla elde edilmelidir,
+ daha önce açıkladığımız EOR işlemi, JOY1DAT kaydının 2 biti arasında gerçekleştirilir
+:
+- “yüksek” anahtarın durumu,
+bit 8 ve bit 9
+arasındaki EOR işleminin sonucudur
+- “düşük” anahtarın durumu, bit 0 ve bit 1
+arasındaki EOR işleminin sonucudur.
+4 anahtarın durumlarını bildiğimizden, joystick'i kullanarak
+ekranda bir sprite hareket ettirebiliriz.
+
+Ders7q.s dosyasını başka bir metin tamponuna yükleyin ve çalıştırın
+
+Şimdi fareye gelelim. Bir fareyi bağlantı noktalarından birine bağladığımızda,
+ilgili kayıt joystick'te olduğundan farklı davranır
+. Aslında JOY0DAT (ama 1 için de aynıdır)
+, yüksek baytın dikey yöndeki hareketleri
+ve düşük baytın yatay yöndeki hareketleri algılamak için kullanıldığını görürüz. Her bayt,
+ farenin hareketlerine göre değişen bir sayı (0 ila 255) temsil eder.
+- yüksek bayt, fare yukarı doğru her hareket ettirildiğinde azalır
+ve fare aşağı doğru her hareket ettirildiğinde artar.
+- Alt bay, fare mouse a sinistra
+ve fare mouse a destra.
+Bu bilgileri fare ile bir sprite'ı hareket ettirmek için nasıl kullanacağımızı görelim.
+Aklıma gelen ilk yöntem, JOY0DAT'ın 2 baytını
+sprite'ın koordinatları olarak kullanmaktır, çünkü sprite'ın koordinatları
+da yukarı veya sola gittiğinde azalır ve aşağı veya sağa gittiğinde artar
+.
+Bu yöntemin dezavantajı, bir baytte
+255 değerine ulaşabilmemizdir, bu nedenle JOY0DAT'ın yatay yöne ayrılmış baytından okuyabileceğimiz değerler
+en fazla 255 olabilir, oysa bir sprite'ın yatay koordinatları
+sprite'ın yatay koordinatları 320'yi aşabilir.
+
+Lezione7r1.s dosyasını yükleyin ve bu yöntemi deneyin.
+
+Biraz daha karmaşık olan ancak yatay yönde 320 piksel yerine 255 piksel ile sınırlama sorununu çözen bir yöntem
+Ders7r2.s'de sunulmaktadır. Yöntemin açıklaması için liste sonundaki açıklamayı okuyun
+.
+Bir okla ekran üzerinde nasıl hareket edileceğini bildiğinizde, intuition sistemini kolayca simüle edebilirsiniz, yani okları hareket ettirerek etkinleştirilecek düğmelerle bir kontrol paneli yapabilirsiniz.
+
+Ekran üzerinde bir oku nasıl hareket ettireceğinizi bildiğinizde,
+sezgi sistemini kolayca simüle edebilirsiniz, yani ok (sprite) üzerine hareket ettirerek ve
+joystick veya fare ile düğmeye basarak etkinleştirilecek
+düğmelerin bulunduğu bir kontrol paneli oluşturabilirsiniz. 
+Düğmeye basıldığında okun hangi koordinatta olduğunu kontrol etmek
+ve okun bir düğmenin üzerindeyse o düğmenin seçeneğini etkinleştirmek yeterlidir.
+Bunu yapmak oldukça kolaydır, kendiniz deneyin. Ancak,
+daha ileri derslerde bu tür bir liste olacaktır.
+
+
+
+SPRITE'LARIN YENİDEN KULLANIMI
+
+Sprite'ların yeniden kullanımı, aynı anda
+8'den fazla sprite görüntülememizi sağlayan bir tekniktir. Pratikte, aynı sprite
+farklı yüksekliklerde bulunan farklı nesneleri çizmek için kullanılır.
+Örneğin, ekranın
+üst kısmında bir uzaylıyı görüntülemek için bir sprite kullanırsak aynı sprite'ı
+oyuncunun uzay gemisini ekranın alt kısmında çizmek için tekrar kullanabiliriz.
+Sprite'ları yeniden kullanırken tek sınırlama, aynı sprite ile çizilen 2
+nesnenin farklı yüksekliklere yerleştirilmesi gerektiğidir.
+ Aynı sprite ile çizilen 2 nesneyi oluşturan 2
+satırı ekranın aynı satırında görüntülemek mümkün değildir. Dahası
+, bir kullanım sırasında çizilen şeklin son satırı ile aynı sprite'ın bir sonraki kullanımında çizilen şeklin ilk satırı
+arasında
+sprite'ın kullanılmadığı en az bir satır bulunmalıdır.
+Aşağıdaki şekil durumu daha iyi açıklamaktadır:
+
+ekranın bir kısmı
+________________________
+|             |     Bu ekran bölümündeki her görüntü
+|         _     |     aynı sprite ile çizilir.
+|        _|_|_     |     Her görüntü
+| _ _ _ _ _ _ _ _ _ _|_ _ <-- yatay olarak
+| _/_\_         |
+	 
+| |_____|         |     Ancak, en az bir ekran satırı
+| \_/_ _ _ _ _ _ _ _ _|_ _     sprite kullanımının son satırını
+|     _ _ _ _ _ _ _|_ _ <-- bir sonraki kullanımın ilk satırından
+|     /\         |     ayırmalıdır.
+|     \/         |    
+|             |
+|             |
+|________________________|
+
+
+Yatay konumlar
+veya farklı sprite'larla çizilen şekiller için herhangi bir sınırlama yoktur.
+Bir sprite, her seferinde farklı bir yükseklikte olmak üzere, istediğiniz kadar tekrar kullanılabilir
+.
+Bu teknik, her sprite'a ve bir sprite ile diğer sprite'lar arasında bağımsız olarak uygulanabilir
+sprite ile diğer sprite arasında bağımsız olarak uygulanabilir: örneğin, sprite
+0,3 ve 4'ü bir kez, sprite 1'i üç kez, sprite 2'yi dört kez kullanabilir ve
+sprite 5, 6 ve 7'yi hiç kullanmayabilirsiniz.
+
+Bu tekniği uygulamak çok basittir, çünkü sadece
+sprite'ın veri yapısında bir değişiklik gerektirir.
+
+Normalde, sprite yapısının sonunda, şekli tanımlayan tüm verilerin
+ardından, yapının sonunu belirten 0 değerinde 2 kelime bulunur.
+ Bir sprite'ı yeniden kullanmak için, bu 2 kelimenin yerine,
+ ilkinden daha aşağıda ekrana çizilecek başka bir şekli tanımlayan başka bir sprite yapısı koyarız
+. 
+Sprite'ı
+üçüncü kez yeniden kullanmak isterseniz, ikinci yapının hemen arkasına üçüncü bir sprite yapısı yerleştirin
+ve istediğiniz kadar yeniden kullanım için aynı işlemi tekrarlayın. Son kullanımın
+veri yapısının ardından, son kullanımın sonunu belirten 2 adet 0 değerinde kelime yerleştirin.
+
+
+SPRITE YAPISI
+___________________________ - -
+| | VSTART_1, HSTART_1 | |
+|___________________________|
+| | VSTOP_1 ve bitler     | |
+|___________________________|
+|                      |
+___________________________
+| | kat 1, satır 1 | |
+|___________________________|
+| | kat 2, satır 1 | |
+|___________________________|         İlk kullanım verileri
+|                      |- - -
+------                sprite
+|        ------			 |
+------
+| ___________________________ |
+| kat 1, son satır |
+| |___________________________| |
+| kat 2, son satır |
+| |___________________________| |
+- -
+___________________________ - -
+| | VSTART_2, HSTART_2 | |    İkinci
+|___________________________|        sprite kullanımı
+| | VSTOP_2 ve bit     | |- - - Başlangıç konumu
+|___________________________|        dikey başlangıç konumu
+|                     |    en az bir satır
+___________________________        önceki kullanımın son satırının
+| |             |     |    altında olmalıdır.
+|___________________________|
+| |             |     |
+|___________________________|
+|                     |
+------
+|        ------			 |
+------
+| ___________________________     |
+|             |
+| |___________________________|     |
+|             |
+\|/ |___________________________|     |
+- -
+_ _
+_____             |
+_____             |- - -    Sonraki kullanımlar
+_____         _ _|
+
+___________________________ _ _
+|	 0         |     |    İki sıfırlanmış kelime
+|___________________________|     |_ _ _ son
+|     0         |     |    kullanımın sonunu
+|___________________________|_ _|
+
+
+Çeşitli dikey kullanımların yapıya
+en üstten en alta doğru sırayla yerleştirilmesi gerektiği unutulmamalıdır.
+Bu nedenle, her kullanımın VSTART baytı, sprite'ın önceki kullanımının VSTOP baytından BÜYÜK olmalıdır
+.
+
+Bir sprite'ın 2 kez yeniden kullanıldığı pratik bir yapı örneği görelim
+:
+
+MIOSPRITE:
+VSTART_1:
+dc.b $50                ; ilk kullanım konumu
+HSTART_1:
+dc.b $40+12
+VSTOP_1:
+dc.b $58
+dc.b $00
+dc.w    %0000001111000000,%0111110000111110	; ilk
+dc.w    %0000111111110000,%1111001110001111    ; kullanım
+dc.w    %0011111111111100,%1100010001000011
+dc.w	%0111111111111110,%1000010001000001
+dc.w	%0111111111111110,%1000010001000001
+dc.w	%0011111111111100,%1100010001000011
+dc.w	%0000111111110000,%1111001110001111
+dc.w	%0000001111000000,%0111110000111110
+VSTART_2:         ; kullanım konumu 2
+dc.b $70            ; VSTART_2 > VSTOP_1 OLDUĞUNA DİKKAT EDİN
+HSTART_2:
+dc.b $40+20
+VSTOP_2:
+dc.b $78
+dc.b $00
+dc.w    %0000001111000000,%0111110000111110    ; “şekil” verileri
+dc.w    %0000111111110000,%1111001110001111    ; ikinci kullanım
+dc.w	%0011111111111100,%1100010001000011
+dc.w	%0111111111111110,%1000001110000001
+dc.w	%0111111111111110,%1000010001000001
+dc.w	%0011111111111100,%1100010001000011
+dc.w	%0000111111110000,%1111001110001111
+dc.w    %0000001111000000,%0111110000111110
+dc.w    0,0                    ; son kullanım
+
+
+Yeniden kullanım tekniği,
+iyi kullanıldığında, bir shoot'em'up oyununda hareket halindeki nesnelerin sayısını katlayabilir.
+ Örneğin, düşmanların yatay olarak hareket ettiği yatay kaydırmalı bir oyunda
+:
+
+
+/--___
+\--
+
+/--___
+\--
+
+/--___
+()-                \--
+/\___o - - - - - -
+||||--o - - - - - -            /--___
+||||                    \--
+//\\
+// \\
+------------------------------------------------------------
+
+Düşman oluşumu, çoğunlukla yatay yönde hareket eden ve birbirlerinin üzerine çıkmayan nesnelerden oluştuğu için
+,
+tek bir yeniden kullanılan sprite ile yapılabilir. Bu şekilde, oyuncu1 ve olası bombalar için 7 sprite
+daha elde ederiz.
+
+
+Bu tekniğin kullanımına ilişkin bir örnek, ders7s.s'de bulunabilir. Burada
+aynı anda “16” sprite görüntülenecektir. Dosyayı yükleyin ve inceleyin.
+
+
+Kursumuzda, birkaç yıl önceki intro'larda en ‘klasik’ efektlerden biri olan
+“starfield”, yani yatay olarak hareket eden yıldızlar da eksik olamazdı. Yıldızlar, yeniden kullanılan bir sprite kullanılarak oluşturulmuştur. Ders7t1.s'de 3 versiyonunu sunuyoruz. “yıldız alanı”, yani yatay olarak hareket eden yıldızlar
+.
+Yıldızlar aslında yeniden kullanılan bir sprite kullanılarak yapılmıştır.
+Ders7t1.s, ders7t2.s ve ders7t3.s'de 3 versiyonunu sunuyoruz.
+Sprite'ların yeniden kullanımı, normal sprite'lar gibi “bağlı” sprite'lara da uygulanabilir. 
+Ders 7t4.s'de,
+“yıldız alanı”na benzer bir efekt oluşturduğumuz, ancak yıldızların yerine renkli toplar kullandığımız bir örnek görüyoruz.
+-        -        -        -
+
+-        -        -        -
+
+DUAL PLAYFIELD MODE
+
+Sprite'ların diğer özelliklerini açıklamadan önce, Dual Playfield modunu daha ayrıntılı olarak ele almak için bir parantez açacağız.
+Ders 4'te de bahsettiğimiz gibi, Dual Playfield,
+PLAYFIELD 1 ve 2 olarak adlandırılan iki ekranı üst üste görüntülemenizi sağlayan
+özel bir grafik modudur.
+2 ekranın üst üste olması ne anlama gelir?
+Pratikte her oyun alanı, “şeffaf” bir renge sahiptir ve bu renk sayesinde
+altında ne olduğunu görebilirsiniz, tıpkı her sprite'ın 0
+rengi gibi. Pratikte şeffaflık gerçek bir renk değil,
+playfield içindeki bir tür “delik”tir. Her playfield'ın diğer renkleri
+ise normal şekilde davranır. İki PLAYFIELD'dan biri (seçilebilir)
+diğerinin üzerinde görünür ve şeffaf olmayan renkleri
+diğer oyun alanını kaplar; şeffaf olan ise bir delik gibi davranır ve
+altındaki oyun alanını gösterir.
+Her iki oyun alanının sahip olabileceği maksimum bit düzlemi sayısı
+LOW-RES'te 3 bit düzlemi ve HI-RES'te 2 bit düzlemidir. Pratikte, Amiga'nın 6
+bit-planes Amiga'da iki gruba ayrılır ve her grup
+bir playfield oluşturur. Playfield 1 tek bit-plane'lerden oluşur,
+yani bit-plane 1, 3 ve 5. Playfield 2 çift bit-plane'lerden oluşur,
+yani 2, 4 ve 6.
+Tabii ki her zaman tüm bit-plane'leri kullanmak gerekli değildir
+ kullanmak her zaman gerekli değildir. Ancak, 2 oyun alanına istediğimiz bit düzlemlerini bağımsız olarak atayamayız.
+ Aslında, kullanılacak bit düzlemlerinin sayısı,
+grafik modlarında olduğu gibi aynı şekilde belirtilir. 
+BPLCON0 ($dff100) kaydının 14-12 bitlerinde, BPU2, BPU1 ve BPU0 bitleri olarak adlandırılan bitlerde, 2 oyun alanında etkinleştirilecek toplam bit düzlemi sayısı belirtilir
+.
+ BPU bitlerinde belirttiğimiz toplam sayıya göre,
+ donanım bit düzlemlerini
+aşağıdaki tabloya göre atar:
+
+
+Kullanılan bit düzlemlerinin sayısı |    Bit düzlemleri     |    Bit düzlemleri
+(BPLCON0'ın BPU bitleri)     |    Oyun alanı 1     |    Oyun alanı 2
+----------------------------|---------------------|-------------------
+|             |
+0         | yok     |    yok
+|             |
+1         | düzlem 1     |    yok
+|             |
+2         | düzlem 1     |    düzlem 2
+|             |
+3         | düzlem 1,3     |    düzlem 2
+|			 |
+4         | uçak 1,3     |    uçak 2,4
+|             |
+5         | uçak 1,3,5     |    uçak 2,4
+|             |
+6         | düzlem 1,3,5     |    düzlem 2,4,6
+
+
+Gördüğünüz gibi, playfield 1 her zaman playfield 2'den daha fazla düzleme sahiptir
+ve ayrıca playfield 2, playfield 1'den en fazla bir düzlem daha azdır
+; playfield 1'e 3 düzlem ve playfield 2'ye sadece bir düzlem atamak mümkün değildir
+.
+
+Standart grafik modlarında olduğu gibi, bit düzlemlerinin üst üste binmesi
+videoda her pikseli temsil etmek için kullanılan rengi belirler.
+Ancak, bit düzlemleri ve renk kayıtları arasındaki eşleşme
+biraz farklıdır ve aşağıdaki 2 tabloda gösterilmiştir:
+
+OYUN ALANI 1
+Değer	| Değer | Değer    | Renk
+düzlem 5    |    düzlem 3    |    düzlem 1    | seçili
+----------------------------------------------------
+|        |        |
+0    |    0    |    0    | şeffaf
+|        |        |
+0    |    0    |    1    | COLOR01
+|		|        |
+0    |    1    |    0    | COLOR02
+|        |        |
+0    |    1    |    1    | COLOR03
+|        |        |
+1    |    0    |    0    | COLOR04
+|        |        |
+1    |    0    |    1    | COLOR05
+|        |        |
+1    |    1    |    0    | RENK06
+|        |        |
+1    |    1    |    1    | RENK07
+
+
+OYUN ALANI 2
+Değer    | Değer    | Değer    | Renk
+düzlem 6    |    düzlem 4    |    düzlem 2    | seçili
+----------------------------------------------------
+|        |        |
+0    |    0    |    0    | şeffaf
+|        |        |
+0    |    0    |    1    | COLOR09
+|        |        |
+0    |    1    |    0    | COLOR10
+|        |        |
+0    |    1    |    1    | COLOR11
+|        |        |
+1    |    0    |    0    | RENK12
+|        |        |
+1    |    0    |    1    | RENK13
+|        |        |
+1    |    1    |    0    | RENK14
+|        |        |
+1    |    1    |    1    | RENK15
+
+
+Bu noktada Dual Playfield modunun nasıl çalıştığını biliyorsunuz. Tek
+bilmediğiniz şey... dual playfield'ın nasıl etkinleştirileceği!
+Çok basit, BPLCON0 kaydının 10. bitini 1 olarak ayarlamanız yeterlidir.
+Daha önce de belirttiğimiz gibi, iki playfield'dan hangisinin 
+diğerinin üzerinde görüneceğini seçebilirsiniz. Üstte görünen oyun alanı
+daha önceliklidir. Öncelik belirleyen bir bit vardır, bu bit
+BPLCON2 ($dff104) kaydının 6. bitidir: bu bit 0 ise oyun alanı 1, 2'nin üstünde görünür,
+1 ise oyun alanı 2, 1'in üstünde görünür.
+
+Çift Oyun Alanı örneğini lezione7u.s dosyasında görebilirsiniz.
+
+
+SPRITE VE OYUN ALANI ARASINDAKİ ÖNCELİK
+
+Çeşitli sprite'ların göreceli önceliklerini daha önce gördük. Yani, iki sprite
+üst üste geldiğinde, numarası daha düşük olanı diğerinin üstünde görünür.
+ Ayrıca, Çift Oyun Alanı modunda 2 oyun alanı arasındaki önceliği nasıl belirleyeceğimizi de gördük.
+oyun alanları arasında öncelik belirlemeyi gördük. Şimdi sprite ve oyun alanı arasındaki öncelikleri
+görmemiz kaldı. Öncelikle, sprite'ların her zaman
+sıfır renginin üzerinde göründüğünü not edelim. Diğer renkler için öncelik
+BPLCON2 kaydı tarafından kontrol edilir. Öncelik,
+çift ve tek bit düzlemleri için bağımsız olarak ayarlanabilir. Bu, Dual
+Playfield modunda çok kullanışlıdır, çünkü her playfield'e sprite'lara göre farklı bir öncelik 
+verebiliriz. Standart modda ise, çift ve tek planlara sprite'lara göre aynı 
+öncelik vermek daha uygundur. BPLCON2
+, çift ve tek düzlemler için istenen öncelik düzeyini yazmak için bazı bitlere sahiptir.
+ 0 ila 2 bitleri, tek bit düzlemlerinin öncelik düzeyini içerir
+(Dual Playfield modunda PLAYFIELD 1'e karşılık gelir),
+ 3 ila 5 bitleri ise çift bit düzlemlerinin öncelik düzeyini içerir
+(Dual Playfield modunda PLAYFIELD 2).
+Öncelik seviyesinin nasıl kodlandığını, kodlama her iki durumda da aynı olduğu için
+genel bir oyun alanına
+bakarak görelim. Oyun alanlarındaki öncelikler açısından, sprite'lar 
+çiftler halinde (0-1, 2-3, 4-5 ve 6-7) Bildiğimiz gibi, sprite'lar
+(ve dolayısıyla çiftler) arasındaki öncelik sabittir:
+
+EN YÜKSEK ÖNCELİK ÇİFT 1 (SPRITES 0 VE 1)
+ÇİFT 2 (SPRITES 2 VE 3)
+ÇİFT 3 (SPRITES 4 VE 5)
+EN DÜŞÜK ÖNCELİK ÇİFT 4 (SPRITES 6 VE 7)
+
+Öncelik seviyesi, bu yığına oyun alanımızı eklememizi sağlar
+: tüm çiftlerin üstüne, tüm çiftlerin altına
+veya 2 çiftin arasına yerleştirebiliriz. Bu nedenle, oyun alanını çift 4'ün altına ve çift 2'nin üstüne yerleştirmek mümkün değildir, çünkü
+çift 2, yığının içinde çift 4'ten daha üstte yer almaktadır. Bunun tersi ise
+mümkündür. Şimdi, BPLCON2 bitlerinde ayarladığımız seviyeye göre tüm olası
+öncelikleri gösteren bir tablo gösterelim
+
+KOD | 000 | 001 | 010 | 011 | 100 |
+----------------------------------------------------------------------------
+PRI. MAX | PLAYFIELD | ÇİFT 1 | ÇİFT 1 | ÇİFT 1 | ÇİFT 1 |
+| ÇİFT 1 | OYUN ALANI | ÇİFT 2 | ÇİFT 2 | ÇİFT 2 |
+| ÇİFT 2 | ÇİFT 2 | OYUN ALANI | ÇİFT 3 | ÇİFT 3 |
+| ÇİFT 3 | ÇİFT 3 | ÇİFT 3 | OYUN ALANI | ÇİFT 4 |
+PRI. MIN | ÇİFT 4 | ÇİFT 4 | ÇİFT 4 | ÇİFT 4 | OYUN ALANI |
+
+Örneğin, tablodan da görüldüğü gibi, sprite 0,1,2,3
+(yani çiftler 1 ve 2) playfield'ın üzerinde ve diğer sprite
+ise altında görünmesini istiyorsak, %010 kodunu seçmeliyiz. Bu kod
+, BPLCON2 kaydına, çift oyun alanında
+oyun alanı 1'e atıfta bulunuluyorsa 0 ila 2 bitlerine, çift oyun alanında
+oyun alanı 2'ye atıfta bulunuluyorsa 3 ila 5 bitlerine yazılmalıdır. Normal bir ekran kullanıyorsak, bunu
+ 
+hem 0 ila 2 bitlerine hem de 3 ila 5 bitlerine yazmalıyız.
+
+Ders 7v1.s'de “normal” bir ekranda sprite önceliklerini nasıl ayarlayacağınızın bir örneğini bulabilirsiniz
+.
+
+Ders 7v2.s'de ise Dual Playfield ekranı kullanılmaktadır.
+
+
+
+ÇATIŞMALAR
+
+Amiga donanımı, programcıya sprite'lar arasında, sprite'lar ile
+oyun alanı arasında ve 2 oyun alanı arasında
+çarpışmaları algılayan bir sistem sunar.
+Tüm bu çarpışma türleri sadece 2 kayıt ile yönetilir:
+CLXDAT ($dff00e), çarpışmaların bildirildiği salt okunur bir kayıttır
+ve CLXCON ($dff098), çarpışmaların algılanma şeklini değiştirebileceğiniz bir kontrol kaydıdır
+.
+ Bu kayıtların yapısını açıklamakla başlayalım.
+CLXDAT kaydının bitleri çarpışma algılayıcıları gibi davranır.
+Her bit, belirli bir çarpışma türüne ayrılmıştır.
+Belirli bir tür çarpışma meydana geldiğinde, CLXDAT'ta buna ayrılmış bit
+1 değerini alır. Çarpışma artık meydana gelmediğinde, bit
+0 değerine geri döner. Aşağıdaki tabloda CLXDAT bitlerinin anlamları açıklanmaktadır
+:
+
+CLXDAT BİTlerinin KULLANIMI
+
+bit 15 kullanılmıyor
+bit 14 çift 3 ve çift 4 arasında çarpışma
+bit 13 çift 2 ve çift 4 arasında çarpışma
+bit 12 çift 2 ve çift 3 arasında çarpışma
+bit 11 çift 1 ve çift 4 arasında çarpışma
+bit 10 çift 1 ve çift 3 arasında çarpışma
+bit 9 çift 1 ve çift 2 arasında çarpışma
+bit 8 oyun alanı 2 ve çift 4 arasında çarpışma
+bit 7 oyun alanı 2 ve çift 3 arasında çarpışma
+bit 6 oyun alanı 2 ve çift 2 arasında çarpışma
+bit 5 oyun alanı 2 ve çift 1 arasında çarpışma
+bit 4 oyun alanı 1 ve çift 4 arasında çarpışma
+bit 3 oyun alanı 1 ve çift 3 arasında çarpışma
+bit 2 oyun alanı 1 ve çift 2 arasında çarpışma
+bit 1 oyun alanı 1 ve çift 1 arasında çarpışma
+bit 0 oyun alanı 1 ve oyun alanı 2 arasında çarpışma
+
+CLXCON kaydı aşağıdaki yapıya sahiptir
+
+CLXCON BIT KULLANIMI
+bit 15 sprite 7 etkinleştir
+bit 14 sprite 5'i etkinleştirir
+bit 13 sprite 3'ü etkinleştirir
+bit 12 sprite 1'i etkinleştirir
+bit 11 bit düzlemi 6'yı etkinleştirir
+bit 10 bit düzlemi 5'i etkinleştirir
+bit 9 bit düzlemi 4'ü etkinleştirir
+bit 8 bit düzlemi 3'ü etkinleştirir
+bit 7 bit düzlemi 2'yi etkinleştirir
+bit 6 bit düzlemi 1 etkinleştir
+bit 5 bit düzlemi 6 çarpışma değeri
+bit 4 bit düzlemi 5 çarpışma değeri
+bit 3 bit düzlemi 4 çarpışma değeri
+bit 2 bit düzlemi 3 çarpışma değeri
+bit 1 bit düzlemi 2 çarpışma değeri
+bit 0 bit düzlemi 1 çarpışma değeri
+
+(not: “etkinleştir” yazan yerlerde ÇARPIŞMA ALGILAMA İÇİN ETKİNLEŞTİRME
+anlamına gelir: örneğin CLXCON'un 15. biti 0 ise, bu
+sprite 7'nin ekranda görünemeyeceği anlamına gelmez, sadece
+sprite 7 ile ilgili çarpışmalar algılanmayacağı anlamına gelir)
+
+Bu bitlerin anlamını birazdan açıklayacağız.
+Sprite ve sprite arasındaki çarpışmadan başlayalım.
+Hemen şunu belirtelim ki, çarpışmalar konusunda da sprite
+çiftler olarak kabul edilir.
+Aslında, yalnızca farklı çiftlere ait sprite'lar arasındaki çarpışmalar algılanabilir,
+ aynı çifte ait sprite'lar arasındaki çarpışmalar algılanamaz.
+Örneğin, sprite 0 ile sprite 1 arasındaki çarpışmayı algılamak mümkün değildir.
+Bunun yerine, farklı çiftlere ait sprite'lar arasındaki çarpışmalar algılanır.
+Örneğin, sprite 0 ile sprite 2 arasında bir çarpışma meydana gelirse,
+CLXDAT'ın bit 9'u (çift 1 ve çift 2 arasındaki çarpışma) 1 değerini alır.
+Sprite 1 ve sprite 2 arasında bir çarpışma meydana gelirse, sprite 1 de (0 gibi) çift 1'e ait olduğu için
+her zaman bit 9
+1 değerini alır. Ancak bu her zaman böyle olmaz.
+Aslında, çift numaralı sprite'ları (yani
+sprite 0, 2, 4 ve 6) etkileyen çarpışmalar her zaman algılanır, ancak tek numaralı sprite'ları
+etkileyen çarpışmalar, yalnızca biz istersek algılanır. 
+Tek sayı sprite'ları çarpışma algılamaya etkinleştirmek için,
+CLXCON kaydındaki ilgili etkinleştirme bitini 1'e ayarlamalıyız.
+Bitlerin hangileri olduğunu yukarıdaki tabloda görebilirsiniz. Tek sayı sprite'lar
+birbirinden bağımsız olarak etkinleştirilebilir. Bir
+veya daha fazla tek sayı sprite'ı çarpışma algılamaya etkinleştirmek, avantajlar ve
+dezavantajlar getirir. Örneğin, sadece 1 ve 2 çiftlerini ele alalım ve
+sprite 1 ve sprite 3'ü etkinleştirmediğimizi varsayalım. Bu durumda,
+sprite 0 ve 2 arasında bir çarpışma meydana gelirse, bit 9 (CLXDAT'ta)
+1 değerini alır. Bunun yerine, çarpışma sprite 1 ve 2 arasında
+veya 0 ve 3 arasında veya 1 ve 3 arasında meydana gelirse, hiçbir şey olmaz ve
+çarpışmanın meydana geldiğini bilemeyiz.
+Bunun yerine, tek sayı sprite'lardan birini, örneğin
+sprite 1'i etkinleştirdiğimizi varsayalım. Bu durumda, sprite 0 ve 2 ile sprite 1 ve 2 arasındaki çarpışmalar
+CLXDAT'ın 9 bitini 1'e ayarlar, sprite 0 ve 3 ile
+sprite 2 ve 3 arasındaki çarpışmalar ise hiçbir etki yaratmaz. Bu durumda, sprite 1'in etkinleştirilmediği önceki duruma göre bir
+dezavantaj vardır.
+Nitekim önceki durumda, bit 9 değeri 1 olduğunda, çarpışmanın sprite 0 ve sprite 2 arasında gerçekleştiğinden emin olabilirdik.
+Oysa bu durumda
+iki olasılık vardır: ya sprite 0 ve 2 arasında ya da
+sprite 1 ve 2 arasında çarpışma vardır. 
+CLXDAT
+kayıt defterini okuyarak bu bilmeceyi çözmenin bir yolu yoktur. Sprite 1 devre dışı, ancak sprite 3 etkinse,
+sprite 0 ile 2
+ve sprite 0 ile 3 arasında çarpışmalar algılanır, ancak hangisinin gerçekleştiği ayırt edilemez.
+olduğunu ayırt etmek mümkün değildir.
+Son olarak, sprite 1 ve 3'ün her ikisi de etkinleştirilmişse,
+sprite 0 ile 2, sprite 0 ile 3, sprite 1 ile 2 ve
+sprite 1 ile 3 arasında çarpışmalar algılanır ve bunları ayırt etmek mümkün değildir.
+
+
+Çarpışmayı algılamada tek sayı sprite'lar devre dışı bırakıldığında sprite'lar arasında çarpışma örneği
+ders7w1.s'de bulunmaktadır. Yükleyin ve çalışıp çalışmadığını kontrol edin
+.
+
+
+Tekli sprite'lar arasında çarpışma örneği, tekli sprite'lar çarpışma algılamasında devre dışı bırakılmış olarak
+ders7w2.s dosyasında bulunur. Bu örneğin olduğu gibi çalışmadığını göreceksiniz; çalışması için
+yorumda belirtilen değişiklikleri yapmanız gerekir.
+Bu örnekte, bir çarpışmanın tekli sprite ile mi yoksa onunla eşleştirilmiş çift sprite ile mi ilgili olduğunu ayırt etmek için
+konumların karşılaştırılmasına dayalı bir teknik kullanılmaktadır
+.
+
+
+Şimdi sprite ve oyun alanı arasındaki çarpışmaya gelelim.
+Bir sprite çifti ile bir veya daha fazla
+oyun alanı rengi arasında bir çarpışma algılanabilir. Bu durumda da çarpışmalar
+çiftler halinde değil, çiftlerin tek tek üyeleri dikkate alınarak algılanır.
+CLXCON kaydındaki bitler aracılığıyla tek sayı sprite'ları etkinleştirme
+bu durumda da etkilidir.
+Çarpışmaların algılanması, normal bir ekran mı yoksa Dual Playfield mı kullandığımıza göre farklılık gösterir.
+Normal bir ekranda, CLXDAT'ın 1 ila 4 bitleri
+bir sprite çifti ile çarpışma için seçtiğimiz renk (veya renkler)
+arasındaki çarpışmayı gösterir. Bit 1,
+oyun alanı ile çift 1 arasında, bit 2 oyun alanı ile çift 2 arasında, bit 3
+oyun alanı ile çift 3 arasında, bit 4 oyun alanı ile çift 4 arasında çarpışmayı gösterir. 5 ila 8 arasındaki bitler
+ise kullanılmamalıdır.
+Çift oyun alanı modunda, 2 oyun alanından biri ile bir sprite çifti arasında bir çarpışma algılanabilir ve CLXDAT bitleri
+CLXDAT kayıt tablosunda gösterildiği gibi kullanılır: 1 ila 4 bitleri, oyun alanı 1 ile çeşitli sprite çiftleri arasındaki çarpışmaları gösterirken, 5 ila 8 bitleri
+oyun alanı 2 ile çeşitli sprite çiftleri arasındaki çarpışmaları gösterir. Çarpışmaları algılamak için kullanılacak renkleri seçmek için CLXDAT kaydı kullanılır. Tek renkli bir oyun alanında, CLXDAT bitleri tek bir renkle ilişkilendirilir.
+Çift renkli bir oyun alanında, CLXDAT bitleri iki renkle ilişkilendirilir.
+playfield 2 ile çeşitli sprite çiftleri arasındaki çarpışmaları gösterir.
+Çarpışmaları algılamak için kullanılacak renkleri seçmek için CLXCON kaydı kullanılır.
+Tek renkli durumla başlayalım.
+CLXCON'un 6 ila 11 bitleri, çarpışmalar için hangi bit düzlemlerinin aktif olduğunu gösterir.
+ Sprite ile tek bir renk arasındaki çarpışmaları algılamak istiyorsak,
+ görüntülenen tüm bit düzlemlerini çarpışmalar için etkinleştirmeliyiz.
+ Bir çarpışmayı algılamak için kullanılacak rengin seçimi
+, rengin bulunduğu kaydın numarasını
+CLXCON'un 0 ila 5 bitlerine yazarak yapılır.
+Örneğin, 16 renkli (4 bit düzlemi) normal bir ekranımız olduğunu ve
+ve tek sayı sprite'ların çarpışmalarını dikkate almak istemediğimizi varsayalım.
+Bir sprite ile renk 13 arasında bir çarpışmayı algılamak istiyorsak
+CLXCON kaydına şu değeri yazmalıyız
+
+111111
+5432109876543210
+$03cb=%0000001111001101
+
+Bitlerin anlamına bakalım. 12 ila 15 bitleri tek sayı sprite'ları devre dışı bırakır
+. 6 ila 11 bitlerinden sadece 6, 7, 8 ve 9 bitleri 1'dir. Bu,
+sadece 1 ila 4 bit düzlemlerinin çarpışmalar için etkin olduğunu gösterir. Bunlar
+etkin olan tek bit düzlemleridir. 0 ila 5 bitleri %001101=13 sayısını içerir, yani
+ilgilendiğimiz kayıt numarasıdır. Çift Oyun Alanı durumunda
+durum aynıdır, ancak çarpışmalar için kullanılan tüm bit düzlemlerini etkinleştirerek
+2 renk ile aynı anda çarpışmaları etkinleştirirsiniz:
+örneğin, her biri 8 renkten oluşan 2 oyun alanı ile
+oyun alanı 1'in 7. rengi ve oyun alanı 2'nin 2. rengi için çarpışma algılamayı etkinleştirmek istiyorsak
+CLXCON'a şu sayıyı yazmalıyız
+
+111111
+5432109876543210
+$0fbb=%0000111111011101
+
+Bu bit kombinasyonu, tüm bit düzlemlerinin çarpışma algılamaya etkinleştirildiğini gösterir
+(6 ila 11 arasındaki tüm bitler 1 değerindedir).
+Ayrıca, oyun alanı 1 için kullanılan renk numarası, yan yana konulduğunda %111=7 sayısını oluşturan
+0,2 ve 4 bitlerinden oluşurken, oyun alanı 2 için kullanılan renk numarası, yan yana konulduğunda
+%010=2 sayısını oluşturan 1,3 ve 5 bitlerinden oluşur.
+Bir sprite'ın oyun alanı 1'deki bir renkle çarpışması, aynı sprite'ın oyun alanı 2'deki bir renkle çarpışması durumundan farklı bir CLXDAT bitinin yanıp sönmesine neden olur.
+Bir sprite'ın oyun alanı 1'deki bir renkle çarpışması,
+ aynı sprite'ın oyun alanı 2'deki bir renkle çarpışması durumundan farklı olarak
+CLXDAT bitinin yanmasına neden olur. Örneğin, CLXDAT kayıt tablosunda
+görüldüğü gibi, sprite 0 -
+oyun alanı 1 çarpışması CLXDAT'ın 1 bitini 1'e ayarlarken, sprite 0 -
+oyun alanı 2 çarpışması CLXDAT'ın 5 bitini 1'e ayarlar.
+
+Bir sprite'ın aynı anda birden fazla renkle çarpışmasını da tespit etmek mümkündür
+ancak bu sadece belirli koşullarda gerçekleşir.
+Bunun nasıl mümkün olduğunu anlamak için renk kayıtlarının sayılarının ikili temsilini
+akılda tutmak gerekir.
+Bildiğiniz gibi, 0'dan 31'e kadar numaralandırılmış 32 renk kaydı vardır.
+Aynı anda 2 renkle çarpışmaları algılama olasılığı
+bazı ikili sayıların benzer temsiline dayanır.
+Örneğin, 2 ve 21 sayılarını ele alalım.
+İkili sistemde 2=%00010 ve 21=%10101'dir (31'e kadar sayıları yazabilmek için 5 bit düşünelim
+).
+Gördüğünüz gibi, bu 2 sayının ikili temsil biçimleri tamamen
+farklıdır.
+Bu nedenle, her iki renkle aynı anda çakışmayı algılamanın bir yolu yoktur
+.
+Bunun yerine 22 ve 23 sayılarını ele alalım.
+Şimdi ikili sistemde 22=%010110 ve 23=%010111 olduğunu görelim.
+Bu iki sayının gösterimleri sadece bir bit, en alt bit ile farklıdır.
+Bu durumda, her iki renkle de çarpışmaları tespit etmek mümkündür.
+Aslında, en alt bitin değeri (bu durumda renkleri ayıran)
+bit düzlemi 1 tarafından verilir.
+Çarpışmaları tespit etmek için bit düzlemi 1'i ETKİNLEŞTİRMEZSEK,
+sadece bit düzlemleri 2, 3, 4 ve 5'in değerleri dikkate alınır (32 renkli bir ekranda
+bulunmaktayız, dolayısıyla toplam 5 bit düzlemi vardır) ve
+bit düzlemi 1'in aldığı değer hiçbir etkiye sahip olmaz. CLXCON'a şu değeri yazalım:
+
+111111
+5432109876543210
+CLXCON= %0000011110010110
+
+Bu, çarpışmanın yalnızca etkinleştirilmiş bit düzlemlerine (yani 2, 3, 4 ve 5) göre algılanacağı ve tam olarak
+sprite'ımız aşağıdaki özelliklere sahip bir pikselin üzerine geldiğinde algılanacağı anlamına gelir
+bit düzlemi 1=(0 veya 1) çünkü etkinleştirilmemiştir bit düzlemi 2=1 bit düzlemi 3=1 bit düzlemi 4=0 bit düzlemi 5=1
+
+bit düzlemi 1=(0 veya 1) çünkü etkinleştirilmemiştir
+bit düzlemi 2=1
+bit düzlemi 3=1
+bit düzlemi 4=0
+bit düzlemi 5=1
+
+Gördüğümüz gibi, hem 22=%010010
+ve 23=%010111'in ikili temsilinin bu özel bit yapılandırmasına sahip olduğu
+görüldüğü gibi, her iki renk de sprite'ın geçişinde bir çarpışmaya neden olur.
+ Etkinleştirmediğimiz bit düzleminin (1) 22 ve 23'ün ikili temsilini ayıran tek bit ile
+tam olarak eşleştiğine dikkat edin
+.
+Bu teknik, ikili gösterimleri tek bir bit farklı olan herhangi bir renk çiftine uygulanabilir.
+Örneğin,
+8=%001000 ve 9=%001001 sayıları da en düşük bit açısından farklıdır, bu nedenle
+sprite ile bu 2 renk arasındaki çarpışmaları tespit etmek için
+bit düzlemi 1'i devre dışı bırakmak gerekir. Bunun yerine 10=%001010 ve 14=%001110 renklerini ele alırsak,
+2 ikili temsilin 2. bitinde farklılık olduğunu görürüz (bitleri
+sağdan sola 0'dan başlayarak numaralandırıyoruz), bu da bit düzlemi 3'e karşılık gelir.
+Sprite ile bu 2 renk arasındaki çarpışmaları algılamak için
+bit düzlemi 3'ü devre dışı bırakmalı ve CLXCON'a aşağıdaki değeri atamalısınız:
+
+111111
+5432109876543210
+CLXCON= %0000011011001010 ; bit 8=0, bit düzlemi 3'ün ETKİN olmadığını gösterir
+
+2 bit düzlemini devre dışı bırakırsak, 4 renk arasındaki çakışmaları algılayabiliriz.
+Prensip her zaman aynıdır. Örneğin şu renkleri ele alalım:
+
+1=%00001
+3=%00011
+5=%00101
+7=%00111
+
+Bu 4 renk, bit 0, 3 ve 4'te birbirleriyle aynıdır, ancak
+her renk bit 1 ve 2'de farklı değer kombinasyonlarına sahiptir.
+Bir sprite ile bu 4 rengin tümü arasındaki çarpışmaları tespit etmek için
+bit 1 ve 2'ye karşılık gelen bit düzlemleri 2 ve 3'ü devre dışı bırakmak yeterlidir.
+3 bit düzlemini devre dışı bırakarak 8 renkle
+aynı anda çarpışmaları tespit edebilir, 4 bit düzlemini devre dışı bırakarak 16 renkle çarpışmaları tespit edebilirsiniz.
+Dual Playfield modunda çalışırken de, her bir oyun alanı için
+sprite ile 
+her oyun alanı için birden fazla renk arasındaki çarpışmaları tespit etmek için bazı bit düzlemlerini devre dışı bırakmak mümkündür (sprite ile 2 renk arasındaki
+çarpışmayı tespit etmemiz gerekiyorsa, ancak bu renklerden biri playfield 1
+ve diğeri playfield 2'ye aitse, bu gerekli değildir, çünkü CLXDAT'ta
+her playfield için, her iki playfield ile çarpışmayı aynı anda tespit etmemizi sağlayan bir bit vardır
+).
+
+
+Ders 7x1.s'de, “standart” modda sprite ve
+oyun alanı arasındaki çarpışmanın bir örneğini görüyoruz.
+
+
+Ders 7x2.s'de ise Dual Playfield modunda bir örnek var.
+Her iki listede de, yorumlarda birden fazla renkle çarpışmayı
+algılamanın çeşitli örnekleri verilmiştir.
+
+
+Son çarpışma türü, elbette Dual Playfield modunda, oyun alanı 1 ve oyun alanı 2 arasındadır.
+ Playfield 1'deki bir veya
+birden fazla renk ile playfield 2'deki bir veya birden fazla renk arasında bir çarpışmayı algılamak mümkündür.
+Bunu, sprite ve playfield çarpışması durumunda uygulanan prosedürün aynısını izleyerek, yalnızca bazı bit düzlemlerini etkinleştirerek yapabilirsiniz
+.
+İki playfield arasında bir çarpışma algılandığında, CLXDAT'ın bit 0
+değeri 1 olur.
+
+
+Bu tür bir çarpışmanın bir örneği lezione7x3.s dosyasında bulunabilir.
+
+
+
+SPRITE KAYITLARININ DOĞRUDAN KULLANIMI
+
+Şimdi sprite'ları kullanmanın farklı bir yöntemini göreceğiz. Şimdiye kadar
+sprite'ları SPRxPT kayıtlarını kullanarak oluşturduk, yani
+sprite'ların görüntülenmesi için gerekli tüm bilgileri içeren veri yapılarına (sprite yapıları) işaretçiler.
+Ancak, sprite'ları oluşturmak için alternatif olarak veya
+işaretçilerle birlikte kullanılabilecek başka bir yöntem daha vardır.
+ Bu yeni yönteme
+“sprite'ların doğrudan kullanımı” adını vereceğiz. Sprite'ların doğrudan kullanımı çoğu durumda uygun değildir
+,
+ ancak bazen yararlı olabilir.
+Bunun ne olduğunu iyi anlamak için
+sprite görüntüleme
+konusunu daha ayrıntılı olarak incelememiz gerekir.
+Bir SPRxPT kaydına bir sprite yapısının adresini
+(sprite kullanmanın “standart” tekniğine göre)
+sprite yapısına kaydettiğimiz konum ve şekil verileri,
+DMA adı verilen bir donanım “mekanizması” aracılığıyla
+SPRxPT kayıtlarından farklı özel kayıtlara otomatik olarak aktarılır; bu kayıtlara verilerin yazılması,
+sprite'ların GERÇEKTEN görüntülenmesini sağlar.
+ 
+Amiga'nın çok önemli bir aracı olan DMA hakkında
+daha fazla bilgiyi bir sonraki derste vereceğiz. Şu an için
+sprite'ların görüntülenmesinde oynadığı rolü bilmemiz yeterlidir. Pratikte bir postacı gibi davranır.
+Bellekte oluşturduğunuz sprite'ın veri yapısının
+farklı alıcılara (kayıtlara) adreslenmiş bir yığın mektup olduğunu
+düşünün.. DMA, bu mektupları
+hedeflerine ulaştırmakla ve çeşitli alıcılara ayırmakla ilgilenir.
+Sprite'ların doğrudan kullanımı, sprite verilerini doğrudan
+uygun kayıtlara yazmak, yani mektupları “şahsen”
+çeşitli alıcılara ulaştırmak ve DMA postacısının işini elinden almaktır. 
+DMA işini ücretsiz yaptığına göre, bu
+tekniğin ne işe yaradığını merak edebilirsiniz. Aslında, daha önce de söylediğimiz gibi, genellikle bir avantaj sağlamaz
+; ancak bazı durumlarda yararlı olabilir.
+Öyleyse bu tekniğin ne olduğunu görelim. Daha önce de belirttiğimiz gibi,
+sprite verileri doğrudan bazı kayıtlara yazılır. Her sprite için 4
+kayıt vardır: SPRxPOS, SPRxCTL, SPRxDATA, SPRxDATB (
+x yerine kullanmak istediğiniz sprite numarasını yazmalısınız).
+Bu kayıtların adresleri, ilgili sprite'a bağlıdır.
+ Bunları basit formüllerle hesaplayabiliriz. “x” ile
+sprite numarasını, 0'dan 7'ye kadar belirtiriz.
+
+SPRxPOS adresi = $dff140+(x*8)
+SPRxCTL adresi = $dff142+(x*8)
+SPRxDATA adresi = $dff144+(x*8)
+SPRxDATB adresi = $dff146+(x*8)
+
+Bunları ASMONE “=C” yardımında da arayabilirsiniz.
+
+Şimdi bu kayıtların kullanımını açıklayalım. Bir sprite'ın şekli,
+ sprite'ın 2 küçük bit düzlemini oluşturan SPRxDATA ve SPRxDATB kayıtlarına yazılır (SPRxDATB düzlem 2'dir)
+.. Bu kayıtlar, sprite yapısında bir sprite satırının şeklini tanımlayan kelime çiftleriyle
+aynı işleve sahiptir
+.
+ Her sprite için, sprite'ın TEK bir satırına ait verileri içeren 2 kayıt
+olduğunu unutmayın. Bir sprite'ın
+yatay konumu, bildiğiniz gibi H0, H1 
+..
+ H8 olarak adlandırılan 9 bitten oluşur. Bu 9 bit iki kayda bölünmüştür: H0 biti, yani
+alt bit SPRxCTL kaydının 0 bitinde bulunur. Diğer 8 bit ise SPRxPOS kaydının
+alt baytında bulunur. Kısacası, bu 2 kayıt, yatay konum açısından,
+sprite yapısının 2 kontrol kelimesi
+ile tam olarak aynı şekilde davranır. Dikey konum ise, bu
+teknikle belirlenemez, çünkü spriteler
+oldukça garip bir şekilde davranır.
+Görüntülenebilmesi için, bir sprite etkinleştirilmelidir.
+Bu, SPRxDATA kaydına yazıldığında gerçekleşir.
+Etkinleştirildikten sonra, sprite her satırda, az önce gördüğümüz gibi, SPRxPOS ve
+SPRxCTL kayıtlarında belirtilen yatay konumda görüntülenir. Sprite'ın şekli, her satır için SPRxDATA ve SPRxDATB kayıtlarında bulunan şekildir.
+Dolayısıyla, bu kayıtların içeriği her satırda değiştirilmezse, sprite her satırda aynı şekle sahip olacaktır.
+Bu nedenle, bu kayıtların içeriği her satırda değiştirilmezse, sprite her satırda aynı şekle sahip olacaktır.
+Dolayısıyla, bu kayıtların içeriği her satırda değiştirilmezse
+sprite her satırda aynı şekle sahip olur.
+Sprite, SPRxCTL kaydına yazarak devre dışı bırakılana kadar görüntülenir.
+Her satırda şekli değişen bir sprite görüntülemek için
+bu şekilde oluşturulmuş bir bakır listesi kullanmalısınız:
+(sprite 0 kullandığımızı ve VSTART=$40, VSTOP=$60, HSTART=$160 olduğunu varsayalım)
+dc.w    $4007,$fffe    ; WAIT - VSTART satırını bekle
+
+
+dc.w    $4007,$fffe    ; WAIT - VSTART satırını bekler
+dc.w    $140,$0080    ; SPR0POS - yatay konum
+dc.w    $142,$0000	; SPR0CTL
+dc.w    $146,$0e70    ; SPR0DATB - sprite şekli satır 1, düzlem 2
+dc.w    $144,$03c0    ; SPR0DATA - sprite şekli satır 1, düzlem 1
+; ayrıca görüntülemeyi etkinleştirir,
+; bu nedenle en son yazılmalıdır.
+
+dc.w    $4107,$fffe    ; WAIT - VSTART+1 satırını bekler
+dc.w    $146,$0a70    ; SPR0DATB - satır 2, düzlem 2 sprite şekli
+dc.w    $144,$0300    ; SPR0DATA - satır 2, düzlem 1 sprite oluştur
+
+dc.w    $4107,$fffe    ; WAIT - VSTART+2 satırını bekle
+dc.w    $146,$0a7f    ; SPR0DATB - satır 3, düzlem 2 sprite oluştur
+dc.w    $144,$030f    ; SPR0DATA - satır 3, düzlem 1 sprite şekli
+
+; her satır Y için tekrarlayın
+;    dc.w    $40+Y07,$fffe    ; WAIT - VSTART+Y satırını bekle
+;    dc.w    $146,DATOY2    ; SPR0DATB - sprite şekli satır Y, düzlem 2
+;    dc.w    $144,DATOY1    ; SPR0DATA - sprite şekli satır Y, düzlem 1
+; DATOY1 ve DATOY2 yerine sprite şeklinin verilerini koyarak.
+
+dc.w    $6007,$fffe    ; WAIT - VSTOP satırını bekle
+dc.w    $142,$0000    ; SPR0CTL - sprite'ı devre dışı bırak
+
+Gördüğünüz gibi, oldukça yüksek sprite'lar için çok uzun ve karmaşık bir copperlist gereklidir.
+ Bu durumda DMA kullanmak kesinlikle daha uygundur.
+Ancak, her satırda aynı şekle sahip bir sprite görüntülememiz gerektiğini varsayalım.
+Örneğin, bir sütunu temsil eden bir sprite. Bu
+durumda, bakır listemiz çok basit ve kısa hale gelir:
+
+(sprite 0 kullandığımızı ve VSTART=$40, VSTOP=$60, HSTART=$160 olduğunu varsayalım)
+
+
+dc.w    $4007,$fffe    ; WAIT - VSTART satırını bekler
+dc.w    $140,$0080    ; SPR0POS - yatay konum
+dc.w    $142,$0000    ; SPR0CTL
+dc.w    $146,$0e70    ; SPR0DATB - sprite şekli satır 1, düzlem 2
+dc.w    $144,$03c0    ; SPR0DATA - sprite şekli satır 1, düzlem 1
+; ayrıca görüntülemeyi etkinleştirir,
+; bu nedenle en son yazılmalıdır.
+
+dc.w    $6007,$fffe    ; WAIT - VSTOP satırını bekler
+dc.w    $142,$0000    ; SPR0CTL - sprite'ı devre dışı bırakır
+
+Copperlist'imizin kısa olmasının yanı sıra sprite'ın yüksekliğine göre değişmediğini
+dikkat edin.
+Aksine, bu sprite'ı görüntülemek için DMA kullanmak istersek,
+sprite'ı oluşturan satır sayısı kadar, şekli temsil eden 2 kelimeyi veri yapısında
+saklamak zorunda kalırız.
+100 satır yüksekliğinde bir sütun görüntülemek istediğimizi düşünün.
+DMA kullanırsak, çok fazla bellek kaplayan bir sprite yapısı saklamak zorunda kalırız
+:
+
+SpriteYapısı:
+dc.b    VSTART,HSTART,VSTOP,0
+dc.w    $ffff,$0ff0    ; satır 1
+dc.w    $ffff,$0ff0    ; satır 2
+dc.w    $ffff,$0ff0    ; satır 3
+dc.w    $ffff,$0ff0    ; satır 4
+dc.w    $ffff,$0ff0    ; satır 5
+dc.w    $ffff,$0ff0    ; satır 6
+dc.w    $ffff,$0ff0    ; satır 7
+dc.w    $ffff,$0ff0    ; satır 8
+
+.... ve böylece devam eder, ta ki:
+
+dc.w    $ffff,$0ff0    ; satır 99
+dc.w    $ffff,$0ff0    ; satır 100
+dc.w    0,0        ; sprite sonu
+
+
+Sprite'ları doğrudan kullanarak ise, basit bir copperlist yeterlidir:
+
+dc.b    VSTART,7,$ff,$fe    ; WAIT - VSTART satırını bekle
+dc.w    $140
+dc.b $00,HSTART    ; SPR0POS - yatay konum
+dc.w    $142,$0000    ; SPR0CTL
+dc.w    $146,$ffff    ; SPR0DATB - sprite şekli satır 1, düzlem 2
+dc.w    $144,$0ff0    ; SPR0DATA - sprite şekli satır 1, düzlem 1
+; ayrıca görüntülemeyi etkinleştirir,
+; bu nedenle en son yazılmalıdır.
+
+dc.b    VSTOP,7,$ff,$fe    ; VSTOP satırını bekler
+dc.w    $142,$0000    ; SPR0CTL - sprite'ı devre dışı bırakır
+
+
+
+Sprite'ların doğrudan kullanımına ilişkin basit bir örnek lezione7y1.s dosyasında verilmiştir.
+
+
+Bunun yerine, lezione7y2.s programında, doğrudan erişimli sprite'lar kullanarak
+bakır ile yatay olarak yapılanlara benzer dikey çubuklar
+oluşturuyoruz.
+
+
+Sprite'ları doğrudan kullanma tekniği ile, aynı sprite'ı aynı satırda birden fazla kez görüntülemek de mümkündür.
+Bu yöntem, ders7y3.s'de açıklanmakta ve uygulanmaktadır.
+Aynı satırda birden fazla kez oluşturulan sprite'lar
+MULTIPLEXED, yani “multiplexed” olarak da adlandırılır.
+Başlangıçta sadece 8 sprite olduğunu söylemiştik, ancak
+assembler'ın sprite'ları çoğaltmamıza ve
+paleti yatay olarak da birçok kez değiştirerek standart renklerden çok daha fazla renk almasını sağlamamıza
+olanak tanıdığını gördük. Tek dezavantajı, çok uzun
+copperlist'lere ihtiyaç duyulmasıdır, ancak buna kesinlikle değer.
+
+
+Bu fikrin geliştirilmesi, sprite'lar sayesinde tamamen
+bir ekran oluşturmamızı sağlar, örneğin Lezione7y4.s.
+
+Ancak bu işlemi gerçekleştirmek için çok uzun bir bakır liste yazmak gerekir
+ve bunu daha anlaşılır hale getirmek için SEMBOLLER veya EQUATES kullanılmıştır.
+Bu, assembler dilinde, istediğiniz bir isimle belirli bir sabit sayıyı çağırmanıza
+ve böylece ismi yazdığınızda karşılık gelen sayının derlenmesini sağlayan bir yönergedir.
+Örneğin:
+Şu örneği ele alalım: COLOR0 kaydına erişmek istiyoruz,
+ki bunun $dff180 olduğunu biliyoruz. Şöyle yazabiliriz:
+
+move.w    #$123,$dff180
+
+Ancak istersek şöyle de yazabiliriz:
+
+COLORE0        EQU    $dff180        ; Bir sembolün tanımı
+
+move.w    #$123,COLORE0
+
+Pratikte, asmone COLORE0 yazdığını bulduğunda
+$dff180 bulmuş gibi birleştirmesi gerektiğini tanımladık. Bu, bir etiket tanımlamak gibidir,
+ aslında bir isim uydurup önüne boşluk koymadan yazmamız gerekir, ancak
+: karakterine gerek yoktur (aslında : karakterini de koyabilirsiniz, aynı şekilde
+etiketler : karakterine sahip olabilir veya olmayabilir, ASMONE yine de derler, ancak
+bazı derleyiciler ETİKETLERİN : karakteriyle takip edilmesini ve
+sembollerin (veya eşdeğerlerin) bu karakteri içermemesini tercih ederler). EQU, EŞİT anlamına gelir.
+Hemen hemen tüm derleyiciler, tanımlama için = sembolünü de
+EQU sembolünün yerine kabul eder. Başka bir örnek verelim:
+
+NUMEROLOOP    =    10
+
+MOVEQ    #NUMEROLOOP-1,d0
+Döngü:
+clr.l    (a0)+
+dbra    d0,NUMEROLOOP
+rts
+
+Bu liste ile 10 longword'ü sıfırlıyoruz. EQUATES'in kullanışlılığı,
+hepsini listenin başına koyabilmemizdir, böylece
+belirli değerleri değiştirmek istersek, örneğin kaç döngü yapacağımızı veya kaç bitplanes
+, = veya EQU'den sonraki sembolün değerini değiştirmemiz yeterlidir.
+Ayrıca semboller arasında işlemler de yapabilirsiniz. Pratik bir örnek,
+ bir bit düzlemi için sıfırlanacak alanın hesaplanması olabilir:
+
+BytesPerRiga    =    40
+NumeroRighe    =	256
+Bit Düzlemi Alanı    =    Satır Başına Bayt Sayısı*Satır Sayısı
+
+...
+
+section plane,bss_C
+
+Bit Düzlemi:
+ds.b    Bit Düzlemi Alanı
+
+Listede Bit Düzlemi Alanı 10240, yani 40*256 değerindedir.
+Ders7y4.s'de bakır listesi için semboller tanımlanmıştır.
+
+
+Son olarak, ders7y5.s'de sprite'lardan oluşan ekranı kaydıracağız ve
+bu fırsatı değerlendirerek 68000'in 2 yeni komutunu, ROR ve ROL'u öğreneceğiz.
+Bunları liste yorumunda açıklayacağız.
+
+
+SPRITE ANİMASYONU
+
+Bu dersi sprite animasyonu hakkında bir açıklama ile bitirelim.
+Şimdi “normal” sprite'lara, yani
+SPRxPT işaretçileri ve DMA ile oluşturulan sprite'lara geri dönelim. Bir sprite'ı canlandırmak için, her yeniden çizildiğinde
+şeklini değiştirmek gerekir. Sprite'ın aldığı her şekil
+“animasyon karesi” olarak adlandırılır.
+Genellikle animasyon, belirli bir dizi
+karelerin sürekli olarak tekrarlanacağı şekilde yapılır.
+Örneğin, ekranda yürüyen bir adam düşünün; 
+tüm adımların birbirinin aynısı olduğunu fark edeceksiniz.
+Ekranda yürüyen bir adamı canlandırmak için, belirli sayıda
+kare çizilir ve bunlar arka arkaya bakıldığında adamın bir adımını
+tam olarak gösterir. Adam adımını tamamladığında, yeni bir adım atmalıdır:
+bu noktada, ilk kareden başlayarak aynı kareler tekrar gösterilir
+. Her adım için aynı kareleri tekrar ederek, 
+adamcığı istediğimiz kadar yürümesini gösterebiliriz, ancak
+kare sayısı sınırlıdır (kareler görüntüler olduğu için
+bellek kaplarlar, bu nedenle mümkün olduğunca az kullanmaya çalışmalısınız).
+Buraya kadar anlatılanlar herhangi bir animasyonlu nesne için geçerlidir ve 
+blitter ile yapılan animasyonları ele alırken de bunu akılda tutmak iyi olacaktır
+. Şimdi ise 
+sprite ile yapılan animasyonları ele alalım. Bu, ekranda hareket eden bir sprite'ımız olduğu ve
+her yeniden çizildiğinde farklı bir şekil aldığı anlamına gelir. Genellikle
+şöyle yapılır: her kare için bir sprite yapısı oluşturulur
+ve sprite her yeniden çizildiğinde SPRxPT
+kayıt defterini farklı bir kareye (yani farklı bir veri yapısına) yönlendirilir. Sprite'ın konumu
+her seferinde SPRxPT'nin yönlendirildiği kare yapısına yazılır.
+Pratik bir örnek
+
+Pratik bir örnek ders7z.s'de bulunabilir.
+
+Bu örnek aynı zamanda ders7 ve kursun DISK 1'in sonunu oluşturur.
+Disk 2, bu yazının yazıldığı tarihte (Mayıs 1995) henüz tamamen
+tamamlanmamıştır, ancak ele alınan konular şunlardır:
+
+- BLITTER (kopya modu, satır modu ve doldurma)
+- Kesme, CIAA/CIAB, diskten yükleme, Klavye
+- Ses
+- 68000 hakkında ayrıntılı bilgiler, 68020 hakkında kısa bilgiler
+- Video oyunları programlama
+- Matematiksel rutinler (3d, fraktallar)
+- AGA yonga seti
+- Uyumluluk ve optimizasyonlar
+- PICASSO II video kartı programlama!!!!
+
+Böylesine devasa bir işi bitirebilecek zamanım olacak mı bilmiyorum, zaten bu ilk
+disk (aslında pek çok konuyu ele almadım) bana
+bitmek bilmez gibi gelmişti. Luca Forlizzi'ye (The Dark Coder)
+DERS 7'yi bitirmeme yardım ettiği için ve ayrıca iki istekli beta testçisi
+ANDREA SCARAFONI ve FEDERICO STANGO'ya, anlaşılmayan yerleri
+ve hatta anlaşılmaz cümleleri işaret ettikleri için teşekkür etmeliyim.
+Ne yazık ki, bana yardım EDECEĞİNİ SÖYLEYEN, ama
+sonra ortadan kaybolan Alvise Spanò (AGA/LUSTRONES) gibi kişilere teşekkür edemiyorum.
+
+Disk 2'yi, ya da en azından zamanında yapabildiğim kadarıyla, almak için
+bana mektup yazabilir, ya da daha iyisi, kendi
+programlarınızı içeren bir disk gönderebilirsiniz:
+
+Fabio Ciucci
+Via S.Leonardo n.13
+55100 LUCCA
+
+Bu diskteki her şeyi gerçekten özümsemeden bana yazmayın,
+ sadece listeleri olmakla programcı olunmaz.
+Bu arada bu diski herkese kopyalayın, herkesin olması gerekir, hatta
+Papa bile balkona çıktığında... İtalya'da Amiga'sı olan herkes
+bu diske sahip olmalı. Ve sadece ilgilendiğini düşündüğünüz kişilere vermeyin,
+çünkü kursu takip eden ve en çok şey öğrenenlerin
+en az beklediğim kişiler olduğunu gördüm. Lucca'da en
+ileri olan kişi, diski ilgilenmiş gibi görünen bir arkadaşına
+kopyalaması için verdiğim Michele adlı bir genç. Birkaç ay boyunca
+onlardan haber almadım, sonra Michele evime geldi ve
+oyununun önizlemesini gösterdi!!! Arkadaşı ise hiç ilerleyememişti!
+Bu yüzden bu diski, siyasi partinizin broşürü
+ya da dininizin kitapçığı gibi dağıtın, okullarınızın ya da üniversitelerinizin ilan panolarına
+ya da gazetelerine ilan verin ve herkese
+Amiga programlamayı öğrenmek için diskiniz olduğunu söyleyin, diskin kopyalarını
+bölgenizdeki Amiga satıcılarına verin ve Amiga programlama hakkında bilgi isteyenlere
+vermelerini isteyin, kısacası bu zavallı ülkeyi (birleştirin)
+bu zavallı ülkeyi!
+
+Disk 2'nin zamanı geldiğinde, umarım bitirmiş olurum,
+yine de elimizde ne varsa size gönderirim, bana normal bir mektup yazın
+750 lire ile kısa bir tanıtım yazısı, yaşınız, ayırt edici özellikleriniz, sahip olduğunuz bilgisayar,
+ hayalleriniz ve ne isterseniz, adresinizle birlikte,
+tabii ki. Aynı zamanda,
+en az 10.000 (şimdiye kadar neredeyse herkes 10.000 gönderdi, bazıları 20.000,
+daha az sayıda 30.000 ve bir Cenevizli'den efsanevi 60.000,
+cimri olduğumuz efsanesini çürütmek için) Mektupta,
+havale ile ne kadar gönderdiğinizi belirtmelisiniz, çünkü mektup ve havale genellikle
+biraz farklı zamanlarda ulaşır. PT'lerde galaktik gecikmeler olmaz umarım.
+
+Aksi takdirde şu şekilde değişiklik yapabilirsiniz: bana bir disket gönderin
+mektubu .txt formatında ve belki birkaç listenizi veya başka bir şeyi
+diski doldurmak için. Diski küçük bir posta zarfına koymanız
+ve sadece zarfın kapaklarını kapatmanız veya zarfın kendi
+etiketiyle kapatmanız, diskin içine kağıt veya mektup koymamanız
+gerekiyor. Kısacası, her şeyi bant veya başka bir şeyle kapatmanıza gerek yoktur,
+bu, posta denetimi için gereklidir, ki zaten hiç yapmazlar, ama
+paket böyle olursa daha az ödeme yaparsınız.
+Sonra zarfın üzerine “paket” yazın ve (umarım) nazik
+postane görevlisine içinde mektup bulunmayan bir paket olduğunu söyleyin,
+ bu sayede mektup içeren kapalı bir paket göndermeye kıyasla tasarruf etmiş olursunuz,
+ çünkü mektup “AĞIR MEKTUP” olarak sayılır!
+Sadece 1 disket içeren böyle bir paket 1200 lireye mal olur.
+Daha erken ulaşmasını istiyorsanız, 3000 lire ekleyerek ekspres gönderebilirsiniz, ancak
+bu durumda diski bitirmeniz için kalan süreyi hesaplamanız ve
+zamanında göndermeniz gerekir... Akıllı programcılar değilseniz, ne programcısınız?
+NOT: Disk 2'yi ekspres olarak göndermemi istiyorsanız,
+önceki gibi hesaplama yapabilir veya minimum 13000 liret başlangıç ücreti belirleyip
+mektupta (kağıt veya .txt) disk 2'yi ekspres olarak istediğinizi belirtebilirsiniz.
+
+Son bir yöntem de parayı “nakit” olarak
+mektuba veya pakete koymak olabilir, ancak paranın görünmemesi için
+paketin kapalı olması gerekir... kararı
+siz verin, ama bence mektup veya paket + havale daha iyidir.
+
+Her türlü bağış veya iletişim, beni ve “işbirlikçilerimi”
+bu kursun yazımına devam etmek için cesaretlendirecektir. 
+Deneyimli programcılar, özellikle
+oyun programlamış olanlar (demo yapanları
+burada İtalya'da hepsini tanıyorum, bu camiada bir tür aile ortamı var,
+aileler arası kavgalar da dahil!)
+
+Ayrıca, işbirliği için diğer programcılar, grafikçiler veya müzisyenler bulabileceğiniz en iyi Amiga kullanıcı kulübünü de belirtmeliyim:
+Amiga Expert Team
+
+Mirko Lalli
+Via Vecchia Aretina 64
+52020 Montalto
+Pergine V.no
+AREZZO

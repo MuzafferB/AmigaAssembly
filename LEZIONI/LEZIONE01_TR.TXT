@@ -1,0 +1,1098 @@
+
+İKİ DİSKTE TAM ASSEMBLER PROGRAMLAMA KURSU
+
+FABIO CIUCCI - 1994/95
+
+Amiga donanımını doğrudan kullanan demo veya oyunlar yapmayı öğrenmeye çalışan
+ancak kitapların soyut ve anlaşılmaz bir şekilde yazılmış olması ve örnek kaynak kodların
+yani listelerin çok az yorumlanmış veya çok zor olması nedeniyle
+başaramayanlar veya hiç denememiş ve nasıl yapıldığını merak edenler için.
+
+Bu iki disketin hazırlanmasına maddi veya manevi olarak katkıda bulunan herkese teşekkür ve selamlarımı sunarım, özellikle:
+- Luca Forlizzi (The Dark Coder)
+
+- Andrea Fasce (Executor/RAM JAM)
+- Sirio Zuelli (PROXIMA DESIGN)
+Sirio Zuelli (PROXIMA DESIGN)
+Alberto Longo (VIRTUAL DREAMS)
+
+Ayrıca dersleri test ederek anladıklarını kontrol edenlere de teşekkür ederim:
+
+Andrea Scarafoni, Federico “GONZO” Stango ve diğerleri.
+
+Son olarak, bilgisayar başında
+olmam için çaba gösteren kız arkadaşım Kety'ye teşekkür etmek istiyorum.
+
+Hobi olarak programcı olarak kariyerimde, BBS için birkaç demo/intro
+gerçekleştirdim, örneğin “AMILINK.EXE” AmigaLink veri tabanı için
+veya yeni “Amiga Expert Team” gibi kulüpler için. En önemli ‘eserlerim’
+AGA yonga seti için ilk demom “WORLD OF MANGA”
+“WORLD OF MANGA” ve
+NOVA ACIES grubu için programladığım “NAOS”dur.
+
+Kursumu okumaya başlamadan önce en azından biraz DOS bilgisine sahip olmanızın iyi olacağını belirtmeliyim,
+ en azından listeleri nasıl kaydedeceğinizi bilmek için! Amiga ile birlikte bir kılavuz bulmuş olmalısınız...
+Kısacası, disklerde (hem sabit hem de disketlerde) veriler
+“dosya” olarak saklanır, yani bir dizi sayıdan oluşur ve bu sayılar bir araya gelerek
+grafik, müzik, çalıştırılabilir, liste vb. dosyalar oluşturabilir.
+Boş bir disketin kullanılabilmesi için
+FORMATLANMASI gerektiğini, aksi takdirde üzerine yazmanın imkansız olduğunu unutmayın.
+Biçimlendirildikten sonra, grafik programlarıyla resimler, metinler (şu anda okuduğunuz gibi) ve diğer her türlü dosyayı kaydedebilirsiniz.
+Bir dosya bir diskten diğerine kopyalanabilir, silinebilir veya
+adı değiştirilebilir vb. Bir diskte çok sayıda dosya bulunabilir,
+yaklaşık 880 Kb dolana kadar, örneğin 2 adet 400 Kb'lık dosya veya otuz kadar daha küçük dosya ile. Bir diskin içinde, bir dosya içinde ise, bir dosya içinde 
+yaklaşık 880Kb dolana kadar, örneğin 400Kb'lık 2 dosya veya
+otuz kadar daha küçük dosya ile. Bir diskin içinde,
+biraz düzen sağlamak için, çeşitli “alt dizinler”, yani
+daha küçük “çekmeceler”, dosyaları koymak için bölümler oluşturabilirsiniz.
+Örneğin, DISEGNI (ÇİZİM) ve TESTI (METİN) alt dizinleri oluşturulabilir ve bu dizinlere
+kız arkadaşımız için çizimler ve mektuplar kaydedilebilir,
+ böylece çizimler ve metinler ana dizinde karışık bir şekilde bulunmaz.
+Bu, diskin bir dolap, alt dizinlerin ise bu dolabın çekmeceleri gibi olduğunu düşünün.
+Alt dizinlerin içinde alt dizinler oluşturulabileceğinden, bu çekmecelerin her biri tek başına dosyalar veya içinde dosyalar veya daha küçük “kutular” içeren “kutular” içerebilir.
+Dolayısıyla, mobilyalara benzer bir sistem!
+Dosyalar arasında işlem yapmak için CLI/SHELL'i kullanabilirsiniz. Burada aşağıdaki gibi komutlar yazmanız gerekir:
+Dosyalar arasında işlem yapmak için CLI/SHELL'i kullanabilirsiniz.
+Burada aşağıdaki gibi komutlar yazmanız gerekir:
+
+Dir        = Bir diskteki dosyaları ve alt dizinleri listeler
+Copy        = Dosyaları kopyalar
+Delete        = Bir dosyayı siler (BU KOMUTU KULLANIRKEN DİKKAT EDİN!!!)
+Makedir        = Bir “çekmece” (veya alt dizin) oluşturur
+
+Veya WorkBench'ten fare ile işlem yapabilirsiniz, burada dosyalar “simgeler”
+ve alt dizinler çekmeceler olarak gösterilir.
+Dahili sürücünün adı “df0:”, harici sürücülerin adı “df1:”, “df2:”
+vb. Hard disk genellikle “Dh0:” (veya “Hd0:”) olarak adlandırılır.
+Daha hızlı bir yöntem, DiskMaster veya DirOpus gibi yardımcı programları kullanmaktır.
+Böylece, birkaç liste yazdıktan sonra, bunları
+biçimlendirilmiş bir diske veya sabit diskin hangi alt dizine kaydedeceğinizi belirlemelisiniz.
+Bilmeniz gereken başka bir şey de, “otomatik önyükleme” yapan bir disk nasıl yapılır, yani
+bilgisayarı açtığınızda veya sıfırladığınızda sürücüye takıldığında otomatik olarak başlar.
+Çalıştırılabilir programımızı bir disket üzerine
+‘mioprogramma’ adıyla kaydettiğimizi varsayalım. “S” adında bir alt dizin oluşturmanız ve
+“startup-sequence” adlı bir metin dosyası oluşturun ve bu dosyaya otomatik olarak yüklenecek programın adını yazın
+:
+
+mioprogramma
+
+Startup-sequence, okuduğunuz programla da yazılabilir (düzenlenebilir),
+ bu program aynı zamanda metin editörü görevi de görür. Son olarak, söz konusu diski “yüklemeniz” gerekir,
+ bunun için cli/shell'den şu komutu yazın:
+
+Install df0:
+
+Veya disketi harici sürücüye takarsanız “install df1:” komutunu girin.
+
+Bunu yaptıktan sonra notlara devam edebilirsiniz.
+
+NOT: Kursu sabit diske yüklemek istiyorsanız,
+dosyasını s dizinine kopyalayın: "TRASH'M-ONE16.
+pref“ dosyasını kopyalamayı unutmayın.
+
+NOT 2: Listeleri yazdırmak istiyorsanız, bunların
+powerpacker ile sıkıştırılmış olduğunu ve bu nedenle bu kursta kullanılan PowerPacker Patcher'a ihtiyacınız olduğunu unutmayın.
+ (dosya, ‘C’ dizininde ”PP" adıyla bulunur).
+Yüklemek için LIBS'de “powerpacker.library” dosyasının olması ve
+“PP” komutunun çalıştırılması yeterlidir. Listeler yüklendiğinde otomatik olarak açılacaktır.
+
+Bu kursta, COPPER, SPRITE, BLITTER gibi çeşitli programlama konuları ile
+yeni AGA yonga seti ve PICASSO II ekran kartının programlanması ele alınacaktır.
+Disk 1'de konular şunlardır: 68000, bakır, oyun alanları ve sprite'lar. Blitter, AGA ve geri kalanlar disk 2 ve 3'te yer almaktadır, disk 1'de değildir.
+Disk 1'de konular şunlardır: 68000, copper, playfields ve sprites.
+Blitter, AGA ve geri kalanlar disk 2 ve 3'te bulunur, ancak henüz tamamlanmamıştır.
+
+Bu kursun dağıtımı ve kopyalanması ile ilgili olarak, şunu bilmeniz gerekir
+: Bu kurs GiftWare/Shareware'dir ve kamu malı değildir.
+Bununla demek istediğim, bu kursu arkadaşlarınıza sorunsuz bir şekilde kopyalayabilirsiniz,
+ ancak PARA KARŞILIĞINDA SATAMAZSINIZ, çünkü bu kursun hakları
+yazara, yani bana aittir ve başkalarının emeği üzerinden
+spekülasyon yapmak isteyen ilk kurnaz kişiye ait değildir. Öte yandan, bu kursu
+SADECE BOŞ DISKETLERİN FİYATINA kopyalayabileceğiniz doğruysa,
+çeşitli dersleri başarıyla takip edip bir şeyler programlamayı başarırsanız,
+ benim çalışmamdan faydalanmış olursunuz, bu nedenle bana bir şekilde teşekkür etmelisiniz,
+ özellikle de dünyanın en zengin programcıları olursanız
+(tabii, eğer olursa...). Bu teşekkür, sizin isteğinize göre ölçülebilir,
+ ben 10.000'lik banknotları tercih ederim.
+Küçük hediyeler veya daha iyisi, aşağılık para akışı, Amiga programlama hobimi
+sürdürmem ve kursun yeni bölümlerini
+hazırlamam için beni cesaretlendirecektir. Adresim:
+
+Fabio Ciucci
+Via S.Leonardo, 13
+55100 LUCCA
+
+Bu kursun 1. diskini tüm arkadaşlarınıza kopyalarsanız bana büyük bir iyilik yapmış olursunuz,
+ kişisel olarak ilgilenmeseniz bile, çünkü
+başkalarının da bu diski edinip programlamayı öğrenme şansı olacak.
+10.000 kişi benden istediği için bir ASM (assembler) kursu yazmaya karar verdim
+ve bunu eğlence için yaptığım için
+çok tartışmalı bir şekilde yazdım, ancak bence
+başlangıçta daha net olacak ve bir kez anlamaya başladıklarında daha
+derinlemesine devam edebilecekler. ASM konusunda zaten uzman olanlar dersleri eğlenceli bulacaklar
+ hatalar bulabilirler, bu yüzden
+örnek listelere doğrudan bakmalarını tavsiye ederim: bu kurs sıfırdan
+başlayanlar içindir. Aslında, kişisel deneyimlerime ve
+“CODER” (programcıların jargonunda KÖTÜ anlamına gelir) adaylarının söylediklerine göre, sorun
+her şeyi anlamak ve ilk iki veya üç programı yazmaktır, sonrasında
+kendi başlarına devam edebilecek hale gelmektir. Bu nedenle,
+68000'in ne olduğunu bile bilmeyenlere ekranda toplar döndürmeyi veya bir yazı zıplatmayı
+öğretmeyi amaçlıyorum. Eğer bunlar daha sonra oyun programcısı olmak ve TEAM 17'ye girmek isterlerse
+devam etmeleri yeterli olacaktır.
+
+GODS VEYA PROJECT X GİBİ BİR OYUN PROGRAMLAMAYI ÖĞRENMEK İÇİN
+UÇUŞ SIMÜLATÖRÜ VEYA 3D OLMAYAN, YANİ
+DÖNEN KÜPLER, SINUSOIDAL TÜNELLER VEYA PERSPEKTİF BOZULMALARI
+FRACTALLAR VEYA TEXTURE MAPPING İÇERMEYEN BİR OYUN, ORTAÖĞRETİM MATEMATİK BİLGİSİ YETERLİDİR.
+ÜÇÜNCÜ ORTAOKUL MATEMATİK BİLGİSİ YETERLİDİR.
+
+Bununla, Amiga'nın assembler programlamasının
+matematikle dolu olduğu düşüncesini herkesin kafasından çıkarmak istiyorum. BEN BUNUN HİÇBİR İLGİSİ OLMADIĞINA İNANIYORUM.
+Matematik programı yapmak istiyorsanız, matematik bilmelisiniz,
+ futbol oyunu yapmak istiyorsanız futbol bilmelisiniz.
+Önemli olan
+Önemli olan Amiga'nın nasıl çalıştığını, işlemcisini (Amiga'da
+Motorola 68000) ve özel yongalarını (yani grafik ve ses için kullanılanları)
+bilmek.
+Şahsen ben şehrimdeki Sanat Enstitüsü'nde liseyi bitirdim
+ve ortaokuldayken ASM'de ufak tefek şeyler yapmayı öğrendim, yani
+Amiga'yı oyun oynamak yerine açık tuttuğunuz süreyi iyi kullanmanız yeterlidir:
+üniversitede bilgisayar fakültesine gitmenize gerek yok, orada
+Amiga'da oyun veya demo programlamayı öğretmiyorlar!!!
+
+Ama neden oyun veya demo programlamayı öğrenmek? Demo nedir?
+Oyunların ne olduğunu herkes bilir, bu yüzden programlamayı öğrenmek isteyenlerin
+istediğiniz gibi olmayan oyunları görmekten bıkmış
+ve kendi istediği gibi, piksel piksel “KENDİ” oyununu yapmak istediğini varsayabiliriz.
+Demo'lara gelince, kısa bir açıklama yapmak gerekiyor.
+Demo, “demonstration” yani grafik gösterimi anlamına gelir.
+Neyin gösterimi?
+Amiga'nın gücünün ve programcıların becerisinin, elbette.
+Ancak daha fazlası var: SAHNE.
+Tiyatro sahnesi değil, “AMIGA SCENE” (sahnenin resmi dili olan İngilizce
+ile). Müzik sahnesini hayal edin: çeşitli gruplar
+vokalistler, davulcular vb. Amiga için ise çeşitli gruplar
+CODER (programcılar), GFX ARTIST (grafikçiler), MUSICIANS (müzisyenler)
+var ve bunlar, müzik sahnesindeki grupların yaptığı gibi bir “VİDEO” yapmak yerine
+katkı olarak, farklı zaman ve yerlerde
+diğer gruplar tarafından yapılanlara eklenen bir “DEMO” yapıyorlar. Ayrıca, “SWAPPER” ve
+“TRADER”lar da vardır. Bunlar sırasıyla demoları posta veya modem yoluyla
+takas eden ve dağıtan kişilerdir... Bunlar hiçbir şey üretmezler, ancak
+sahne için önemlidirler, çünkü dolaşımda olmayan bir şey sanki yokmuş gibi
+olur. Öte yandan, bunlar CODER, GRAFICI veya MUSICISTI olmak
+ve başkalarının eserlerini takas etmek yerine DEMO yapmaya katkıda bulunmak istiyorlar.
+“Amiga Scene”de, tüm dünyada, özellikle Avrupa'da üyeleri olan birçok grup vardır.
+En ünlü gruplardan bazılarının isimleri şunlardır
+ANDROMEDA, BALANCE, COMPLEX, ESSENCE, FAIRLIGHT, FREEZERS, MELON DEZIGN,
+POLKA BROTHERS, PYGMY PROJECTS, RAM JAM, SANITY, SPACEBALLS...
+Her grup üyesinin kendine bir takma ad,
+“handle” dediği bir isim taktığına dikkat edin. Kısacası, bir sanat adı: örneğin ANDROMEDA'nın iki kodlayıcısı
+kendilerine “Dr.Jeckyll” ve “Mr.Hyde” adlarını takmış, FREEZERS'dan biri ise
+“Sputnik”, diğer gruplardan bazıları ise Hannibal, Dan, Paradroid, Dak,
+Wayne Mendoza, Performer, Bannasoft, Laxity, Vention, Psyonic, Slammer, Tron,
+Mr. Pet, Chaos, Lone Starr, Dr. Skull, Tsunami, Dweezil...
+Tam isim, takma adın ardından ait olduğun grubun adı ile belirtilir,
+örneğin CHAOS/SANITY, DWEEZIL/STELLAR, DAK/MAD ELKS, vb.
+Ben, sahnede “RANDY/RAM JAM” olarak biliniyorum, ancak konuyu bilmeyenler
+için Fabio Ciucci olarak da bilinirim.
+Sahne, grupların demolarını getirdiği ve oylama ile ödüllerin dağıtıldığı bir tür parti-buluşma olan PARTY'ler düzenler
+.
+ve kazananlara milyonlarca ödül verilir.
+Bazı demo kodlayıcıları, konu hep aynı olduğu için
+oyun yapmaya geçerler. Örneğin, BANSHEE'nin programcısı HANNIBAL/LEMON,
+ELFMANIA'nın programcısı SAVIOUR/COMPLEX, STARDUST'un programcıları DESTOP/CNCD ve
+SCY/CNCD ve liste uzayıp gider....
+Ancak disk 2'de sadece SCENA hakkında bir ders bulunmaktadır.
+
+Assembler programlamaya geri dönersek, ister demo ister oyun yapmak isteyin,
+3d rutin listelerini inceleyerek öğrenmeye başlamanızı tavsiye etmiyorum
+(rutin=bir liste veya programın parçası), çünkü bunlar en
+karmaşık olanlardır, ben bile zor anlıyorum, programlama nedeniyle değil
+içerdikleri matematik formülleri nedeniyle.
+Ama dikkat! Matematik gerekmiyorsa
+elektronik bilgisi veya Amiga'nın elektrik şemalarını
+öğrenmek gerektiğini düşünmeyin! Bu, yalnızca bir grafik kartı veya video dijitalleştirici veya benzeri bir şeyi yönetmek için bir program yapmak istiyorsanız
+gerekli.
+Örneğin, kabloların nereden geçtiğini bilmeden ekrana bir şekil
+getirebilir veya müzik çalabilirsiniz!
+12 yaşında assembler öğrenen insanlar tanıyorum, 30 veya 40 yaşında öğrenenler de var,
+ matematik bilgisi iyi olmayan ve
+İngilizce bilmeyenler. Yani yaş da denememek için kabul edilebilir bir mazeret değil!
+EVET! ÇÜNKÜ İNGİLİZCE BİLMENİN ZORUNLU OLDUĞUNU DA KAFANIZDAN ÇIKARMALISINIZ!
+İngilizce bilmenin her şeyi kolaylaştırdığını kabul etmeliyim, çünkü ASM komutları İngilizce kelimelerin kısaltmalarıdır, örneğin SUB ve ADD, ÇIKAR ve EKLE anlamına gelir.
+Ancak, İngilizce bilmenin her şeyi kolaylaştırabileceğini de itiraf etmeliyim
+çünkü ASM komutları İngilizce kelimelerin kısaltmalarıdır, örneğin SUB
+ve ADD, ÇIKAR ve EKLE anlamına gelir.
+WorkBench ve Amigados bilgisi, programlama için
+size yardımcı olmayacaktır, çünkü bilgisayar aslında çok
+farklı çalışır. Daha basit bir şekilde, bu “üst yapılar”
+, kickstart çipinde bulunan işletim sistemidir ve
+bu sistem olmadan, bilgisayarı açtığınızda disketi takmanızı isteyen ekran bile görünmez.
+ Gördüğünüz ve hareket ettirdiğiniz pencereler, kickstart'ta bulunan
+binlerce ASM kod satırının sonucudur, kickstart'ta bulunur, aslında
+kick 1.3 ve kick 2.0 arasındaki pencerelerin farkını görmek yeterlidir, bu fark
+takılan disklerin farklılığından değil, kick'in kendisindeki farklılıklardan kaynaklanmaktadır.
+DeLuxe Paint, Ev Yönetimi, word
+işlemci veya gadget'ları ve açılır menüleri seçebileceğiniz küçük pencereler açan
+workbench yardımcı programları yazmak istiyorsanız, ASM yerine C dilini öğrenmenizi tavsiye ederim, çünkü bu daha uygundur ve bir kez öğrendikten sonra
+listelerinizi MS-DOS ve WINDOWS ortamına kolayca dönüştürebilirsiniz,
+ Amiga'yı terk etmek isterseniz.
+Bunun yerine, zıplayan toplar ve metalik yazılar içeren grafik demolarından etkileniyorsanız
+ve AGONY,
+LIONHEART, SHADOW OF THE BEAST, TURRICAN, APYDIA, PROJECT X, SUPERFROG,
+ZOOL, GODS, CHAOS ENGINE, XENON II, LOTUS ESPRIT ve hatta
+SENSIBLE SOCCER gibi oyunları programlamak istiyorsanız, bunların sadece SAF ASSEMBLER ile yapılabileceğini ve
+özel matematik bilgisi gerektirmediğini, klasik
+toplama, çıkarma, çarpma ve bölme işlemleri ile birkaç
+SENI ve COSENI tabloları yeterlidir, örneğin, parabolik bir yörünge ile düşen topları
+veya bir eğriyi takip eden topları yapmak için: bu tablolar,
+1,2,3,5,8,10,13,15,18,23 gibi bellekteki bir dizi sayıdan ibarettir ve bunlar,
+örneğin, yatay konumun ilerlemesi ve dikey konumun ilerlemesini temsil eden başka bir dizi sayıdır; bu “tablolar” veya SINUSTAB, yani bir eğrinin koordinatlarını tanımlayan bir dizi sayı, özel bir komutla oluşturulabilir, CS
+dikey konumun ilerleyişini temsil eden bir dizi sayıdır; bu dizi
+“tablolar” veya SINUSTAB, yani bir eğrinin koordinatlarını tanımlayan bir dizi sayı,
+ ASMONE'de bulunan CS komutuyla oluşturulabilir,
+ trigonometriyi tam olarak bilmeseniz bile
+geçirilecek parametreleri bilmek ve
+denemeler yapmak yeterli olabilir. Bu SINUSTAB veya TABELLER oyunlarda ve demolarında çok sayıda bulunur,
+çünkü birçok dalgalı hareket tamamen yerinde hesaplanmaz
+. Bunun yerine, MONKEY ISLAND gibi MACERA oyunları veya
+yönetim oyunları yapmak istiyorsanız, yani sadece sabit grafik ekranlar
+ve içinde yavaşça hareket eden birkaç küçük adamın olduğu, oyunun
+fare ile nesneleri veya yazıları seçmekten ibaret olduğu oyunlar, o zaman
+C dilini de kullanabilirsiniz, çünkü oyun
+kolayca PC'ye dönüştürülebilir ve bu da size epey para kazandırabilir.
+Zaten PC'deki C dili bilim okullarında ve bilgisayar üniversitelerinde çok iyi öğretiliyor
+ve parayı onlar kazanacak.
+
+NOT: Amiga assemblerini bilmek, daha sonra aynı mikroişlemciye sahip başka bir bilgisayar türü
+programlamaya geçerseniz yararlı olabilir.
+Örneğin, Motorola 68000, Apple MacIntosh ve Atari ST gibi bilgisayarlarda kullanılır.
+Ancak bu bilgisayarlar farklı işletim sistemlerine sahiptir (Amiga kickstart'tan farklı) ve grafik ve ses için farklı yongalara sahiptir, bu nedenle 68000 komutlarının bilgisine ihtiyacınız olacaktır.
+Ancak bu bilgisayarlar farklı işletim sistemlerine (Amiga kickstart'tan farklı) ve
+grafik ve ses için farklı yongalara sahiptir, bu nedenle
+68000 komutlarını bilmeniz gerekir, ancak Amiga işletim sistemi ve grafik yongaları hakkında bilgi sahibi olmanız gerekmez, bunları baştan öğrenmeniz gerekir;
+ayrıca C gibi dillerle bile yeni işletim sistemini öğrenmeniz gerekir
+.
+Örneğin, C dilini kullanarak WorkBench için pencereleri açan ve belki de küçük dağlar gibi çizimler yapan bir program yazarsanız, bir MSDOS PC satın alıp bunu yeniden yapmak isterseniz,
+Örneğin, C dilini kullanıyorsanız ve WorkBench için
+pencereleri açan ve belki de dağlar gibi çizimler yapan bir program yazıyorsanız,
+bir MSDOS PC satın alıp bunu WINDOWS'ta yeniden yapmak isterseniz, 
+programınızın dağları yapmak için gerekli hesaplamalarla ilgili kısımlarını ve
+genel yapısını yeniden kullanabilirsiniz, ancak
+Workbench pencerelerini ve seçim araçlarını açmakla ilgili tüm kısmı
+çöpe atıp Windows talimatlarıyla değiştirmelisiniz ve sizi temin ederim
+ki başka bir işletim sistemi öğrenmek ve bir programı dönüştürmek
+aylar hatta yıllar sürer.
+NOT: 68000 assembler ile yazılmış bir program, bazı hususlar göz önünde bulundurulduğu takdirde, diğer
+daha güçlü işlemcilerde de mükemmel çalışır.
+
+Hala okuyorsanız, demektir ki yılmadınız. O halde assembler'ın yardımcı programlarının listesini tamamlayayım... (dilinin adı ASSEMBLY,
+onu derleyen programın adı ASSEMBLER, ancak dilin de ASSEMBLER olarak adlandırılması yaygındır).
+ Öncelikle assembler en hızlı dildir, özellikle iyi biliyorsanız, ve aynı şey başka bir dil ile yapıldığında, assembler ile yapılan her zaman daha yavaş olacaktır.
+ASSEMBLER olarak adlandırılması yaygındır). Her şeyden önce, assembler en hızlı dil olmaya devam etmektedir,
+ özellikle de iyi biliyorsanız, ve aynı şey başka bir dil ile yapıldığında
+her zaman assembler ile yapılanlardan daha yavaş olacaktır.
+Ayrıca, daha önce hiç görülmemiş özel GRAFİK efektler yaratmanın tek yolu da budur
+: bir başlık oluşturucu ile de özel efektler elde edebilirsiniz, ancak
+sadece program tarafından tanımlananları yapabilirsiniz.
+ Aslında, bir başlık veya özel efektin hangi programla yapıldığını bulmak zor değildir;
+aynı şey DEMO MAKER için de geçerlidir. En iyisi TRSI DEMOMAKER'dır ve
+ilginç efektlere sahiptir, ancak artık çocuklar bile demomaker ile yapılmış bir şeyi tanır
+çünkü üstünde ve altında her zaman altın yazılar
+ve ortasında toplar veya yıldızlar vardır... YETER!!! Artık yeter!
+Assembler ile programlamayı öğrenerek, daha önce hiç görülmemiş
+efektler icat edebilirsiniz, çünkü
+binlerce kişinin kullandığı ve özel televizyon kanallarını ve diskleri dolduran
+yirmi kadar hazır efekt arasından seçim yapmak zorunda değilsiniz.
+Assembler ile icat edebileceğiniz sonsuz çeşitlilikteki şeylerin bir örneği olarak
+SPACEBALLS “state of the art” DEMO'yu verebilirim, bu
+en tanınmışlardan biridir, programlaması zor değildir ve
+özel efektlerin arasında dans eden stilize kadın figürleriyle hayranlık uyandırır;
+
+Daha sabırlı bir programcı, önce
+oynamak, hayallerindeki oyunu yapmak, Amiga'nın gerçek sınırlarını denemek, ekranı yavaşlatmadan kaç tane adam hareket ettirebileceğini görmek için
+bir oyun programlayabilir
+ 
+daha sonra bir ticari oyun yapmayı denemek için hiçbir engel yoktur,
+bu da grafikçilerin ve müzisyenlerin işbirliğini ve
+pazarlama ile ilgili tüm kısımları gerektirir, bu kısım genellikle
+oyunun reklamının, oyunun gerçek değerinden daha fazla ödüllendirilir, ancak
+oyunun değeri o kadar yüksekse, başarı yine de gelir.
+Neden CD32 için bir oyun yapmaya başlamayalım? CD'nin 600 MB kapasitesini kullanan bir AGA oyunu yapmanız yeterlidir
+: örneğin, arka planı gerçek zamanlı olarak yüklenen bir “FİLM” olan ve üzerinde RAMBO
+herkesi öldüren bir karakterin veya bir uzay gemisinin döndüğü bir oyun.
+Zorluk, yeni AGA yonga setini öğrenmek veya CD'ye uyarlama yapmakta değil, aslında normal yonga setine çok benzeyen AGA yonga setinde birkaç yeni kayıt defteri öğrenmek ve CD'ye uyarlama yapmakta değil, Zorluk,
+yeni AGA yonga setini öğrenmekte ya da CD'ye uyarlamakta değil, çünkü AGA yonga seti
+normal yonga setine çok benziyor, sadece birkaç yeni kayıt öğrenmek yeterli ve
+işlemci aynı şekilde çalışıyor, CD yönetimi ise
+daha da kolay, çünkü programcılar arasında dolaşan 2 diski
+“CD 32 DEVELOPER KIT” disklerini incelemek yeterlidir. Dolayısıyla, 2000 yılına girerken assembler
+hala öncü olabilir, tabii ki belirli
+görevler için, ve 2000 yılında teknoloji tamamen CD'ye geçerse,
+CD'deki oyunları oynamak veya sık sık çıplak kadınları görmek için PC satın alanların umduğu gibi,
+ MDDOS PC'lerdeki CD'lerin çoğu
+seksi slayt gösterileri olduğu için, Amiga da CD'de yazılımına sahip olacak ve bu yazılım
+bir gün bir programlama kursu okuyarak macerasına başlayan
+birisi tarafından geliştirilebilir... Her şeyin nasıl çalıştığını bilerek,
+bazı programların veya oyunların nasıl çalıştığını da anlayabilir ve bazı kısımlarını değiştirebilirsiniz
+: örneğin, bir oyun veya programın
+çalışmadığını anlayabilir ve çalışması için değiştirebiliriz,
+programlarda bazı değişiklikler yapabiliriz, örneğin ben bir yardımcı programı
+Amiga 4000'de disk üzerindeki sanal belleği kullanacak şekilde değiştirdim,
+diğer zamanlarda PD programlarını hızlandırdım, bunların en önemli kısımlarını “çaldım” ve hızlandırdım
+. Son olarak, sözde eğitmenler,
+sonsuz canlar yapılabilir, yani
+zavallı PLAYER 1'in canını azaltan liste parçaları bulunur ve her şey değiştirilir, belki de öldürüldüğünüzde canlarınız artacak şekilde
+... bir oyun veya bir
+programın nasıl çalıştığını görmek ve anlamak için ASM'yi GERÇEKTEN iyi bilmek ve
+bir L.M monitörü veya daha iyisi bir ACTION REPLAY tipi kartuşa sahip olmak gerekir (L.M monitörü,
+ bir bellek bölümünde bulunan komutları ayrıştırmaya, yani görüntülemeyi sağlayan bir yardımcı programdır
+ve bellekte hangi noktada bulunduğunu bulursanız
+hayat alan komutların yerini bulursanız, her şeyi değiştirebilirsiniz...
+L.M, Makine Dili anlamına gelir, yani mikroişlemcinin dili,
+derleyici tarafından üretilen dil). Ancak bu işlemler
+zor bir iştir ve bir oyunda mavi bir adamı yeşile çevirmeye çalışarak
+başlamak kesinlikle yararlı değildir. Birçok gencin
+zamanını L.M. monitörleri ve kartuşlarla rastgele uğraşarak
+ne olduğunu bilmedikleri şeyleri yapmaya çalışarak, programlardaki veya listelerdeki yazıları anlamadan değiştirerek,
+ bunları kendilerinin yaptığını veya önemli değişiklikler yaptığını söyleyerek
+harcadığını gördüm. Bu insanlar bugün bile
+bir görüntüyü assembler'da görüntüleyemiyorlar; jargonda bu şarlatanlara LAMER denir.
+
+Durumu özetleyelim: Eğer siz de o klasik 18 yaşındaki
+solgun, kambur, kadınlardan uzak gençlerden biriyseniz ve zavallı Amiga'nızın belleği için LM monitörlerle rastgele uğraşıyorsanız
+ve büyük bir hacker olduğunuzu övünüyorsanız,
+ monitörü bırakıp beni doğru yola takip etmenizi tavsiye ederim.
+Ben de o saçma şekilde başladım (ama 8 yaşında, 18 değil!),
+ama sonra akıllandım ve sayfaları atlamadan kitap okumaya başladım.
+ İşte size faydalı olabilecek bir kitap:
+
+AMIGA DONANIM KILAVUZU, IHT: Bu kılavuz
+Amiga'nın grafik ve sesini sağlayan ÖZEL ÇİPLERİN
+nasıl çalıştığını ve DISK SÜRÜCÜSÜNÜ nasıl kullanacağınızı vb.
+Bu kitap vazgeçilmezdir, ancak tek bir görüntüyü bile görüntülemek için
+68000'i de bilmeniz gerekir, çünkü 68000
+grafik çiplerini yönetir. Ayrıca, her şey soyut kalır, bir tür
+özet referans tabloları dizisi gibidir ve geçerli örnekler yoktur.
+Ancak, dersimde birçok örnek bulabilirsiniz!!!! İngilizce biliyorsanız,
+ yeni ECS çipleriyle güncellenen en son HARDWARE REFERENCE MANUAL'ı arayın.
+ Ancak, dersimin süresi boyunca buna gerek yoktur
+çünkü temel bilgiler, Amiga 1200'ün AGA çiplerinde de mevcuttur.
+Ayrıca ASMONE'de, tüm $DFFXXX kayıtlarının genel ve özel açıklamalarını veren bir komut, =C, bulunmaktadır.
+Örneğin:
+=C 100, grafik çözünürlüğü ile ilgili BLTCON0 kaydının açıklamasını verir.
+Aynı şekilde =C 040, BLITTER
+kayıtlarının özetini verir. ($dff040) hakkında bir özet verir.
+
+ROM KERNEL MANUAL ve PROGRAMMARE L'AMIGA cilt 1 ve 2 gibi kitaplar,
+donanımla doğrudan programlama için yararlı değildir, bu kursda öğretmeye çalışacağım şey budur, ancak
+workbench veya amigados için programlar yapmak isteyenler için yararlıdır, bunlar
+kickstart ve workbench disklerinde bulunan işletim sistemini kullanır...
+ pencereli programlar
+yani, ekranlarda toplar ve ekolayzırlarla veya alevler arasında zıplayan adamcıklar
+olmayan programlar... bu nedenle C programcıları için daha yararlıdır.
+TAVSİYE ETMİYORUM... bu şekilde programlama ÇOK SIKICI.
+
+NOT: Eğer rastgele LM monitör kullanıcıları değil de
+kopyalamak ve bitirmek için yeni oyunlar arayan hevesli araştırmacılarsanız, saatlerinizi
+telefonda en son haberleri öğrenmek için geçiriyorsanız ve kalan saatlerinizi
+XCOPY ile kopyalamak ve oynamak için geçiriyorsanız, belki de daha çabuk bitirmek için her zaman eğitmenle
+oynuyorsanız, o zaman LM monitörle kambur olmak daha iyidir: ya bu
+araştırma ve kopyalama telaşını bırakın ya da
+ekranda adamcıkların neden hareket ettiğini hiç bilmeyen
+hipertansif insanlar olarak kalacaksınız ve
+oyuna menü ve her şeyi içeren bir eğitmen yapmayı asla öğrenemeyeceksiniz ve
+kendinize bir eğitmen yaptığınızda, oyunu bitirmek
+Bu, oyuncu ile oyun yaratıcısı arasındaki farktır,
+boyun eğmiş ve aptal halk ile onları yöneten rejim liderleri arasındaki farktır.
+Rejim liderleri, (eğitmenle ya da eğitmen olmadan) sayısız oyunu bitirmek için uykusuz geceler geçirir,
+oyunların ne olduğu önemli değildir, yeter ki çok ve yeni olsunlar, XCOPY ile kopyalanmış olsunlar (ki
+bu arada XCOPY dünyadaki en kötü kopyalama programıdır! DCOPY kullanın daha iyi!).
+P.S: Kadınlardan bahsetmişken, ASM'DE KADIN TARAFINDAN PROGRAMLANMIŞ HİÇBİR ŞEY GÖRMEDİM
+!!!! Eğer bir kadın okuyorsa, bence
+bu ilk olan olmak için bir neden daha!!! 
+Tanımadıkları insanlar hakkında dedikodu yapmak veya
+vitrinlere bakmak yerine, etek giyip çılgın şeyler programlayan bir kız, bence
+kendilerini zeki sanan bir sürü çocuk
+(az sayıdaki) tanıdıkları kızlara fareyi veya workbench pencerelerini ne kadar iyi kullandıklarını göstererek, onların hiçbir şey anlamadıklarını ve kendilerini dahi olarak tanıtabileceklerini
+ve NASA ile bağlantıları olduğunu söyleyebileceklerini düşünerek. Oysa onlar bir disketi bile formatlayamıyorlar.
+LEZIONE1.TXT
+'nin ardından okuyacağınız örnek kaynak koduyla birlikte, en ZOR, en ÖNEMLİ olan
+LEZIONE2.TXT, bir disketi formatlamayı bile bilmeyen
+
+Şimdiden söyleyeyim, bu DERS1.TXT'nin ardından okuyacağınız DERS2.TXT, en ZOR, yani KADER DERSidir.
+Yani, bu dersi geçerseniz, işiniz bitmiştir, çünkü ders 3'ten itibaren
+copper ile ilk özel efektleri yapmaya başlayacaksınız ve sonuna kadar
+hızla ilerleyeceksiniz.
+ Bu nedenle, sabırla ve özenle
+DERS 2.TXT'yi atlamadan geçmenizi rica ediyorum.
+
+Şimdi, assembler ile programlama için kullanılan programları inceleyelim:
+
+-ASSEMBLER, komutlardan oluşan listeyi
+sembolik formatta (move, add...) ikili formata (yani baytlara) çeviren programdır.
+Yani, programcı tarafından okunabilir bir metni, işlemcinin okuduğu ve yürüttüğü gerçek komut formatına
+(bir dizi sayı) çevirir.
+Örneğin, “RTS” komutu $4e75'e dönüştürülür ve bu şekilde devam eder.
+Bu, programlamayı insani hale getirir, çünkü her komuta karşılık gelen sayıları ezbere bilerek programlamayı bir düşünün!
+SAYILAR için programlama, gerçek MAKİNE DİLİ, yani L.M ile programlama anlamına gelir, ancak bu gereksizdir, ASSEMBLER kullanarak çok daha iyi yapılır, yani geleneksel kelimeler kullanılarak, COMANDI denir.
+SAYILARLA programlama, gerçek MAKİNE DİLİ ile programlama anlamına gelir,
+yani L.M, ancak bu gereksizdir, ASSEMBLY ile çok daha iyi yapılır, yani
+gerçek sayılar yerine KOMUTLAR olarak adlandırılan geleneksel kelimeler kullanılır.
+Ortaya çıkan bu ikili kod, nesne kodu olarak adlandırılır ve doğrudan
+bilgisayar tarafından çalıştırılabilir, hatta çalıştırılabilir dosya olarak kaydedilebilir veya
+program test edilebilir.
+Assembler'da onaltılık sayı sisteminin de kullanıldığını unutmayın!
+Onaltılık sayılar, $ ile başlayan sayılardır ve 16 tabanında yazılırlar,
+daha sonra açıklayacağımız gibi, $4e75'te olduğu gibi ABCDEF harflerini de içerebilirler.
+Listede “gramer” hataları varsa, bunların
+derleyici tarafından bildirileceğini unutmayın, çünkü uyulması gereken kesin kurallar vardır
+: örneğin LABEL (ETİKET)
+satırın başından başlamalı, yani önlerinde boşluk olmamalı ve
+iki nokta (:). Örneğin, doğru bir LABEL şöyledir:
+
+PIPPO:
+
+Aslında isim istediğiniz gibi verilebilir ve PIPPO uygundur, çünkü = + - vb. semboller içermez,
+ önünde boşluk yoktur ve : ile biter.
+Etiketler, listede çeşitli yerlere verilen isimlerdir ve
+program sırasında bu şeyleri belirtmek için kullanılırlar. Örneğin,
+PIPPO: belirli bir dizi komuta, programda PIPPO'nun
+çalıştırılması gerektiğini söylediğimizde, PIPPO'nun altındaki komutlar çalıştırılacaktır. Aynı
+şekilde bir şekle veya bir müziğe de etiket koyabiliriz; etiket
+bulunduğu bellek adresini temsil eder, tıpkı yerlerin isimlerinin
+o yerlerin konumunu temsil etmesi gibi! Avustralya'ya gitmek istersem,
+üzerinde güzel bir AUSTRALIA etiketi göreceğim. Ancak, ETİKETLER
+bize yön bulmak için yararlıdır, ancak derleyici her şeyi dönüştürdüğünde,
+nesne kodunda etiket yoktur, sadece talimatlara karşılık gelen numaralar vardır.
+
+Ayrıca, her zaman
+boşluklarla, tercihen bir TAB ile (tek seferde 8 boşluk yapar,
+CTRL tuşunun üstündeki tuş) önceden gelmesi ve ardından işlenenler gelmesi gereken komutlar vardır, örneğin:
+
+PIPPO:
+MOVE.L    $10,$20
+
+Bu durumda MOVE.L komuttur, ilk operand $10 ve
+ikincisi $20'dir. Bazı komutlar tek bir operand gerektirirken, diğerleri
+hiç operand gerektirmez, örneğin:
+
+CLR.L    $10
+
+Tek bir operand gerektirir. RTS gibi komutlar operand gerektirmez.
+Son olarak, komutlarla ne yapıldığını hatırlamak için yararlı olan bir yorum olabilir
+: yorum, noktalı virgül (;) sonra yazılabilir.
+
+PIPPO:                ; LABEL, MOVE.L adresini temsil eder
+MOVE.L    $10,$20        ; 2 işlenenli komut
+CLR.L    $10        ; 1 operandlı komut
+RTS            ; operand içermeyen komut
+
+Yorumlar derleme sırasında yok sayılır, bu nedenle
+istediğiniz her şeyi yazabilirsiniz, yeter ki ; işaretinden sonra olsun.
+Bu gramer kurallarıdır. Bu basit kurallara uyarak program
+derlenir. Programın yapması gerekeni yapıp yapmaması ise size bağlıdır!!!
+
+-EDITOR ise metinleri yazmak veya değiştirmek için kullanılan bir programdır.
+Bizim durumumuzda, listeleri yazmak için kullanılır. Listeler, anahtar kelimelerden (move, add...) ve programcının yorumlarından (; işaretinden sonra yazılır) oluşan metinlerden ibarettir.
+En güçlü editörler karakterleri arayabilir, bağlayabilir ve değiştirebilir.
+En güçlü editörler karakterleri arayabilir, bağlayabilir ve değiştirebilir.
+Genellikle listelere .ASM veya .S ile biten bir isim verilir, ben
+şahsen .S'yi tercih ederim, bu yüzden kurstakiler .S ile biterken
+okunacak metinler .TXT ile biter, ancak dosya adı elbette
+derleyici için önemli değildir, çünkü derleyici dosyayı yine de yükler.
+
+-MONITOR bu durumda Amiga'nın görüntülerini gördüğünüz ekran olarak anlaşılmamalıdır,
+ ancak belleğin içeriğini, örneğin $100 adresinde hangi sayının olduğunu ve
+bunun gibi bilgileri görüntülemenizi sağlayan başka bir programdır.
+ MONITÖRLER genellikle bir DISASSEMBLATORE'ye (disassembler) de sahiptir, yani ASSEMBLATORE'nin
+tersi, belleği sayılar yerine
+komutlar olarak görmemizi sağlar, yani sayıları ilgili
+sembolik komutlara (move, add..), böylece çalışmasını netleştirir.
+Yani MAKİNE DİLİNİ ASSEMBLY'ye dönüştürür, yani her sayının temsil ettiği
+assembly komutlarını yeniden oluşturur ve OBJEKT KODUNU
+listede kullandığınız orijinal biçimine geri döndürür. Assembler için kullanılan örneği
+tekrar ele alacak olursak, $4e75'i “RTS”ye dönüştürür.
+
+-DEBUGGER, programı komut komut test etmek için kullanılır,
+her seferinde komutların etkilerini görüntüler ve
+programın hatalı çalışmasının nedenini gösterebilir. Böylece programı
+parça parça çalıştırmanıza, yani durumu kontrol etmek için ne kadar çalıştıracağınızı belirlemenize
+ve ardından her hatayı bulmak için çalıştırmaya devam etmenize olanak tanır.
+Aslında BUG, jargonda HATA anlamına gelir; İngilizce'de PULCE PESTIFERA anlamına gelir,
+çünkü hatalar genellikle programda bulunması zordur;
+debugger ile düzensizliğin nerede meydana geldiğini kontrol edebilirsiniz.
+
+Bazen, bir işletim sisteminde etkin bir şekilde çalışabilmesi için nesne kodu
+LINKER ile LINKED olmalıdır, çünkü yürütülebilir dosyalar
+sadece bir araya getirdiğiniz komut bloğu değildir, aynı zamanda
+işletim sistemi tarafından belleğe yüklenmesini sağlayan parçalara da sahiptir.
+Bu, MSDOS PC'deki .EXE ve .COM dosyaları ve
+diğer tüm işletim sistemlerindeki yürütülebilir dosyalar için geçerlidir. Bu nedenle, Amiga için bir yürütülebilir dosya
+bir ATARI ST veya MACINTOSH tarafından yüklenmez, çünkü FILE formatı farklıdır.
+Özellikle Amiga'larda HUNK vardır ve nesne kodunu, fareyle tıklayarak veya SHELL'den yükleyerek çalıştırılabilen bir HUNK dosyasına dönüştürmek için
+onu bağlamanız gerekir.
+Neyse ki birçok derleyiciye yerleşik bir bağlayıcı vardır, bu nedenle bu adımı atlamanıza gerek yoktur.
+Neyse ki birçok assembler yerleşik bir linker içerir, bu nedenle
+bu adımı atlamak gerekmez.
+
+Bu kursta yer alan assembler, TRASH'M'ONE, bir EDİTÖR,
+bir ASSEMBLER, bir MONİTÖR/DEBUGGER ve bir LINKER içerir!!! Yani hepsi BİRDE!!!!
+Asmone'nin PD (yani serbestçe kopyalanabilir) versiyonudur.
+
+Editörle ilgili olarak, bir metni aramak için
+AMIGA sağ+SHIFT+S tuşlarına aynı anda basarak veya fareyle (SAĞ TUŞ)
+“Edit Funct.” başlığı altındaki açılır menüden Search seçeneğini seçerek bir metin arayabilirsiniz; bu
+nokta, sol üstte “Search for:” yazısı görünecektir, buraya
+aradığınız kelimeyi (veya kelimeleri) yazın. Bu, okumaya kaldığınız yeri
+bulmak için yararlı olabilir: örneğin,
+bugün burada bırakmak istiyorsanız, kaldığınız satırı işaretleyebilirsiniz,
+bu durumda 549 (sol altta gösterilen), veya
+metnin bu noktasını bir kelime arayarak da bulabilirsiniz, örneğin “Funct”,
+veya “549'da”, veya “arama”, veya istediğiniz herhangi bir kelimeyi arayarak bu noktayı bulabilirsiniz.
+
+Normalde, listemizi bir EDİTÖR ile yazmalı ve
+listeyi (KAYNAK olarak adlandırılır) istediğiniz bir adla kaydetmeliyiz.
+Ardından, listelemeyi yüklemek için derleyiciyi yüklemeliydik,
+ derlemeliydik (yani metni L.M'deki eşdeğerine dönüştürmeliydik) ve
+nesne kodunu kaydetmeliydik.
+Programı test etmek, yani çalışıp çalışmadığını kontrol etmek için
+derleyiciden çalıştırmalıydık veya onu çalıştırılabilir hale getirerek DOS'tan
+başlatmalıydık. Değişiklik yapmak için editörü bulmalı,
+listelemeyi yeniden yüklemeli, değiştirmeli, kaydetmeli ve tüm derlemeyi yeniden yapmalıydık.
+MSDOS PC'de yapılması gereken budur, bu yüzden programlamayı bıraktım,
+ oysa Amiga'da çoklu görev özelliği sayesinde
+EDİTÖR, DERLEYİCİ vb. Bu yetmezmiş gibi, birisi
+efsanevi SEKA'yı icat etti, bugünkü ASMONE'ye benziyordu ve editör, derleyici ve
+monitörü bir arada barındırıyordu. Gelişmelerle birlikte MASTERSEKA'ya, ardından
+ASMONE'ye ve son olarak da birçok hobi programcı tarafından ASMONE'nin değiştirilmiş birçok sürümüne ulaştık
+. En hevesli iki değiştirici (bravo!!)
+TFA, TFA ASMONE'yi yapanlar ve DEFTRONIC, bunu yapanlar
+TRASH'M'ONE'u yapan DEFTRONIC'tir. Deftronic'inkini seçtim çünkü en az BUG'lu olanıdır.
+Aslında, en iyi şekilde değiştirilmiş olan bu ASMONE'lar genellikle hatalı derlemeler yapar
+veya aniden kilitlenir, ancak bunlardan şikayet edemeyiz
+çünkü para kazanmadan seçenekler eklemekten keyif alıyorlar!
+
+Sonuç olarak, listeyi yazabilir, ardından ESC tuşuna basarak
+derleyici/monitöre geçebilir, buradan derleme yapabilir (“A” ile) veya
+hafızanın içeriğini hem sayı hem de talimatlar olarak görebilirsiniz
+DISASSEMBLATE, programın çalışmasını kontrol edebilir ve son olarak
+“WO” ile çalıştırılabilir DOSYAYI doğrudan kaydedebilirsiniz.
+Karışıklık olmaması için, listeyi, yani
+KAYNAK olan METİN'i kaydetmenin bir şey, yürütülebilir dosyayı, yani
+YÜRÜTÜLEBİLİR DOSYA biçiminde talimatlardan oluşan bir PROGRAM'ı kaydetmenin başka bir şey olduğunu unutmayın.
+Kaynak, CED gibi başka bir düzenleyiciyle de yazılabilir ve
+daha sonra ASMONE'den yüklenebilir. Aynı şekilde,
+Asmone ile yazılmış bir metin bir editörden yüklenebilir. Asmone Editörü,
+bir assembler içine yerleştirilmiş normal bir EDİTÖR'den başka bir şey değildir ve bununla
+annenize bir mektup yazabilir veya bir diskin STARTUP-SEQUENCE'ını değiştirebilirsiniz
+(Bunun ne olduğunu bilmeyenler, lütfen AmigaDos kılavuzunu okuyun!).
+
+Şimdi, yanlış anlaşılmaları önlemek için, bilgisayarın nasıl çalıştığını kendi tarzımda açıklayarak devam edeceğim.
+Her şeyi organize eden, mikroişlemci 68000, CPU, yani
+
+Merkezi İşlem Birimi, kısacası Patron'dur.
+İşlemci, talimatları yerine getirir, çünkü yerine getirebileceği çok kesin bir talimat setine sahiptir ve bunları birbiri ardına (sırayla) yerine getirir, yolunda bir talimat bulmadıkça.. İşlemci
+komutları yerine getirir, aslında yerine getirebileceği çok kesin bir komut seti vardır
+ve bunları birbiri ardına (sırayla) yerine getirir, ancak yolunda
+daha ileri veya geri atlama komutu
+veya belirli sayıda döngü (veya döngü) yapma talimatı ile karşılaşmadıkça, bunları birbiri ardına (sırayla) yürütür. Örneğin, bazı
+talimatları sayayım: MOVE, “bir değeri bir yerden başka bir yere kopyala” anlamına gelir,
+örneğin “move $10,$20” $10'da bulunan değeri $20 konumuna taşır,
+veya CLR, SIFIRLA anlamına gelir: “clr $10” $10 konumunu sıfırlar...
+(YER ile işlemcinin erişebileceği bir bellek noktasını kastediyorum)
+
+Bu arada! İşlemci bellek üzerinde çalışır! Bir harita yapalım:
+
+Komutlar $200000'dan küçük adreslerle çalıştığında
+CHIP RAM üzerinde çalışıyor, yani: $000000'dan $80000'a kadar ilk 512k CHIP var, bunlar
+eski a500 veya a2000'lerdekiler, RAM ise $100000'a kadar devam ediyorsa,
+1 MB chip RAM var demektir, a500+, a600 veya yeni a2000'lerde olduğu gibi,
+CHIP bellek ise 2 MB ise, a1200 veya a500+ veya genişletilmiş a600'lerde olduğu gibi
+örneğin, çip $000000 ile $200000 arasında değişir. Özetle, işlemci
+200000 $'dan küçük adreslerde çalışıyorsa, CHIP RAM'deyiz, örneğin:
+
+CLR.L    $30000
+MOVE.L    $150000,$1a0000
+
+Bunlar CHIP RAM üzerinde çalışan komutlardır.
+
+Bunun yerine, $200000 ve üzeri adreslerde çalıştıklarında, FAST
+RAM'deyiz, örneğin 1 MB belleğe sahip eski bir a500, 512k CHIP
+ve 512k FAST olarak bölünmüş belleği 2 parçaya bölünmüştür:
+
+1)    $000000 ile $80000 arası    ; ilk 512k CHIP RAM
+
+2)    $c00000 ile $c80000 arası    ; 512k FAST RAM.
+
+SYSINFO gibi yardımcı programlarla sahip olduğunuz bellek bloklarını kontrol edebilirsiniz.
+
+Ayrıca, ROM Kickstart gibi özel bellek alanları da vardır.
+Bunlar genellikle kick 1.2 ve 1.3 için $fc0000 veya kick 2.0 veya 3.0 için $f80000'dir.
+RAM'den farklı olarak ROM üzerine yazılamaz, sadece okunabilir
+ve bilgisayar kapatıldığında silinmez.
+
+Çok önemli bir adres $dff000'dır, çünkü komutlar
+$dff000 ile $dff1fe arasındaki adreslerde çalışırken
+grafik ve sesin CUSTOM ÇİPLERİ devreye girer, bu nedenle grafiği çalıştırmak için
+bu adreslere $dffxxx, diğer adıyla
+REGISTRI olarak da adlandırılır, çünkü her birinin bir işlevi vardır:
+komut satırından (ESC tuşuna basarak Editör ve komutlar arasında geçiş yapabilirsiniz)
+“=C” komutunu girin ve bu kayıtların özetini, numaralarıyla birlikte
+göreceksiniz; burada 000, $dff000'ı ve 100, $dff100'u ve adıyla birlikte görürsünüz, örneğin
+$dff006 VHPOSR, $dff100 ise BPLCON0'dır. Bu adresler
+sadece okunabilir veya sadece yazılabilir, örneğin $dff006
+sadece okunabilir ve $dff100 sadece yazılabilir. Sayı ve isim arasında bir W veya R
+harfi göreceksiniz: W harfi olanlar sadece yazılabilir
+(WRITE), R harfi olanlar sadece
+okunabilir (READ). Bazıları S (strobe) veya ER (EarlyRead) şeklindedir, bunları
+daha sonra kullandığımızda ele alacağız.
+
+Diğer özel adresler $bfexxx alanında, yani $bfe001
+ile $bfef01 arasında bulunur: bunlar CIAA yongasına bağlı adreslerdir ve
+zamanlayıcı, yani kronometre görevi görmek ve
+paralel port (yazıcı portu) gibi portları kontrol etmek gibi çeşitli işleri yapar.
+Benzer görevleri, $bfdxxx adreslerine bağlı CIAB yerine getirir.
+
+Pratikte hatırlamanız gereken şey,
+$dffxxx veya $bfdxxx veya $bfexxx gibi bir adres gördüğünüzde, bir CUSTOM kayıt defterinde çalıştığımızdır.
+Bu, ekran renklerinin değişmesi, joystick veya farenin hareketlerinin kontrol edilmesi
+ve daha fazlasını neden olur.
+
+RAM bellek, hem CHIP hem de FAST, her komutun hangi adreste olduğunu bilmenize gerek yoktur
+çünkü, bildiğiniz gibi, assembler adresler yerine LABEL kullanmamıza izin verir:
+bunları sadece gerekli yerlere koyacağız, ASMONE gerçek adresleri
+etiketlerin yerine koyacaktır.
+ İsterseniz, komutlarımızın hangi adreslere
+yerleştirildiğini daha sonra görebiliriz.
+
+Komut örneklerine devam edelim:
+ADD ve SUB gibi komutlar vardır, bunlar EKLEME ve ÇIKARMA anlamına gelir, örneğin
+SUB #10,ENERGIA enerji değerinden 10 çıkarır;
+MULS,MULU ile çarpma ve bölme işlemleri,DIVS ve DIVU ile çarpma ve bölme işlemleri ve OR, AND, NOT gibi
+ mantıksal işlemler ve diğerleri vardır. JMP, JUMP anlamına gelir, yani belirli bir konuma atla
+(örneğin JMP $40000), JSR ise
+belirli bir konumda RTS bulana kadar bir rutini çalıştır,
+ yani “rutin bitti” anlamına gelir ve JSR'den sonra
+çalışma devam eder; BRA, JSR ile aynı şeyi yapar ve BSR, JSR gibi çalışır.
+TST, sıfıra göre BAŞA DÖN anlamına gelir, yani belirli bir
+konumun veya kaydın sıfıra eşit olup olmadığını kontrol eder; bu komut veya
+CMP komutu, yani bir şeyi başka bir şeyle KARŞILAŞTIR, genellikle
+koşullu bir atlamayı izler: örneğin BEQ ve BNE, şu anlama gelir
+BEQ= Koşul doğruysa belirli bir konuma atla (EŞİTSE BRANCH)
+BNE= Koşul doğru değilse atla (BRANCH IF NOT EQUAL). Böylece çeşitli
+dalgalanmalar oluşturulur; aptalca bir örnek verelim:
+
+Ana:
+BSR CAMPANE        ; BSR, CAMPANE etiketinin altına atlar, ardından
+; buraya geri dönerek BSR'yi yürütür aspettamouse
+BSR aspettamouse    ; MOUSE'un basılmasını bekler
+BSR PAVAROTTI
+RTS     ; asmone veya workbench'e geri dön
+
+aspettamouse:
+fare tuşunun basılı olup olmadığını kontrol et
+basılı değilse aspettamouse'a git, yani fare basılı olana kadar döngüye devam et
+(bu durumda “BNE aspettamouse” yazılır)
+RTS     ; subroutine aspettamouse sonu, BSR'nin altına geri dön
+
+CAMPANE:
+dindon    ; dindon sesi çıkaran bir rutin
+RTS
+
+PAVAROTTI:
+AAAAAHHHHHHHHH    ; Pavarotti'yi şarkı söyleten bir rutin
+RTS
+
+END    ; Listenin sonunu gösterir, konulmayabilir.
+
+(END'in altına yazılanlar okunmaz ve birleştirilmez)
+
+Öyleyse, bu varsayımsal programı çalıştırarak, “Principale”
+'nin, 3 rutini (programın 
+adlandırılmış kısımları, örneğin PAVAROTTI) sırayla çağıran ana rutin olduğunu söyleyebiliriz:
+başlangıçta işlemci CAMPANE'nin altına atlar: ve
+çanları çalardı, ardından bir RTS bulur ve BSR CAMPANE'nin altına geri döner, burada başka bir
+BSR bulur ve bu onu “aspettamouse:”'nin altına götürür; bu, fare tuşu basılana kadar
+bir döngü yapan bir rutindir... işlemci
+milyarlarca kez fare ve fare non viene premuto, torna sempre a controllare
+senza sosta; fare viene calpestato (premuto) la situazione cambia,
+perché si esce dal ciclo infinito ASPETTAMOUSE, e si arriva al suo RTS, ossia
+all'uscita, che lo fa tornare a PRINCIPALE sotto il “bsr aspettamouse” che
+(işlemci her zaman bir sonraki komutu, yani
+altındaki komutu yürütür ve bir BSR'den, yani başka bir yerde yer alan belirli
+komutların yürütülmesinden geri döndüğünde de) ve onu Pavarotti'yi
+şarkı söylemeye götüren bir başka BSR bulur.
+Sonunda Pavarotti'nin konserinden döndüğünde bir RTS bulur, bu da onu
+PRINCIPALE'den çıkarır ve böylece asmone veya workbench'e geri döner: PROGRAM sona ermiştir.
+
+Şimdi işlemcinin çeşitli komutlar arasında nasıl hareket ettiğini daha iyi açıklayacağım:
+“BEQ label” durumunda, dallanma söz konusu olabilir, çünkü bu noktada
+2 yol izlenebilir: yapraksız, kuru bir ağaç,
+dallı budaklı, yaşlı bir meşe ağacı düşünün, bu ağaç bir noktada
+2 dala ayrılır, sonra bu 2 dalın her biri 2'ye ayrılır ve böyle devam eder.
+beq'e geldiğimizde, programın başlangıcından, yani ağacın dibinden, bizim
+karınca yuvası START:'ın bulunduğu yerden yola çıkan bir karınca gibiyiz ve ilk DALLANMA noktasına geldik:
+ Bu noktada
+sağ dalda mı yoksa sol dalda mı devam edeceğimizi seçiyoruz. Bu seçimi
+68000, CMP veya TST gibi koşulun sonucuna göre yapıyor:
+
+BAŞLANGIÇ: ; çimlerdeki karınca yuvası
+...
+...
+TST.B LABEL30 ; LABEL30 baytı= 0??? (örnek koşul)
+BEQ RAMODESTRO ; evet ise, RAMODESTRO'ya atla....
+ ; hayır=0 değilse, RAMOSINISTRO'yu çalıştır
+; (baytın $01 ile $FF arasında bir sayı olduğu anlamına gelir)
+.... (RAMOSINISTRO talimatları)
+rts Son, çıkıyoruz: RAMOSINISTRO'yu geçtik, DESTRO'yu geçmedik
+
+RAMODESTRO:...
+ (RAMODESTRO talimatları)
+...
+rts Bitti, RAMODESTRO'yu geçtik, SINISTRO'yu geçmedik
+
+Bu durumda bir TST koşulu (0 ile karşılaştır) ve CMP koşulu (
+ilk operand ile ikinci operand karşılaştır) ardından bir BEQ (evet ise, atla...) veya BNE (eğer değilse,
+atla...), belirli bir dizi komutu mu yoksa
+başka bir dizi komutu mu çalıştıracağını, bir yolu mu yoksa başka bir yolu mu seçeceğini belirlemek için kullanılır.
+BNE'yi, belirli
+bir dizi komutun koşul gerçekleşene kadar tekrar tekrar çalıştırıldığı bir döngü (veya loop) oluşturmak için zaten kullandık,
+ örneğin farenin tıklanmasını bekleyen döngü.
+Döngü, bir ağaca tırmanan bir karınca yerine
+aynı şeyi yorulmadan veya grev yapmadan milyarlarca kez yapma sabrına sahip bir ROBOT ile karşılaştırılabilir,
+ örneğin:
+
+MUTFAĞA GİT, KEK PİŞMİŞ Mİ KONTROL ET, PİŞMEMİŞSE OTURMA ODASINA DÖN
+VE 30 SANİYE BOYUNCA KÖPEKTEN BİT AL, SONRA
+MUTFAĞA GİT, KEK PİŞMİŞ Mİ KONTROL ET, PİŞMEMİŞSE OTURMA ODASINA DÖN
+VE 30 SANİYE BOYUNCA KÖPEKTEN BİT AL, SONRA
+MUTFAĞA GİT, KEK PİŞMİŞ Mİ KONTROL ET, PİŞMEMİŞSE SALONA GERİ DÖN
+VE 30 SANİYE BOYUNCA KÖPEKTEN BİT AL, SONRA
+MUTFAĞA GİT, KEK PİŞMİŞ Mİ KONTROL ET, PİŞMEMİŞSE SALONA GERİ DÖN
+VE 30 SANİYE BOYUNCA KÖPEKTEN BİT AL, SONRA
+MUTFAĞA GİT, KEK PİŞMİŞ Mİ KONTROL ET, PİŞMEMİŞSE SALONA GERİ DÖN
+VE 30 SANİYE BOYUNCA KÖPEKTEN BİT AL, SONRA...
+
+Görüldüğü gibi, bir insan kekin pişmesi için gerekli süre boyunca
+bu şekilde sürekli gidip gelmeye isyan ederdi, ancak 68000
+gözünü bile kırpmıyor. Kek nihayet piştiğinde, BEQ kontrol edilir
+ve ROBOT, TOGLILADALFORNOSENZASCOTTARTIEMETTILAINTAVOLA: rutinine geçer.
+
+Burada ve orada, hatta büyük veya küçük döngüler içinde dallanmalarla
+her türlü ihtiyacı karşılayan karmaşık bir yapı oluşturulabileceğini tahmin edebilirsiniz.
+Bir şehrin gelişimini simüle eden programların karmaşıklığını düşünün.
+Bu programlar, binlerce duruma göre vatandaşların davranışlarını simüle eder.
+Tüm bunlar, bazen birbirine bağlı veya döngüsel dallanmalarla mümkündür.
+
+Dallanmalar, yani BEQ veya BNE'leri çağırarak veya sadece
+68000'in
+yolculuğu sırasında bulundukları için yürütülen talimat parçaları, ROUTINE veya SUBROUTINE olarak adlandırılır. yani belirli bir görevi yerine getiren belirli sayıda komuttan oluşan
+program parçalarıdır.
+ROBOT döngüsünde, pastayı fırından çıkaran komutlar
+tek bir ROUTINE içinde izole edilebilir ve
+pastayı fırından çıkarmak gerektiğinde her seferinde çalıştırılabilir.
+Aslında ROUTINE'lerin ve özellikle izole SUBROUTINE'lerin yararı,
+ örneğin pastayı fırından her çıkarmak için aynı komut dizisini yeniden yazmak zorunda olmamaktır
+.
+Bu komutları izole edebilir ve bir
+ad vererek, yani başlarına bir LABEL atayarak ve
+RTS komutuyla sonunu belirleyerek bir kenara koyabiliriz. SUBROUTINE kelimesine bir tanım verelim:
+-Bir isim verilen bir komut bloğunun alt rutini olarak adlandırılır,
+bir LABEL ile başlar, yani istenen bir isim ve ardından : ile
+ve özel bir geri dönüş komutu olan RTS (ReTurn from Subroutine) ile biter
+ve genellikle BSR komutu ile çalıştırılır, ardından
+alt rutinin adı gelir; BSR komutunu çalıştırdıktan sonra, işlemci, alt rutini çalıştıran BSR komutunun altındaki
+komutları çalıştırmaya devam eder.
+Bu, bir denizaltının komutanına benzetilebilir. Bu durumda
+ana programdır ve emir vererek alt programları yürütür.
+Örneğin, komutanın periskopla bir düşman gemisi gördüğünü düşünün.
+Bu noktada, BSR ArmateSiluri komutunu verecek, yani torpidoları ateşleme emrini verecektir.
+Torpidoları ateşleyen alt program yürütülene kadar
+işlemeye devam edemeyecektir. Tüpler hazır olduğu bildirildiğinde, komutan,
+yani ana program, prosedüre devam eder: yani BSR SAĞ
+ve BSR SOL komutlarını makine dairesine verir ve gemi
+tüplerin yörüngesine girene kadar; bunu, içinde
+CMP GEMİ, TORPİLİ ve ardından BNE SPOSTASOTTOMARINO, yani: “LABEL
+geminin konumunu içeren etiket, torpillerin ulaşacağı konumu içeren LABEL
+etiketinin içeriğiyle aynı mı?”, eğer hala değilse (BNE), o zaman
+tekrar hareket et, yani daha sağda mı yoksa daha solda mı olduğumuzu kontrol edecek rutine geri dön
+ve buna göre SOL
+ve SAĞ alt rutinlerini çalıştırın. Bu döngü, pastanın pişmesini bekleyen ROBOT'un döngüsüne benzer,
+ ancak bu durumda pişmeyi beklemek yerine,
+MOUSE'u bekleyen döngüde onu durdurmak için basmamız gerektiği gibi,
+bizim aktif olarak tam konuma ulaşmamız gerekir.
+Hizalama döngüsünde kalmıştık: aniden komutan
+torpidoları ateşleme emrini verir! (BSR FUORIUNO, BSR FUORIDUE).
+BOOOOOOOOOOM... İşe yaradı... Her yerde ölüler, suda yüzen çoraplar,
+Almanya'nın her yerine dağılmış dullar ve yetimler (filmlerde her zaman Almanlar ölür),
+ deniz dibinde bir enkaz.
+MERAK ETMEYİN! Bu sadece başarılı bir bilgisayar simülasyonuydu.
+
+İşlemcinin mantığını anladıysanız, işiniz bitti demektir.
+Bilgisayarda gördüğünüz her şey, ister hava durumu tahmini programı,
+ ister küpler ve toplarla bir demo, ister bir aksiyon oyunu olsun,
+çeşitli TST, BTST, CMP koşullarının yanıtlarına göre
+döngüsel veya sıralı olarak yürütülen program parçalarından oluşur. 
+Dolayısıyla, her türlü işlem
+ve karar, karmaşıklık derecesi ne olursa olsun, belirli sayıda
+basit koşullardan oluşur, her alt rutinin daha küçük alt rutinlerle yapılabileceğini düşünürsek, örneğin Fırından Pastayı Çıkar:
+Fırından Pastayı Çıkar:
+BSR Fırını Kapat
+BSR Fırını Aç
+BSR Pastayı Masaya Koy
+BSR KekAl (robot olduğu için yanmaz)
+BSR KekMasayaKoy
+BSR FırınıKapat
+rts
+
+Alt alt rutinler de başka alt rutinlerden oluşabilir:
+
+FırınıKapat:
+BSR AnahtaraGit
+BSR SolaDöndür
+rts
+
+Alt rutinlerin en büyük yararı, programı daha anlaşılır hale getirmek,
+onu mantıklı parçalara ayırmak ve diğer programlarda kullanılabilecek
+rutinler koleksiyonu oluşturma olanağı sağlamaktır. Örneğin,
+joystick'in konumunu okuyan bir rutininiz varsa, bunu
+gerekirse küçük değişiklikler yaparak yapacağınız tüm oyunlarda yeniden kullanabilirsiniz. Aynı şekilde
+müziği çalan rutin veya ekranda bir adamı yürüten rutin.
+
+Bu, zavallı mikroişlemcinin doğru veya yanlış koşullarına göre sürekli çalışıp dolaştığını
+anlamak için bir fikir vermektedir.
+Burada oraya zıplarken bir hata olduğunda, örneğin diskten yanlış yüklenmiş verilerin bulunduğu bir alana zıplarsa veya programcı bir hata yaparsa,
+ o zaman efsanevi GURU MEDITATION veya SOFTWARE FAILURE
+(Yazılım Hatası) mesajı, rahatsız edici kırmızı yanıp sönen penceresinde belirir.
+Yeniden yazılabilir bellek (RAM) değiştirilebilir ve
+daha önce de belirtildiği gibi CHIP ram ve FAST ram olarak ikiye ayrılır.
+Aradaki fark, GRAFİK ve SESLERİN CHIP RAM'de olması gerekirken
+işlemci komutlarının hem CHIP hem de FAST'ta olabilmesidir.
+Örneğin, eski Amiga 500 1.2 veya 1.3, 512Kb RAM'e sahiptir, yani yarım
+mega, ve genişletilirse bir mega RAM'e ulaşır, ancak diğer 512k
+FAST'tır, bu yüzden örneğin DeLuxe Paint ile
+1MB'lık bellek 512k CHIP ve 512k FAST olarak bölünmüşken,
+1MB'lık belleğin tamamı CHIP olan a500+'da bellek yetersiz kalır: eski 500'deki bellek artar,
+ancak FAST türündedir ve yeni bir ekran açmak için kullanılamaz, bu nedenle
+bellek yok der. Programlama yaparken FAST'a yerleştirilmiş grafikleri görüntülemek
+isterseniz, o görüntüyü görüntülemek dışında her şey olur. Bellek, çeşitli boyutlarda bloklardan oluşur,
+örneğin eski bir a500'de ilk 512k chip ram,
+$00000 ile $80000 arasında ve 512k genişletme $c00000 ile $c80000 arasında: işletim sistemi
+belleğin nerede olduğunu bilir ve programları otomatik olarak
+boş alanlara yükler, örneğin WorkBench veya
+CLI veya SHELL'den bir program yüklendiğinde, disketten veriler (kickstart sayesinde)
+belleğe aktarılır, CHIP veya FAST bellek talep edilmesine bağlı olarak, ardından
+işlemci, programı yüklediği (veya daha doğrusu disketten kopyaladığı
+) bellek noktasına atlar. Kullanıcı, programın
+bellekte hangi noktaya yerleştirildiğini ve mikroişlemcinin nerede çalıştığını bilemez.
+Eski 500 modelinde chip belleğin $00000 ile $80000 arasında olduğunu söylemiştim,
+bellek aslında birçok küçük evin bulunduğu bir cadde gibi bölümlere ayrılmıştır
+ve her evin bir adresi vardır: tesadüfen adres
+veya bellek konumu (İngilizce ADDRESS) olarak adlandırılırlar: yolun başında
+0 numaralı ev vardır ve bir bayt içerir, sonraki evin adresi 1'dir
+ve bir bayt daha içerir, ve böyle devam eder. Ancak
+ONALTILI sayı sistemi, yani 16 tabanlı sistem kullanılır. Bu bir sorun değildir,
+çünkü ASMONE'de sayıyı istediğiniz zaman
+“?” komutunu kullanarak dönüştürebilirsiniz: “?$80000” yazdığınızda ondalık olarak 524288
+elde edersiniz, bu da 1024*512'ye, yani yarım Kb veya “KAPPA RAM”a
+yani 1024 bayt, 512 ile çarpılmış. $100000 ise bunun
+iki katı, yani bir mega... ?$80000*2 (“*” yani “ÇARPILMIŞ”) komutunu deneyin.
+Onaltılık sayıların önünde dolar işareti vardır, gördüğünüz gibi,
+ondalık sayıların önünde hiçbir şey yoktur, ikili sayıların önünde ise % işareti vardır.
+Bunlar temel bilgilerdir: mesafeler için metre,
+dekametre ve kilometre olduğu gibi, bellek için de BIT, BYTE,
+WORD ve LONGWORD vardır. Bit, belleğin en küçük parçasıdır;
+BYTE, 8 bitten oluşur ve kendi adresi olan bir birimdir:
+yani işlemci şöyle diyebilir: 
+“bellek yolu n10” adresindeki küçük kutuya “bellek yolu n16” adresindeki küçük kutuya
+bu durumda,
+byte 10'da (yani onaltılık veya HEXadecimal olarak $A) bulunan sekiz biti
+Karışıklığı önlemek için, kesin bir örnek verelim: bitler
+0 veya 1 olabilir; 10. baytta bitler şöyleydi: 00110110,
+16. baytta ise 11110010, MOVE.B 10,16 komutundan sonra 10. bayt
+00110110 olarak kalır, 16. bayt ise 00110110 olur. MOVE'daki .B,
+bir BYTE, yani kopyalanabilecek en küçük parçanın taşındığı anlamına gelir.
+MOVE.W ve MOVE.L de yapılabilir, yani bir WORD (.w)
+veya bir LONGWORD (.L) taşınabilir, bunlar şunlardır: 1 word = 2 bayt, bir
+longword = 4 bayt, yani 2 word. O halde, MOVE.W 10,16 yapıldığında,
+16. bayta 10. bayt, 17. bayta 11. bayt kopyalanır, yani
+2 baytlık bir blok taşınır. MOVE.L komutunda
+4 bayt taşınır, yani: 16. bayta 10. bayt, 17. bayta 11. bayt, 18.
+bayta 12. bayt, 19. bayta 13. bayt. Bir şema yapalım:
+
+MOVE.L ÖNCESİ 10,16 ; 08/09/10/11/12/13/14/15/16/17/18/19/20
+C A N E     G A T T O
+
+MOVE.L 10,16 ; 08/09/10/11/12/13/14/15/16/17/18/19/20
+C A N E     C A N E O
+
+MOVE.B 20,14 ;08/09/10/11/12/13/14/15/16/17/18/19/20 yaparsak
+C A N E O C A N E O
+
+Varsayımımıza göre 08,09,14,15 konumları sıfırlanmıştı,
+10-13 ve 16-20 konumları ise bir değere sahipti, burada harfler
+örnek olarak verilmiştir. MOVE.W 8,10 ile sonlandırıyoruz:
+
+;08/09/10/11/12/13/14/15/16/17/18/19/20
+N E O C A N E O
+
+3 komutla CANE GATTO'yu NEO CANEO'ya dönüştürdük!!!!!
+Şaka bir yana,
+sentetik hafızanın nasıl çalıştığını beyninize iyice kazıyana kadar okumaya devam etmeyin!
+Move.x ile biraz oyun oynayın, size iyi gelir!
+Örneğin, çeşitli MOVE komutlarıyla ANTANI'yi TANTI NANI'ye,
+SBLINDO'yu DOBLONI'ye veya RENULOZ'u ZUZZURELLONE'ye dönüştürmeyi deneyin.
+İşlemcinin KOMUTLARININ adreslerinin
+2,4,6 gibi çift olmasını, yani WORD ile hizalı olmasını unutmayın, aksi takdirde her şey GURU'ya gider.
+Şüpheye yer bırakmamak için, bellekte bir dizi değer vardır,
+ bunlar 68000 komutları veya örneğin
+yukarıda bahsedilen SINUSTAB gibi veriler, görüntülenecek resimler, sesler, yazılar olabilir...
+bellekteki talimatlar MOVE.B 10,16 biçiminde değildir, bu
+bir DISASSEMBLED sürümüdür, bellekte örneğin bu talimat
+10 bayt yer kaplar ve şöyledir: $13,$F9,$00,$00,$00,$0A,$00,$00,$00,$10, burada $13f9
+genel olarak MOVE.B anlamına gelir, $0000a onaltılık olarak 10 ve $10 onaltılık olarak 16
+onaltılık sistemde... Aynı şekilde her komutun kendi baytları vardır,
+örneğin NOP komutu, yani no operation, hiçbir şey yapmaz, bellekte
+$4e71'dir. Öncelikle, işlemcinin bellek üzerinde işlem yapmanın yanı sıra
+kullanabileceği kayıtlar olduğunu belirtmek isterim. Bu kayıtlar, veri kayıtları ve adres kayıtları olarak adlandırılır
+ve 16 adet olup her biri bir uzun kelime uzunluğundadır ve a0, a1, a2, a3, a4, a5, a6, a7
+Adres kayıtları d0, d1, d2, d3, d4, d5, d6, d7 veri kayıtları; bunlar işlemcinin içindedir
+ve bu nedenle 2 kayıt arasında yapılan işlemler 2
+örneğin move.l d0,d2,
+move.l $100,$200'den daha hızlıdır; bu nedenle, mümkünse sayıları
+belleğe değil kayıtlara koyarak işlem yapmak tercih edilir.
+
+Daha önce de belirtildiği gibi ROM yazılabilir değildir, yani ROM'a yazan bir MOVE
+işlemi etkisizdir: $FC0000 veya $f80000 üzerine bir move işlemi hiçbir işe yaramaz.
+Sadece ROM'da bulunan ROUTINES işlenebilir. Ancak KICK
+HER VERSİYONDA FARKLI OLDUĞUNDAN, ASLA DOĞRUDAN KICK'E ATLAYIN.
+İşletim sistemi, rutinlerin, yani kickstart'ta bulunan tek tek
+programların, kick ne olursa olsun ve bellekte nerede bulunursa bulunsun aynı
+şekilde çağrılabilmesi için yapılmıştır: bu
+JSR, yani JUMP TO SUBROUTINE (Bir adrese atla
+) ile yapılır daha sonra geri dönüp JSR'nin altından devam eder), bunlar
+sabit olmakla birlikte, adres 4'te bulunan adrestan başlar ve
+her zaman doğru JSR'leri yapmak için ayarlanacak adres bulunur
+böylece kickstart rutinleri çalıştırılabilir. Workbench
+pencerelerini açmak, karakter yazdırmak,
+diskteki bir dosyayı okumak veya yazmak için programlar, her seferinde kickstart ROM'daki CHIP'te bulunan rutini çağırmalı
+ve örneğin yüklenecek dosyanın adını veya açılacak pencerenin boyutunu
+iletmelidir; bunun yerine, bir
+oyun veya demo “ATLADIĞINDA”, işletim sistemi
+kickstart'ı çağırmaz: örneğin, bilinen XCOPY kendi ekranını açar
+ve çoklu görev özelliğini devre dışı bıraktığı ve
+işletim sistemi programları gibi sağ tıklama menüleri ve pencereleri olmadığı
+açıkça görülür. Aynı şekilde, daha önce
+bahsettiğim SENSIBLE SOCCER gibi bir oyun,
+boot (başlangıç) sonrasında kickstart çipi kaldırılsa bile çalışır, çünkü
+pencereleri açmak veya dosyaları yüklemek için rutinler çağrılmaz: 
+ekranda görünenler tek tek kontrol edilir ve diskten veriler
+DOS dosyaları olarak değil,
+DRIVE'ın kafaları hareket ettirilerek veya kablonun pinlerine akım verilerek doğrudan okunan izler olarak yüklenir. Bu
+fark açık mı? İşletim sistemini KULLANAN programlar veya oyunlar,
+yani ROM'daki rutinleri sürekli olarak çağırıp
+çoklu görev ve pencereleri ve pencereleri açmayan veya WorkBench'ten farklı şekilde açan ve Deluxe Paint ile birlikte çalıştırılamayan diğer programlar
+arasında, pencereyi değiştirerek veya aşağıya taşıyarak?
+Kısacası, ROM bizim için donanımla iletişim kurmakla ilgilenir ve bizden bir şey yapmamızı istemez,
+Kısacası, ROM bizim için donanımla iletişim kurar
+ve önceden belirlenmiş bir dizi işlemi gerçekleştirir, ancak donanımla
+iletişime geçmeye karar verirsek, yapabileceğimiz her şeyi yapabiliriz,
+ tabii ki yeteneklerimizin elverdiği ölçüde!!!
+
+Öyleyse ROM kullanmadan kod yazacağız. Ama o zaman
+sadece mikroişlemci mi kullanacağız? Peki bir görüntüyü nasıl görüntüleyebiliriz veya
+müzik nasıl çalabiliriz? MOVE ile mi????
+Şimdi CUSTOM CHIP'ler devreye giriyor!!!
+Bu CHIP'ler PAULA, AGNUS ve DENISE olarak adlandırılır, ayrıca 2 tane daha CHIP vardır
+bunlar CIAA ve CIAB olarak adlandırılır. Bu akıllı çipler, Amiga'nın ses çıkarmasını
+ve ekranda tüm o renkleri görüntülemesini sağlayan çiplerdir.
+Söz konusu kayıtların çoğu
+$dff000 ile $dff1fe arasında bulunurken, seri, paralel ve
+disk sürücülerle ilgili olanlar $bfexxx veya $bfdxxx alanında bulunur.
+68000'in tüm komutlarını öğrendikten sonra, ev kadar büyük programlar yazabilirsiniz,
+ ancak belleği buradan oraya taşırsanız, hiçbir şey görüntülenmez veya
+ses çıkmaz! İşlemci ile bu çipleri kontrol etmek gerekir; ana yonga
+BLITTER'dır ve çizgileri çizmek, bellek parçalarını
+kaydırma veya ekran üzerinde hareket ettirme gibi işlemleri yapmak, alanları doldurmak (3 boyutlu katılar
+blitter ile çizilir ve doldurulur; işlemci, blitter'ın çizdiği
+çizgilerin koordinatlarını hesaplar)
+Ancak her şeyi görüntüleyen ve renkleri belirleyen COPPER'dır:
+örneğin, $dff180 renk 0'a, $dff182 renk 1'e karşılık gelir,
+ $dff006 ise elektronik fırçanın ekranı çizmek için geldiği çizgidir
+ve saniyede 50 kez çizilir:
+Bu kayıtlar sadece okunabilir veya sadece yazılabilir, örneğin
+$dff180'e bir değer yazılabilir, ancak bu değerin ne olduğu okunamaz.
+Aynı şey $dff006 için de geçerlidir, buraya yazmak mümkün değildir.
+Elektronik fırçanın konumunu değiştirmek için özel bir kayıt vardır.
+Diğerleri için de durum aynıdır. $bfexxx kayıtlarında disk
+sürücüsünü veya fare dahil çeşitli bağlantı noktalarını kontrol edebilirsiniz: örneğin, $bfe001 adresinin 6
+bitinde farenin sol tuşunun durumu bulunur,
+ bu tuşun basılı olup olmadığını işlemci ile kontrol edebilir ve çıkmadan önce
+tuşun basılmasını bekleyebilirsiniz. Bu,
+programlamanın ilk örneğidir ve LEZIONE1a.s dosyasını yükleyerek analiz edebilirsiniz. Bu dosya, kursun ilk kaynağıdır
+ve 68000 ile bir döngü,
+bir $dffxxx ve bir $bfexxx kaydının kullanımını içerir. (aşağıda açıklandığı gibi başka bir metin tamponuna yükleyin
+).
+
+Assembler'ın, bu durumda ASMONE'nin nasıl kullanıldığına kısaca değinelim:
+Başlangıçta CHIP veya FAST bellek tahsis etmek için seçim yapmanız gerekir, kurs kaynakları için chip'i seçmeniz önerilir, ne kadar belleğiniz olduğuna bağlı olarak
+Kb sayısını seçin, en az 250.
+Bir dizin veya sürücü seçmek için “v” komutunu kullanın, örneğin derslerin dizinine gitmek için “V df0:LEZIONI” yazın, kaynakların dizinine gitmek için “V df0:LEZIONI” yazın.
+Bir dizin veya sürücü seçmek için “v” komutunu kullanın, örneğin
+derslerin bulunduğu dizine gitmek için “V df0:LEZIONI” yazın,
+kaynakların bulunduğu dizine gitmek için “V df0:SORGENTI” yazın, ardından
+kaynağı veya dersi okumak için “R” tuşuna basın ve pencereden seçin.
+ESC tuşuyla editör işlevi ile komut satırı arasında geçiş yapabilirsiniz;
+yani ESC tuşuna basarak metni kaydırabilir veya değiştirebilirsiniz, ESC tuşuna tekrar basarak
+komut satırına geri dönersiniz ve burada örneğin “A” ile
+listelemeyi DERLEYEBİLİRSİNİZ, ardından bunu çalıştırmak için “J” tuşuna basmanız gerekir. (JSR!!)
+Aynı anda 10 metin yükleyebilirsiniz, bunlar kaynak veya dersler olabilir,
+çünkü EDIT modundayken, yani metni imleçle kaydırabilir ve değiştirebilirsiniz,
+ F2 tuşuna basarsanız liste değişir ve
+ikinci listeye geçersiniz, bu durumda ikinci liste boş olacaktır: F1 tuşuna tekrar basarsanız
+daha önce yüklediğiniz metne geri dönersiniz: bu şekilde, örneğin,
+tampon 1'de (yani F1 ile çağrılabilen liste 1) Ders1.TXT'yi tutarken
+tampon 2'de, F2 ile seçilebilen,
+ders1 ile ilgili listeyi, yani Ders1a.s'yi yükleyebilirsiniz. Daha sonra ders1'i tampon 1'e,
+ders2'yi tampon 2'ye, ders2'nin listelerinin tampon 3, 4, 5'e vb.
+koyabilirsiniz, böylece dersi inceleyebilir, ardından F4 veya F5 tuşuna basarak
+bir listenin yürütülmesini hemen kontrol edebilir veya ders1'de hatırlamadığınız bir şeyi
+görüntüleyebilirsiniz vb.
+NOT: Sayfalar arasında gezinmek için imleçleri (oklar) ve SHIFT tuşunu kullanın.
+Yani, C64'ünüz yoksa, ALT tuşunun üzerindeki ok tuşunu kullanın.
+“A” tuşuna bastığınızda ne olduğunu açıklayayım: liste (veya kaynak)
+normal metin biçimindedir ve komutlar olan anahtar kelimelerden veya
+derleyici tarafından tanınan diğer sembollerden oluşur... Bir grup komutu
+veya bir “değişken”i, bir tablonun başlangıcını işaretlemek veya listede belirli bir noktaya
+referans vermek için ETİKETLER veya LABEL'ler kullanılır.
+Bunlar kenarın başından itibaren boşluk içermemeli ve : (İKİ NOKTA) ile bitmelidir.
+Etiket adı serbesttir, ancak 68000 komutuyla aynı isim verilmemelidir
+! Örnek:
+
+WAITMOUSE:            ; etiket
+btst    #6,$bfe001    ; sol tuş basılı mı?
+bne.s    WAITMOUSE    ; değilse WAITMOUSE'a dön (btst'yi tekrarla)
+rts            ; Çık
+
+Komutların aralarında boşluk olması gerektiğini hatırlatırım, bu durumda
+TAB tuşunu (CTRL ve CAPS LOCK tuşlarının üstündeki tuş) kullandım, bu tek vuruşla 8 boşluk yapar...
+ Etiket adının sonuna : (iki nokta) koyulmaması gerektiğini unutmayın,
+ sadece kendisine koyulur.
+Kaynak kodu düzenledikten sonra, “A” ile DERLENMELİDİR; bu
+işlem ASMONE'nin metni okumasını ve koda, yani
+68000 tarafından okunacak ve komutlar olarak yürütülecek baytlara dönüştürmesini sağlar.
+Derlendikten sonra, yukarıda belirtilen kod, “=R” ile görülebilen bir bellek noktasında bulunur ve “J” komutuyla işlemci, belleğin o noktasına atlar
+ve programımızı çalıştırır. ASMONE, listede bir hata bulursa,
+ hata düzeltilene kadar derlemeyi tamamlamaz.
+Kursun kaynak kodları, DEVPAC 3 ve MASTERSEKA gibi diğer derleyicilerle, tüm kickstart'larla ve 1200 gibi AGA dahil tüm Amiga'larla da çalışır.
+Kurs kaynakları, DEVPAC 3
+ve MASTERSEKA gibi diğer derleyicilerle, tüm kickstart'larla ve 1200 veya 4000 gibi AGA
+dahil tüm Amiga'larla da çalışır.
+
+Lezione1a.s'nin çalıştığını doğruladıysanız, başka bir
+metin tamponuna (örneğin F3) LEZIONE2.TXT dosyasını “R” ile yükleyin.
+
+Tamponları değiştirirken bellek yetersizse, başlangıçta
+ALLOCATE mesajında çok fazla bellek seçmişsiniz demektir ve RAM DISK için bellek kalmamıştır.
+Bir dahaki sefere daha az bellek seçin.

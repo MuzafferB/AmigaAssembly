@@ -1,0 +1,3498 @@
+
+3D DERSİ İÇİN PROJE:
+
+Şu anda sadece başkalarının dokümanlarından alıntılar ve benim geçici yazdıklarım var,
+ bunlar da biraz düzenlenmiş durumda, ancak yine de BAŞLANGIÇ NOKTASI olarak işlev görüyorlar.
+Bu dersin, bakır, blitter, kesme vb. konuları açıklayan derslerin ardından verileceğini unutmayın,
+ böylece okuyucular donanım konusunda bilgili olacaklardır
+donanım kılavuzunu okumuş olacaklardır.
+
+
+İşte bu dersin “projesi”:
+
+1 - PERSPEKTİF
+
+1) Perspektifin açıklaması, basit rutine kadar,
+ders3d-1'de bir fikir var: sadece yer değiştirme yaparak
+iyi anlaşılması için... başlangıçta sadece noktaların PLOT'u, daha açık...
+1b) Perspektif açıklandıktan sonra, başka örnekler de verilebilir, örneğin
+merkezden çıkan klasik 3d yıldızlar, referans listeleri var
+...
+1c) Bilmiyorum, 3d bir zemin, sadece perspektif kullanıp
+dönüş yapmadan, sadece öteleme yapan bir şey.
+
+2 - DÖNÜŞLER
+
+2) Perspektif anlaşıldıktan sonra, ilk dönüşleri yapabilirsiniz, ancak
+başlangıçta sadece 1 eksen etrafında, sonra iki eksen etrafında ve
+son olarak 3 eksen etrafında yapmanız iyi olur, ancak her adım için birçok örnek liste ve
+noktaların NEDEN döndüğüne dair iyi bir açıklama ekleyin. 
+Dönüşlerle birlikte, ÇİZGİLERİ de kullanmaya başlayabilirsiniz... ama şimdilik
+sadece normal WIREFRAME...
+
+2b ) Dönüşleri yaptıktan sonra, vektör topları da ekleyebilirsiniz, sadece
+sıralama rutinini açıklamanız yeterlidir, blitter'ı zaten biliyorlar.
+Bu noktada blitter'ı zaten biliyorlar.
+
+3- GİZLİ
+
+3) Ardından, gizli çizgi vektörünün nasıl yapılacağını ve ardından
+dolgulu olanları da açıklamak gerekir... Basitlik ve gelişimi gösteren çeşitli
+listelerle adım adım açıklamaya özen gösterin...
+
+4 - IŞIK KAYNAĞI veya başka bir şey
+
+4) Dersin amacı, HERKESE eski tip bir
+filled vektörün nasıl yapılacağını anlamaktır, anlayışı zorlaştıran aşırı optimizasyonlara
+veya kesişmeler veya lightsource
+REALE vb. ile karışıklıklara gerek yoktur. Her neyse, yüzlerin ortalama Z konumu ile sahte bir lightsource
+nasıl yapılacağını veya solidi inconvex
+vb.
+
+Doku, yakınlaştırma ve pic döndürme veya DOOM labirentleri
+konusuna gelince, bunlar 1992-93'ten beri var, yani vektörlerden daha yeni, bu yüzden bunları
+daha sonra ayrı bir derste ele alacağım. Burada vektörlerin
+1987'deki çizgi vektörlerden 1990-91'deki ışık kaynaklarına kadar ele alınacaktır.
+
+3 dizinde, örneklerin derlenmesinde ve teoride referans olması için, sizin listeleriniz de dahil olmak üzere çeşitli örnekler bulunmaktadır:
+DIR:
+
+3d0 - bu ders ve dot/linevector'dan hiddenlinevector'a listeler
+
+3d0 - bu ders ve dot/linevector'dan hiddenlinevector'a kadar listeler
+3d1 - vektör topları!
+3d2 - Dolgulu vektörler, ışık kaynaklı olanlar da dahil.
+3d3 - sadece dolgu amaçlı, darkman'ın gölgeli vektörleri ve chiunkyvecs, yeni bir şey yok
+ama en azından disketin boş kısmını dolduruyorlar...!!!
+
+******************* DERSİN BAŞLANGICI: **********************************
+
+- temsil sistemi
+
+Not: Bir linevector yapmak için ortaokul düzeyinde matematik bilgisi yeterlidir.
+ (Işıklı dolgulu vektörler için durum farklıdır).
+Her neyse, HER ŞEYİ anlayana kadar okumaya devam etmeyin,
+ ya da en fazla geri dönüp anlamadığınız kısımları tekrar okuyun.
+ Sonuçta birkaç formül var, bunlar
+"680x0 rutinlerine “çevrildikten” sonra “kendi kendilerine” çalışırlar ve daha karmaşık nesneler oluşturmak için dbra döngü sayısını
+artırmanız yeterlidir.
+Bu yüzden nasıl çalıştıklarını anlamaya çalışın, böylece kendi
+değişikliklerinizi veya “icatlarınızı” yapabilirsiniz, aksi takdirde sadece
+nesneleri değiştirip örneklerdeki rutinleri kullanmakla ki bu pek bir şey ifade etmez.
+Önemli olan, her şeyi bir
+öğleden sonra anlamayı ummadan, küçük adımlarla ilerlemektir.
+Ayrıca, üç boyutluluk konusunda çok hayal gücünüz olmalıdır,
+yani belirli bir nesnenin yukarıdan, yandan vb. nasıl göründüğünü hayal edebilmelisiniz.
+Pratikte, ortogonal projeksiyonlar hakkında bilgi sahibi olmak
+yararlı olacaktır, ki bu, Imagine veya Real 3d gibi 3d programları kullananların
+bildiği bir temsil sistemidir.
+
+******************************************************************************
+*                PERSPEKTİF                 *
+******************************************************************************
+
+Arizona'da bir çayırda, kötü bir motosikletin üzerinde
+durmuş, ufku seyrediyoruz.
+Aniden gökyüzünde bir küp belirir! Bir UFO mu?
+UFO olsun ya da olmasın, perspektifin nasıl işlediğini açıklamak için iyi bir örnek.
+Bildiğiniz gibi, iki gözümüz var. tek gözümüz varmış gibi yapalım,
+aksi takdirde gerçekliğin
+stereometrisi ve kasklarına akan çok fazla şeyi dikkate almamız gerekir.
+Yani UFO ile baş başa kaldık ve biz sert adamlar olduğumuz için gözlerimizi
+korsanlar gibi bandajladık (kuyruk, küpe vb. de var tabii) ve
+tek gözümüzle UFO'yu görüyoruz.
+O kadar şaşırıyoruz ki, daha iyi görmek için bandajı kaldırmak bile aklımıza gelmiyor
+.
+ Bunun yerine küp tehditkar bir şekilde dönerek yaklaşıyor.
+Cesur olduğumuz için kaçmak yerine perspektifi incelemeye başlıyoruz.
+İşte bir örnek:
+
+___
+/__ /|    <-- UFO             !
+| | |
+|___|/                 -O. <--- BİZ
+||
+______________________________________________/\_____________
+
+Bu görüntü “profilden” görülmektedir.
+
+Ancak biz görüntüyü “perspektif” olarak göreceğiz:
+
+_______________________________
+|				|
+|     ____        |
+|     / /\        |
+|     /___/ \        |
+|     \ \ /        |
+|     \___\/        |
+|                |
+|-------------------------------| <- UFUK ÇİZGİSİ
+|                |
+|                |
+|_______________________________|
+
+
+Bu, görüntünün monitörde nasıl görüneceği, yani
+gözlerle görüldüğü gibi. Peki bunu nasıl elde edebiliriz?
+Sorun şu ki, KATI şekil 3 boyuta sahipken, monitör
+sadece 2 boyuta sahiptir! Yükseklik ve genişlik! Z ekseni, yani derinlik ekseni eksiktir.
+O halde, biz üç boyutlu bir şekli
+. Bunu fotoğraf çekerken yaparız
+: bir küp 2 boyutta resmedilir.
+Artık ne aradığımızı biliyoruz. Durumu daha iyi inceleyelim:
+
+Bir şema yapalım:
+
+|
+______________ _        |
+/|         /|     _    |
+/ |         / |     _	|
+/ |         / |        - _
+/ |        / |        | - _ _
+/____|________/ |        | _ - _-¢_> GÖZ
+| | | |     _ - _ -
+| |_______|____ |_ -    | _ -
+| /     | /     _ -
+| / | / _ -	|
+| /     | / _ -    |
+| /     | / _ -        |
+|/____________|/-        |
+|
+|
+
+^            ^
+NESNE X,Y,Z     TABLO
+
+
+Uzayda nesneyi, gözümüzü ve göz ile nesne arasında
+gizemli bir tablo görüyoruz.
+Peki, peki. Nesneyi X, Y, Z noktaları ile tanımladık ve
+bu noktaların göze ulaşmak için izlediği yolu görüyoruz: tüm ışınlar
+göze gider ve göze gelen ışınlar, felsefi yorumlara göre noktalara gider.
+ Her halükarda, tabloda
+bir şekil çizildiği kesindir. Mmmmh... TABİİ Kİ! Bu perspektif projeksiyonudur! Pratikte
+tablo, perspektif olarak bozuk bir şekilde şekillenen figürün oluştuğu MONİTÖRÜMÜZDEN
+başka bir şey değildir. Aslında, dikkat ederseniz, küp uzaklaşırsa
+tablodaki figür küçülür, yaklaşırsa
+büyür, tıpkı nesnelerin yaklaşıp uzaklaştığını gördüğümüzde olduğu gibi
+!
+Şimdi, 
+, üç boyutlu nesnemizin iki boyutlu eşdeğerinin (monitöre basılabilir)
+, bizimle nesne arasına bir cam levha
+koyup, gördüğümüz şekli camın üzerine kalemle “çizerek” elde edileceğini biliyoruz. Mantıklı, değil mi? Ama burada ne kalemimiz ne de görüntüyü çizebileceğimiz cam levha
+var. Koordinatlarımız var...
+.
+
+|
+/|
+/ |
+/ |
+/ |
+/ |
+______________ _     / |
+/|         /|     _ | |
+/ |         / |     _ | |
+/ |         / |     |-___ |
+/ |        / |     |/__/||- _ _
+/____|________/ |	 || ||| - _-¢_> GÖZ
+| | | |     _ || ||| -
+| |_______|____ |_ - ||__|/|
+| /     | /     _|- |
+| / | / _ - | |
+| /     | / _ - | /
+| /     | / _ -     | /
+|/____________|/-     | /
+| /
+| /
+|/
+
+^            ^
+GÖZ         KARE
+
+
+Kareyi hafifçe eğdik ve aslında
+kubumuzun çizildiğini ve SADECE İKİ BOYUTLU olduğunu görüyoruz! X ve Y!
+
+Konuyu biraz daha bilimsel hale getirelim:
+X ve Y olmak üzere 2 boyutlu bir monitörümüz var ve bu monitörde noktalar, çizgiler veya
+istediğimiz her şeyi noktaların koordinatlarını vererek çizebiliriz:
+
+
+0,0        X ekseni
+o---------------------------------> 320,0
+a |
+s |
+s |
+e |
+|
+Y |
+|                 |
+|                 ___| 320,256
+\/
+0,256
+
+Monitörün sol üst köşesi 0,0 noktasıdır.
+
+
+Şimdi, 3 boyutlu nesnemizi tasarlayalım, X, Y ve Z, burada Z
+'ye “derinlik” adını verebiliriz:
+
++
+/|
+/
+/
+/
+/
+/
+0,0,0 /        X ekseni
+o--------------------------------->
+/|
+/ |
+Z / |
+/ a |
+e / s |
+s / s |
+s /    e |
+a /     |
+/    Y |
+/     |
+|/     |
+- \/
+
+
+Görüldüğü gibi, bize doğru gelen bir eksen eklenmiştir, sanki
+X ve Y eksenleri bir pencerenin kenarları ve Z ise açık bir panjurmuş gibi
+:
+___        -> X
+/| |
+/ | |
+/ | |
+| | |
+| |___|
+| /
+|/
+
+/ |
+
+Z     Y
+
+
+Eğer pencerede bir nokta olsaydık, sağa doğru ilerlersek X değerimiz artar,
+aşağı doğru ilerlersek Y değerimiz artar ve evden dışarıya doğru ilerlersek
+Z, yani derinlik azalır ve teorik olarak monitörden çıkıp karşınıza gelmemiz gerekir.
+Ancak bu mümkün değildir,
+ bu yüzden sadece “öyleymiş gibi” göstermeliyiz.
+Genellikle Z değeri, nesne gözlemciden uzaklaştıkça
+,
+ yani “eve girdikçe” artar.
+Gözlemci, yani göz, genellikle Z=0 noktasında bulunur ve negatif Z değerleri
+nesne “arkamızdan” geçtiğindeve bu nedenle onu görmediğimizde ortaya çıkar.
+
+Bu arada, küpümüzü X, Y, Z koordinat sisteminde tasarlayalım:
+Bunu yapmak için kareli veya milimetre kağıdı kullanabilir veya
+eğer dahisinizse kafanızdan yapabilirsiniz.
+İşte bir küp tasarımı, bildiğiniz gibi 6 yüzü ve
+en az 6 kenarı, yani bizi ilgilendiren noktalar vardır.
+
+
+Eksi< X >Artı        Eksi            Artı
+^            /|
+Y         Z
+v         |/
+Artı         Eksi
+
+
+(P4) -50,-50,+50______________+50,-50,+50 (P5)
+/|         /|
+/ |		 / |
+/ |         / |
+/ |        / |
+(P0) -50,-50,-50/____|________/+50,-50,-50 (P1)
+| | | |
+| |_______|_____|+50,+50,+50 (P6)
+| /-50,+50,+50 (P7)
+| /     | /
+| /     | /
+| /     | /
+|/____________|/+50,+50,-50 (P2)
+(P3) -50,+50,-50
+
+
+Gördüğünüz gibi X sağ-sol sapma, Y “yukarı-aşağı” ve Z
+derinlik, yani “ileri-geri”dir.
+
+Dikkat ederseniz, bu örnekte 0,0,0 noktası küpün merkezindedir, sistemi daha açık hale getirmek için
+: aslında sol yüzü oluşturan 4 nokta
+hepsi X koordinatı =
+ -50 koordinatına sahiptir, sağ yüzü oluşturan noktaların tümü ise X = +50 koordinatına sahiptir.
+Öte yandan, üst yüzü oluşturan 4 noktanın tümü
+Y = -50 koordinatına sahiptir, alt yüzü oluşturan noktaların ise Y = +50 koordinatına sahiptir.
+(burada Y, “yukarı” doğru gittikçe artar).
+Son olarak, 
+“ön” yüzü oluşturan 4 nokta Z = -50 koordinatına sahiptir,
+“arka” yüzün 4 noktası ise Z = +50 koordinatına sahiptir, yani
+daha derindir.
+
+Bu bilgilerle, nesnemizi oluşturan
+noktalarla bir küp veri yapısı oluşturabiliriz:
+
+CubeObject:    ; Mega Basit Efsanevi Küp, 8 Nokta.
+; İşte X, Y, Z koordinatlarıyla tanımlanan 8 nokta
+
+dc.w    -50,-50,-50    ; P0 (X,Y,Z)
+dc.w    +50,-50,-50    ; P1 (X,Y,Z)
+dc.w    +50,+50,-50    ; P2 (X,Y,Z)
+dc.w    -50,+50,-50    ; P3 (X,Y,Z)
+dc.w    -50,-50,+50    ; P4 (X,Y,Z)
+dc.w    +50,-50,+50    ; P5 (X,Y,Z)
+dc.w    +50,+50,+50    ; P6 (X,Y,Z)
+dc.w    -50,+50,+50    ; P7 (X,Y,Z)
+
+NPuntiOggetto    = 8
+
+Tamam, nesnemiz hazır! Şimdi sorun onu perspektife oturtmak.
+
+******************************************************************************
+*    TABLO ÜZERİNE YANSITILAN NOKTALARIN Y KOORDİNATLARINI HESAPLAYALIM     *
+******************************************************************************
+
+Ekrana yansıtılan noktaların Y koordinatlarını bulmak için önceki şemaya geri dönelim.
+Gözün Y=0 konumunda, yani yerde olduğunu varsayalım. Bunun imkansız olduğunu biliyorum, ama
+bir siperde olduğunuzu ve küpün yerden çıktığını hayal edin:
+“PROFİL” görünümü: <---------------- Z ekseni (derinlik) --------
+
+“PROFİL” görünümü:
+
+<---------------- Z ekseni (derinlik) --------------->
+^
+|                    |
+a             P        |    
+s     ______________ _        |    
+s     /|         /|     _    |    
+e     / |         / |     _    | P¹    
+/ |         / |        - _
+Y     / |        / |        | - _ _         TOPRAK
+----- /____|________/ |-----------+-----------¢_> GÖZ -------------
+|    | | | |T        |T¹
+|    | |_______|____ |        |
+|    | /     | /        |
+v    . .     . .
+^            ^
+NESNE X,Y,Z     ÇERÇEVE
+
+
+Noktalar:
+
+GÖZ    = gözlemcinin konumu, buna O diyelim
+P    = XYZ uzayındaki nesnenin noktası
+P¹    = çerçeveye yansıtılan P noktası
+T    = Y=0 (zemin seviyesi) küpün “ortaya çıktığı” noktada.
+T¹    = Y=0 (zemin seviyesi) çerçevenin “yerleştirildiği” noktada.
+
+P¹ noktasının tablo (monitör) üzerindeki Y koordinatını,
+yani perspektif izdüşümünü nasıl bulacağımızı görelim. 2 adet benzer dik üçgenin “ortaya çıktığını” fark ederseniz,
+ bunlar tam olarak “O-P-T” ve “O-P¹-T¹” şeklindedir:
+
+P
+|-_ |(tablo)
+| -_ |
+a | -_ |
+s | -_|P¹
+s |    +_    
+e |    | -_
+|    | -_
+Y |    | -_
+|    | -_
+|T_______|T¹_______-O (göz)
+
+<---- Z ekseni ---->
+
+
+Segmentler:
+
+PT    = Uzayda P noktasının Y koordinatı (Yogg)
+P¹T¹    = Çerçevede P¹ noktasının Y koordinatı (BİLİNMEYEN Y¹)
+OT    = P noktasının gözlemciden Z mesafesi (DistZpunto)
+OT¹    = Gözlemcinin çerçeveden Z mesafesi (DistZossSchermo)
+
+PT, OT ve OT¹ değerlerini biliyorsak, P¹T¹ değerini bulmak için şunu dikkate almalıyız
+büyük üçgenin yüksekliği, küçük üçgenin yüksekliğine
+(bize gereken değer) eşittir, büyük üçgenin tabanı, küçük üçgenin tabanına
+eşittir. Anlaşıldı, değil mi?
+Yani, PT, P¹T¹'ye OT'nin OT¹'ye oranı gibidir, başka bir deyişle: PT:X=OT:OT¹
+
+Aradığımız şeyi, yani P¹T¹'yi (ekrana yansıtılan noktanın Y koordinatı)
+elde etmek için, oranın uçlarını,
+yani PT*OT¹'yi çarpıp, sonucu OT'ye bölmeliyiz:
+
+P¹T¹=(PT*OT¹)/OT
+
+Bunu şu şekilde “çevirebiliriz”:
+
+Yproyected = (Yogg*DistZossSchermo)/DistZPunto
+
+Ve dolayısıyla, kabaca, şu şekilde:
+
+move.w    Yogg,d0            ; Nesnenin Y koordinatı
+muls.w    DistZossSchermo,d0    ; DistZossSchermo*Yogg
+divs.w    DistZPunto,d0    ; d1'de P¹ noktasının Y koordinatı vardır
+
+Tabii ki tüm noktaları yansıtan bir döngü yapmamız gerekecektir.
+
+******************************************************************************
+*    RESİM ÜZERİNE YANSITILAN NOKTALARIN X KOORDİNATINI HESAPLAYALIM     *
+******************************************************************************
+
+Peki, şimdi P¹ noktasının X'ini hesaplamak için
+işlemin benzer olduğunu tahmin etmiş olmalısınız. Önce profili gördük, bu nedenle
+Y ekseni “dik” olarak kabul edilmeliydi, yani zemine dik,
+bir elektrik direği gibi. X ekseni ise bize doğru geliyordu ve teorik olarak
+sadece bir nokta görünüyordu, gözümüze gelen bir ok gibi.
+Z ekseni ise yatay çizgiydi, zemine göre tanımlanabilirdi.
+Şimdi, sahneyi yukarıdan görmek için yerimizi değiştirelim. Bu şekilde Z ekseni
+değişmezken, X ekseni Y ekseninin yerini alır:
+
+Şimdi “YUKARI”dan bir bakış açısına geçelim:
+
+P
+|-_ |(çerçeve)
+| -_ |
+a | -_ |
+s | -_|P¹
+s |    +_    
+e |    | -_
+|    | -_
+X |    | -_
+|    | -_
+|T_______|T¹_______-O (göz)
+
+<---- Z ekseni ---->
+
+Bu durumda P noktası gözlemcinin sağına kaymıştır.
+
+Segmentler:
+
+PT    = P noktasının uzaydaki X koordinatı (Yogg)
+P¹T¹    = P¹ noktasının tablodaki X koordinatı (BİLİNMEYEN Y¹)
+OT    = P noktasının gözlemciden Z mesafesi (DistZpunto)
+OT¹    = Gözlemcinin çerçeveye olan Z mesafesi (DistZossSchermo)
+
+P¹ noktasının X koordinatını nasıl bulacağımıza bakalım.
+Bu sefer de şunu yapmalıyız:
+
+P¹T¹=(PT*OT¹)/OT
+
+Bunu şu şekilde “çevirebiliriz”:
+
+Xproiettato = (Xogg*DistZossSchermo)/DistZPunto
+
+Ve kabaca şöyle:
+
+move.w    Xogg,d0            ; Nesnenin X koordinatı
+muls.w    DistZossSchermo,d0    ; DistZossSchermo*Xogg
+divs.w    DistZPunto,d0	; d1'de P¹ noktasının X koordinatı vardır
+
+Sonuç olarak, Y ve X'i bulmak için “aynı” şeyi yapmalıyız.
+
+move.w    Xogg,d0            ; Nesnenin X koordinatı
+move.w    Yogg,d1            ; Nesnenin Y koordinatı
+muls.w    DistZossSchermo,d0    ; DistZossSchermo*Xogg
+muls.w    DistZossSchermo,d1    ; DistZossSchermo*Yogg
+divs.w    DistZPunto,d0    ; d1'de P¹ noktasının X koordinatı var
+divs.w    DistZPunto,d1    ; d1'de P¹ noktasının Y koordinatı var
+
+******************************************************************************
+*        PERSPEKTİF PROJEKSİYON SON RUTİNİ         *
+******************************************************************************
+
+Şimdi ise, bir 3d XYZ noktasını yansıtan ve çıkışta X¹ ve Y¹ değerlerini elde eden yaklaşık bir rutin oluşturmayı düşünmeliyiz.
+Bunu yapmak için, daha önce yaptıklarımıza bazı eklemeler yapmamız gerekiyor.
+Bunu yapmak için, daha önce yaptıklarımıza bazı hususlar eklememiz gerekiyor.
+P¹'nin X koordinatını hesaplamaktan başlayalım.
+Prosedürün şu şekilde olduğunu söylemiştik:
+
+P¹T¹     = (PT * OT¹     )/OT
+
+Xproyected = (Xogg*DistZossSchermo)/DistZPunto
+
+Ancak, P noktasının gözlemciden uzaklığını bulmak için,
+OT (distZPunto) ile tanımladığımız, bir toplama işlemi yapmamız gerektiğini belirtmek gerekir:
+
+DistZPunto = Zogg + DistZossSchermo
+
+Yani, gözlemcinin ekrandan uzaklığını nokta P'nin Z koordinatına eklememiz gerekir,
+ çünkü:
+
+P
+|-_ |(çerçeve)
+| -_ |
+a | -_ |
+s | -_|P¹
+s |    +_    
+e |    | -_
+|    | -_
+X |	| -_
+|    | -_
+|T_______|T¹_______-O (göz)
+-50 -60     -366
+
+<---- Z ekseni ---->
+
+Bu durumda, çerçeve Z = -60 konumunda,
+P ise Z = -50 koordinatında ve göz -316 konumunda bulunmaktadır.
+Dolayısıyla Zogg = -50 ve DistZossSchermo = 256'dır. Ancak O'dan T'ye olan mesafe
+366'dır ve bu, 21+(-3), yani (lanet olsun) Zogg+DistZossSchermo ile elde edilebilir.
+
+Son formül şöyledir:
+
+P¹T¹     = (PT * OT¹     )/OT
+
+Xproiettato = (Xogg*DistZossSchermo)/(Zogg-DistZossSchermo) * HAYIR! DAHA FAZLA
+* NASIL OLURDU -?? porkocan
+
+Endişelenecek bir şey yok. “Sözde Rutinimiz” şu şekilde olur:
+
+move.w    Xogg,d0
+move.w    DistZossSchermo,d1
+muls.w    d0,d1        ; Xogg*DistZossSchermo
+move.w    DistZossSchermo,d2
+sub.w    Zogg,d2    ; Zogg-DistZossSchermo = DistZPunto
+divs.w    d2,d1        ; (Xogg*DistZossSchermo)/DistZPunto
+; d1'de P¹ noktasının X koordinatı vardır
+
+Girişte, P noktasının X
+ve Z koordinatları olan Xogg ve Zogg ile, gözlemcinin ekrandan uzaklığı olan DistZossSchermo'ya ihtiyacımız olduğunu unutmayın.
+Bu değer, monitöre bakan kişinin gerçek uzaklığına benzer bir değere sahip olmalıdır
+!
+__________
+ìììììììììì                 /     \
+ììììììì \            ||     \
+ìììììì <O <--- DistZossSchermo --->||     \
+ììì(     \            ||     |
+ììì ‘    _|            ||     |
+ìì        \            ||     /
+|        <            ||     /
+|    \     /             \__________/
+---’
+
+GÖZLEMCİ             MONİTÖR
+
+
+Son olarak, gözlemcinin gözünün ekranın merkezine hizalı olduğunu
+ve nesneyi ortalamamız gerektiğini
+dikkate almalıyız! Bu nedenle (sonunda) ekranın merkezinin koordinatlarını eklemeliyiz, aksi takdirde merkez 0,0 noktası, yani
+sol üst köşe olur ve küpümüz o köşede sadece
+dörtte biri görünecektir:
+___
+/__/| 0,0
+| x---------------
+|_|_|/         |
+|         |
+|         |
+|         |
+|         |
+|         |
+|         |
+--------------- 320,256
+
+Bunun yerine, hesaplamaların sonuna CentroX ve CentroY, yani
+X ve Y koordinatlarını eklediğimizde, küpü merkeze taşırız.
+Ekran LowRes 320*256 ise, merkez 160,128 (320/2 , 256/2) olacaktır.
+
+0,0
+---------------
+|         |
+|     ___     |
+|    /__/|     |
+| | x ||     |    -> merkez 160,128'dir
+| |___|/     |
+|         |
+|         |
+--------------- 320,256
+
+
+Şimdi de SON formülü görelim:
+
+P¹T¹     = (PT * OT¹     )/OT         \
+Xproyected = (Xogg*DistZossSchermo)/(Zogg-DistZossSchermo) / + CentroX
+
+İşte son rutin:
+
+PERSPEKTİF:
+LEA    PuntiXYZtraslati(PC),A0    ; X,Y,Z tablosunun adresi
+; yansıtılacak (zaten çevrilmiş)
+LEA    PuntiXYproiettati(PC),A1 ; yansıtılan koordinatların yerleştirileceği tablo
+; X¹,Y¹ yansıtılan.
+MOVE.w    #Ekran Genişliği/2,D3 ; Ekranın merkezi X (ortalamak için)
+MOVE.W     #Ekran Uzunluğu/2,D4 ; Ekranın merkezi Y (ortalamak için)
+
+MOVE.w    #Nesne Noktası-1,D7	; yansıtılacak nokta sayısı
+PERLOP:
+MOVEM.W    (a0)+,d0/d1/d2    ; X koordinatı d0, Y koordinatı d2, Z koordinatı d2
+MULS.W    DistZoss,d0    ; DistSchermoOss*Xogg
+MULS.W    DistZoss,d1    ; DistSchermoOss*Yogg
+ADD.W    DistZoss,d2    ; Zogg+DistZoss_quadro in d2
+DIVS.w    D2,D0     ; (DistZossSchermo*Xogg)/(Zogg-DistZossSchermo)
+DIVS.w    D2,D1     ; (Ekran DistZoss*Yogg)/(Zogg-Ekran DistZoss)
+ADD.W    d3,D0     ; + X ekranın merkezi (ortalamak için)
+ADD.W     d4,D1     ; + Y ekranın merkezi (ortalamak için)
+MOVEM.W    D0-D1,(A1) ; X¹ ve Y¹ değerlerini kaydedin. Yansıtın ve kaydırın.
+ADDQ.W    #2+2,A1     ; Sonraki 2 değere atlayın.
+DBRA     D7,PERLOP ; NumeroPunti kez tüm noktalar için tekrarlayın.
+RTS         ; hepsini yansıtana kadar
+
+Her neyse, ekran ile gözlemci arasındaki mesafeyi
+256 olarak belirleyebiliriz, böylece 2 muls'u “ASL.L #8” olarak dönüştürebiliriz:
+
+PERSPEKTİF:
+LEA    PuntiXYZtraslati(PC),A0     ; X, Y, Z tablosunun adresi
+; yansıtılacak (zaten çevrilmiş)
+LEA    PuntiXYproiettati(PC),A1 ; Koordinatların yerleştirileceği tablo
+; X¹,Y¹ koordinatlarının yerleştirileceği tablo.
+MOVE.w    #Ekran Genişliği/2,D3 ; Ekranın merkezi (ortalamak için)
+MOVE.W     #Ekran Uzunluğu/2,D4 ; Ekranın merkezi (ortalamak için)
+
+MOVE.w    #NPuntiOggetto-1,D7    ; yansıtılacak nokta sayısı
+Proiez:
+MOVEM.W	(a0)+,d0-d2 ; d0'da X koordinatı, d1'de Y koordinatı, d2'de Z koordinatı
+->    ASL.L    #8,d0     ; (MULS #256) DistZossSchermo*Xogg
+->    ASL.L    #8,d1     ; (MULS #256) DistZossSchermo*Yogg
+->    ADD.W    #256,d2     ; Zogg+DistZossSchermo (dist. oss<->punto bul)
+DIVS.w    D2,D0     ; (Ekran Zoss Mesafesi*Xogg)/(Zogg-Ekran Zoss Mesafesi)
+DIVS.w    D2,D1     ; (Ekran Zoss Mesafesi*Yogg)/(Zogg-Ekran Zoss Mesafesi)
+ADD.W    d3,D0	 ; + ekranın merkezindeki X koordinatı (merkezlemek için)
+ADD.W     d4,D1     ; + ekranın merkezindeki Y koordinatı (merkezlemek için)
+MOVEM.W    D0-D1,(A1) ; X¹ ve Y¹ değerlerini kaydedin, yansıtın ve kaydırın
+ADDQ.W    #2+2,A1	 ; Sonraki 2 val'e atlayalım.
+DBRA     D7,Proiez ; NumeroPunti kez tüm noktalar için tekrarlayın.
+RTS         ; hepsini yansıtana kadar
+
+(sıfıra bölünme dikkat: ancak dikkatli olunursa gerek yoktur...)
+
+->    ADD.W    #256,d2     ; Zogg+DistZossSchermo (dist. oss<->nokta buluyorum)
+bne.s    NonZero
+moveq    #1,d2    ; sıfıra bölünmeyi önler
+NonZero:
+DIVS.w    D2,D0     ; (DistZossSchermo*Xogg)/(Zogg-DistZossSchermo)
+
+*****************************************************************************
+TRASLAZIONI
+
+Pratikte, tüm x, y, z... noktalarına aynı değer eklenir veya çıkarılır.
+*****************************************************************************
+
+İşte, bir tür mantar (veya lolipop) ile basit traslazioni'ların etkisini gösteriyoruz
+:
+
+------------------------------------------------------------------------------
+
+X¹=X+XF
+_     __     ___     __     _
+-     /\___    / \__    /. \_    / . \    _/ .\    __/ \    ___/\    +
+\/    \_/    \__/    \___/     \__/     \_/     \/
+
+Eksi    <    <    <     SIFIR     >     >     >    ARTI
+
+Daha sağa veya daha sola hareket ediyoruz... sanki hareket halindeki bir trenin penceresinden
+bakıyormuşuz gibi.
+
+------------------------------------------------------------------------------
+
+Y¹=Y+YF
+
+-        Eksi
+___
+<___>         /\
+|
+___
+/ \         /\
+\___/
+|
+___
+/ \
+| |        SIFIR
+\___/
+
+_
+|
+\___/         \/
+
+|
+_
+<___>         \/
+
++
+
+* Nesneyi daha yüksek veya daha alçak bir yerden görüyoruz... sanki
+asansördeymişiz gibi.
+
+------------------------------------------------------------------------------
+
+Z¹=Z+ZF
+___                
+-      / \              ___                 +
+( )            / \         .-.
+\___/            \___/         \_/     <>    .
+
+Eksi    <    <    <     SIFIR     >     >     >    Artı
+
+
+* Nesne büyür veya küçülür: yaklaşır veya uzaklaşır
+
+******************************************************************************
+*                DÖNÜŞLER                 *
+******************************************************************************
+
+yavaşça açıklayalım... önce tek bir eksen etrafında 2d dönüş, sonra
+yavaş yavaş hızlı rutine kadar tamam...
+
+
+a = radyan (radyan=derece/57,295779 - Ör. 1 derece = 1/57,xx=0,017453)
+
+360° = 2*Pi
+
+Etrafında
+
+Xnew = X*COS(a)-Y*SIN(a)
+
+z ekseni:
+
+Ynew = X*SIN(a)-Y*COS(a)
+Znew = Z
+
+Etrafında
+
+Xnew = X
+
+X ekseni:
+
+Ynew = Y*COS(a)-Z*SIN(a)
+Znew = Y*SIN(a)+Z*COS(a)
+
+Etrafında
+
+Xnew = X*COS(a)+Z*SIN(a)
+
+Y ekseni:
+
+Ynew = Y
+Znew = X*SIN(a)+Z*COS(a)
+
+YA DA BAŞKA BİR DEYİŞLE:
+
+xr = X dönüş açısı
+yr = Y dönüş açısı
+zr = Z dönüş açısı
+
+X¹ bir sonraki sefer kullanılacak yeni X'tir; önceki hesaplamanın değerleri kullanılarak 2 eksen birden hesaplanır
+.
+
+Y¹=Y*COS(xr)-Z*SIN(xr)        ;\ X
+Z¹=Y*SIN(xr)+Z*COS(xr)        ;/
+
+X¹=X*COS(zr)-Y*SIN(zr)        ;\ Z
+Y¹=X*SIN(zr)+Y*COS(zr)        ;/
+
+X¹=X*COS(yr)-Z*SIN(yr)        ;\ Y
+Z¹=X*SIN(yr)+Z*COS(yr)        ;/
+
+Cos(a) =     X1*X2+Y1*Y2+Z1*Z2
+-------------------------------------
+sqrt((x1^2+y1^2+z1^2)*(x2^2+y2^2+z2^2)
+
+
+------------------------------------------------------------------------------
+
+YY = Y*Cos(AX) + Z*Sin(AX)
+Z = Z*Cos(AX) - Y*Sin(AX)
+Y = YY
+
+XX = X*Cos(AY) + Z*Sin(AY)
+Z = Z*Cos(AY) - X*Sin(AY)
+X = XX
+
+XX = X*Cos(AZ) + Y*Sin(AZ)
+Y = Y*Cos(AZ) - X*Sin(AZ)
+X = XX
+
+------------------------------------------------------------------------------
+
+;DÖNÜŞLER: açılar r1,r2,r3
+;     koordinatlar x,y,z
+; xa,ya,za geçici değişkenler
+
+xa=cos(r1)*x-sin(r1)*z
+za=sin(r1)*x+cos(r1)*z
+x=cos(r2)*xa+sin(r2)*y
+ya=cos(r2)*y-sin(r2)*xa
+z=cos(r3)*za-sin(r3)*ya
+y=sin(r3)*za+cos(r3)*ya
+
+----------------------------------------------------------------------------
+
+X EKSENİ:
+
+___     ___     ___     ___
++     _|_     |     _L_    / \    <_ _>     |    <_i_>    -
+<_'_>     _|_    <___>     \___/     T     |     |
+DAHA FAZLA                                DAHA AZ
+
+Kendi ekseni etrafında dönme ________ X
+
+Bu hareket, “profilden” bakıldığında bir vantilatörün veya bir gemi pervanesinin dönüşünü andırır.
+------------------------------------------------------------------------------
+
+Y EKSENİ:
+
+_          __     ___     __          _
++     ___\    ___/\    _/ \    / \    / \_    /\___    / __    -
+\_/     \/     \__/    \___/    \__/    \/    \_/
+
+DAHA FAZLA    <    <    <     SIFIR     >     >     >    DAHA AZ
+
+
+Eksen | Y etrafında kendi etrafında döner
+|
+|
+|
+
+Bu dönüş bir helikopterin pervanesini andırıyor!
+
+------------------------------------------------------------------------------
+
+Z Eksen:
+
+___|_         _|_        _|___
++     |     X     |    X     |     -
+/      |	 \    
+DAHA FAZLA                        DAHA AZ
+
+Eksen · Z etrafında kendi etrafında döner    (eksen size doğru!)
+
+Pratikte, dönüş POZİTİF ise nesne saat yönünde döner,
+tıpkı bir saat ibresi gibi, NEGATİF ise saat yönünün tersine döner
+.
+
+------------------------------------------------------------------------------
+
+(panel oluşturun:
+
++ X TRASL -
+
++ Y TRASL -
+
+Vb. fare ile...
+
+
+******************************************************************************
+*            GİZLİ ÇİZGİLER ve DOLDURULMUŞ                 *
+******************************************************************************
+
+(Slave/Perspex'in Grapevine #16'daki makalesinden.
+
+Dolgulu vektörler
+
+Vektörlerin temel prensibi, nesnelerin birbirine çizgilerle bağlanmış noktalar
+veya “yüzler” oluşturmak için birbirine bağlanmış noktalar
+Noktalar, X, Y, Z eksenlerindeki 3 koordinatla belirlenebilir.
+X, sağ-sol sapmadır, Y “yukarı-aşağı” ve Z derinliktir,
+yani “ileri-geri”.
+
+
+İşte bir küp projesi örneği. Bildiğiniz gibi küpün 6 yüzü ve
+en az 6 kenarı, yani bizim ilgilendiğimiz noktalar vardır.
+
+
+-50,+50,+100______________+100,+100,+100
+/|         /|
+/ |         / |
+/ |         / |
+/ |     / |
+- 50,+100,-50/____|________/+100,+100,-50
+| | | |
+| |________|____|+100,-50,+100
+| /-100,-100,+100/
+| /     | /
+| /     | /
+| /     | /
+|/____________ |/+100,-100,-100
+-100,-100,-100
+
+
+Bu bilgilerle, nesnemizi oluşturan
+noktalar ve yüzlerden oluşan bir küpün veri yapısını oluşturabiliriz:
+
+CubeObject:    ; Mega Basit Küp, 8 Nokta ve 6 yüz.
+
+CubePts:
+dc.w    8-1        ; 8 Nokta (DBRA
+; döngü için bu değeri alarak yapacağımız için -1 koyuyoruz.
+; Bildiğiniz gibi DBRA num.loop-1 gerektirir
+dc.w    -100,+100,-100    ; İşte X, Y, Z koordinatlarıyla tanımlanan 8 nokta
+dc.w    +100,+100,-100
+dc.w	+100,-100,-100
+dc.w	-100,-100,-100
+dc.w	-100,+100,+100
+dc.w	+100,+100,+100
+dc.w	+100,-100,+100
+dc.w	-100,-100,+100
+
+; İşte şimdi her yüzün bilgileri: ilk kelime
+; nokta sayısıdır (dbra için), ardından bu yüzü oluşturan noktalar gelir,
+; yani küpün 8 noktasından hangileri bu yüzü oluşturur. Dikkat edilmesi gereken nokta
+; noktaların sırası “saat yönünde”dir (yani sayarken saat yönünde
+; saat ibresi yönünde) yüz ekrana baktığında saat yönünde,
+; yüz arkada, “döndüğünde” ise saat yönünün tersine olur.
+; Bu sıra, bir yüzün görünür mü yoksa
+; diğerlerinin arkasında gizli mi olduğunu anlamak için yararlı olacaktır.
+
+CubeFace1Pts:
+dc.w    4-1            ; 4 Nokta
+CubeFace1Cons:
+dc.w	0*4,1*4,2*4,3*4,0*4    ; 0-> 2-> 3-> 1->0 - Bu
+yüzün noktaları (*4,
+tablodan doğru ofseti
+bulmak için basitçe
+nokta tablosunun başladığı yere
+ekleyin.
+CubFace1Col: 
+($RGB)
+
+dc.w	4-1
+dc.w	4*4,7*4,6*4,5*4,4*4
+dc.w	VCol02
+
+dc.w	4-1
+dc.w	0*4,3*4,7*4,4*4,0*4
+dc.w	VCol03
+
+dc.w	4-1
+dc.w	1*4,5*4,6*4,2*4,1*4
+dc.w	VCol04
+
+dc.w    4-1
+dc.w    0*4,4*4,5*4,1*4,0*4
+dc.w    VCol05
+
+dc.w    4-1
+dc.w    3*4,2*4,6*4,7*4,3*4
+dc.w    VCol06
+
+CubeEnd:
+dc.w    0        ; Sıfır ile liste sonlandırılır
+
+Çizgilerle birleştirilmesi gereken noktalar sırayla listelenir; başlangıç noktası
+listenin sonuna eklenir:
+
+Çizgi1 = nokta0->nokta1
+Çizgi2 = nokta1->nokta2
+Çizgi3 = nokta2->nokta3
+Çizgi4 = nokta3->nokta0
+
+
+Şimdi en korkutucu kısım: hesaplamalar.
+
+
+AX, AY + AZ = X, Y veya Z için Dönme Açısı
+
+CX + CY = X + Y için Merkez Değerleri
+
+CX = 160    ; 320x200 ekran boyutu için boyutlar
+CY = 100
+
+YY = Y*Cos(AX) + Z*Sin(AX)
+Z = Z*Cos(AX) - Y*Sin(AX)
+Y = YY
+
+XX = X*Cos(AY) + Z*Sin(AY)
+Z = Z*Cos(AY) - X*Sin(AY)
+X = XX
+
+XX = X*Cos(AZ) + Y*Sin(AZ)
+Y = Y*Cos(AZ) - X*Sin(AZ)
+X = XX
+
+Z = 512/(512+Z)
+X = X*Z+CX
+Y = Y*Z+CY
+
+Artık bir tel kafes küp yapmak için ihtiyacımız olan her şeye sahibiz, hatta
+temel düzeyde, eğer gerçekten sadistseniz.
+
+; Nesne, noktalar, bu noktalar arasındaki bağlantılar ve yüzlerden oluşur.
+; Noktalar, nesnedeki TÜM noktalar
+; Bağlantılar, “bir yüz oluşturmak için hangi noktaların birleştirilmesi gerektiği”
+; Yüzler, saat yönünde sıralanmış ilk 3 noktadır, 
+böylece
+; “gizli çizgi”, yani gizli çizgileri kolayca uygulayabilirsiniz.
+
+; Yüz doldurulup kopyalanmadan önce, küçük bir rutin, blitter'ın doldurması (fill), temizlemesi ve
+; kopyalaması gereken alanı hesaplar. Bu, X ve Y eksenleri için yapılır.
+
+; Hızlandırmak için önceden hesaplanmış bir perspektif TAB kullanılabilir,
+; tüm olası Z kombinasyonlarını hesaplayarak (Z= 640/(640+Z)).
+; Bu şekilde, yavaş DIVS'yi kaldırıp,
+; TAB'da doğru değeri bulan klasik rutinle değiştirebilirsiniz:
+;
+;    lea    PROSPTAB,a0
+;    add.l d0,d0
+;    move.w (a0,d0.w),d0
+;
+
+; SENO tablosu,
+; COS(n) = SIN(n-90°) kuralı sayesinde COSENO tablosu olarak kullanılabilir.
+
+Yapılacakların listesi:
+
+1) Nesneyi bulun.
+2) Nesnenin yapısından nokta sayısını alın.
+3) Nesnenin tüm noktalarını özel olarak oluşturulmuş bir tampona döndürün.
+4) İlk yüzün veri bloğuna bir işaretçi oluşturun.
+5) Yüz sayısını okuyun (Se=0 ise nesne bitmiştir).
+6) Noktaları çiftler halinde okuyun ve çizgi çizme rutinine gönderin.
+7) Çizgi çizme rutini ayrı bir tampona çizer.
+8) FILL için X Y alanını (mümkün olduğunca küçük) hesaplayın.
+9) Tampondaki yüzü (blitterin fill ile) doldurun.
+10) Yüzü tampondan ekrana kopyalayın (3 bitplanes). Şu şekilde:
+
+; a0 = kaynak
+; a4 = dest
+
+move.l    A3,Bltapth(A6)    ; a
+move.l    A4,Bltbpth(A6)    ; b
+move.l    A4,Bltdpth(A6)    ; d
+btst.l    #0,D7        ; bu Plane'e ihtiyacımız olup olmadığını test edelim
+beq.s	PlaneVuoto
+PlaneFull:
+move.l    #$0DFC0000,BltCon0(A6)    ; Minterms OR için
+bra.s    BlitPlane
+PlaneVuoto:
+move.l    #$0D0C0000,BltCon0(A6)    ; Minterms Maske için
+BlitPlane:
+move.w    D4,Bltsize(A6)        ; Boyut
+
+Dolu veya boş bir düzlem için. Bu, tüm 3 bitpanes için yapılmalıdır.
+En küçük X+Y ile yüz tamponunu temizlemek gerekir (bunu zaten
+hesapladık).
+İşlemi nesnenin tüm yüzleri için tekrarlayın.
+Ekran için en küçük X+Y dikdörtgenini hesaplayın ve bir sonraki döngüden önce ekranı temizleyin
+.
+
+PS: Çift tampon kullanmayı unutmayın.
+Çift tampon, bir kare görüntülenirken
+temizleyip başka bir yere yazabilir ve kare sonunda görüntüleyebilirsiniz.
+ Aksi takdirde, bu işlemlerin video yenileme hızına göre yavaş olması nedeniyle
+katı cismin silinme ve çizilme anı görünür.
+ (Pratikte, berbat bir PC-MSDOS'ta yapılmış gibi görünür).
+
+
+Kodun bir araya getirilme şekli, bir bayrak tarafından etkinleştirilen bir çift
+tampon değiştirici ile çalışan bir Lev6'ya sahip olmanızdır. Çift tampon en son etkinleştirildiğinde
+kare sayısını sayan bir sayacınız vardır. Ve her kare için
+açısal dönüşü günceller.
+
+
+Döndür:
+move.l    FaceBuffer(PC),A0
+lea    STab+$80*2(PC),A5    ; SinTab adresi
+lea    STab+$80(PC),A6        ; CosTab adresi
+move.l    Object(PC),A1        ; Nesne yapısı adresi
+lea	XYPoints(PC),A2        ; Hesaplanan noktaların yerleştirileceği yer
+;    lea    Perspective(PC),A3    ; Önceden hesaplanmış perspektifli sekme
+moveq    #0,D5
+move.w    (A1)+,D5        ; Nokta sayısı
+
+; Serbest = A4
+
+PointLoop:
+move.w    (A1)+,D0    ; D0 = X
+move.w    (A1)+,D1    ; D1 = Y
+move.w    (A1)+,D2    ; D2 = Z
+
+move.w    AngleY(PC),D7
+move.w	(A5,D7.W),D6    ; D6 = Sin(AX)
+move.w    (A6,D7.W),D7    ; D7 = Cos(AX)
+
+; D0 = X
+; D1 = Y
+; D2 = Z
+; D6 = Sin(AY)
+; D7 = Cos(AY)
+
+; YY = Y*Cos(AY) + Z*Sin(AY)
+; Z = Z*Cos(AY) - Y*Sin(AY)
+; Y = YY
+
+move.w    D1,D3        ; D3 = Y
+move.w    D2,D4        ; D4 = Z
+
+Muls.W    D6,D4        ; D4 = Z*Sin(AY)
+Muls.W    D7,D2        ; D2 = Z*Cos(AY)
+Muls.W    D6,D1        ; D1 = Y*Sin(AY)
+Muls.W    D7,D3        ; D3 = Y*Cos(AY)
+
+ADD.L    D4,D3        ; D3 = Y*Cos(AY) + Z*Sin(AY)
+Sub.L    D1,D2        ; D2 = Z*Cos(AY) - Y*Sin(AY)
+
+ADD.L    D3,D3
+ADD.L    D2,D2
+SWAP    D3        ; D3 = Y
+SWAP    D2        ; D2 = Z
+
+MOVE.W    AngleX(PC),D7
+MOVE.W    (A5,D7.W),D6    ; D6 = Sin(AX)
+MOVE.W    (A6,D7.W),D7    ; D7 = Cos(AX)
+
+; D0 = X
+; D2 = Z
+; D3 = Y
+; D6 = Sin(AY)
+; D7 = Cos(AY)
+
+; XX = X*Cos(AX) + Z*Sin(AX)
+; Z = Z*Cos(AX) - X*Sin(AX)
+; X = XX
+
+move.w    D0,D1        ; D1 = X
+move.w    D2,D4        ; D4 = Z
+
+Muls.W D6,D4        ; D4 = Z*Sin(AX)
+Muls.W D7,D2        ; D2 = Z*Cos(AX)
+Muls.W D6,D0		; D0 = X*Sin(AX)
+Muls.W D7,D1        ; D1 = X*Cos(AX)
+
+ADD.L    D4,D1        ; D1 = X*Cos(AX) + Z*Sin(AX)
+Sub.L    D0,D2        ; D2 = Z*Cos(AX) - X*Sin(AX)
+
+ADD.L    D1,D1
+ADD.L    D2,D2
+SWAP    D1        ; D1 = X
+SWAP    D2        ; D2 = Z
+
+MOVE.W    AngleZ(PC),D7
+MOVE.W	(A5,D7.W),D6 ; D6 = Sin(AZ)
+MOVE.W    (A6,D7.W),D7 ; D7 = Cos(AZ)
+
+; D1 = X
+; D2 = Z
+; D3 = Y
+; D6 = Sin(AZ)
+; D7 = Cos(AZ)
+
+; XX = X*Cos(AZ) + Y*Sin(AZ)
+; Y = Y*Cos(AZ) - X*Sin(AZ)
+; X = XX
+
+MOVE.W    D1,D0        ; D0 = X
+MOVE.W    D3,D4        ; D4 = Y
+
+Muls.W    D6,D4        ; D4 = Y*Sin(AZ)
+Muls.W    D7,D3        ; D3 = Y*Cos(AZ)
+Muls.W    D6,D1        ; D1 = X*Sin(AZ)
+Muls.W    D7,D0        ; D0 = X*Cos(AZ)
+
+ADD.L    D4,D0        ; D0 = X*Cos(AZ) + Y*Sin(AZ)
+Sub.L    D1,D3        ; D3 = Y*Cos(AZ) - X*Sin(AZ)
+
+ADD.L    D0,D0
+ADD.L    D3,D3
+SWAP    D0        ; D0 = X
+SWAP    D3        ; D3 = Y
+
+; D0 = X
+; D2 = Z
+; D3 = Y
+
+; Z = 512/(512+Z)
+; X = X*Z+CX
+; Y = Y*Z+CY
+ 
+
+ADD.W    Zoom,D2
+MoveQ    #8,D7
+Ext.L    D0
+Ext.L    D3
+Asl.L    D7,D0
+Asl.L    D7,D3
+Tst.W    D2
+Bpl.S    ZNotZero
+MoveQ	#1,D2
+ZNotZero:
+Divs.W    D2,D0
+Divs.W    D2,D3
+
+;    ADD.W    Zoom(PC),D2    ; D2 = Z+Zoom
+;	ADD.L    D2,D2
+;    MOVE.W    (A3,D2.W),D2    ; D2 = Z Perspektif Değeri
+
+;    Muls.W    D2,D0        ; D0 = X*Z
+;    Muls.W    D2,D3        ; D3 = Y*Z
+
+;    ADD.L    D0,D0
+;    ADD.L    D3,D3
+;    SWAP    D0
+;    SWAP    D3
+
+ADD.W    #ScreenX/2,D0    ; D0 = X*Z+CX
+ADD.W    #ScreenY/2,D3    ; D3 = Y*Z+CY
+
+; D0 = X
+; D3 = Y
+
+Move.W    D2,MaxPts*2(A2)    ; Z'yi kaydet
+Move.W    D0,(A2)+    ; X'i kaydet
+Move.W    D3,(A2)+    ; Y'yi kaydet
+
+DBRA    D5,PointLoop    ; Tüm Noktaları Hesapla
+
+Hangi yüzün gizli olduğunu, dolayısıyla hangilerini çizmemek gerektiğini öğrenmek için
+yüzün döndürülmüş ilk 3 noktasını (x+y) alıp şu hesaplamayı yapın:
+
+Eğer:
+
+((Bx-Ax)*(Cy-By))-((Cx-Bx)*(By-Ay))
+
+Pozitifse, yüzü çizmeyin!
+
+
+; İşte SINTAB, COSTAB olarak kullanabilmek için 2 kez tekrarlanmıştır.
+
+SineTableOfWordsX2:
+
+dc.w    1,$324,$648,$96A,$C8C,$FAB,$12C8,$15E2,$18F9
+dc.w	$1C0B,$1F1A,$2223,$2528,$2826,$2B1F,$2E11,$30FB
+dc.w	$33DF,$36BA,$398C,$3C56,$3F17,$41CE,$447A,$471C
+dc.w	$49B4,$4C3F,$4EBF,$5133,$539B,$55F5,$5842,$5A82
+dc.w	$5CB3,$5ED7,$60EB,$62F1,$64E8,$66CF,$68A6,$6A6D
+dc.w	$6C23,$6DC9,$6F5E,$70E2,$7254,$73B5,$7504,$7641
+dc.w	$776B,$7884,$7989,$7A7C,$7B5C,$7C29,$7CE3,$7D89
+dc.w	$7E1D,$7E9C,$7F09,$7F61,$7FA6,$7FD8,$7FF5,$7FFF
+dc.w	$7FF5,$7FD8,$7FA6,$7F61,$7F09,$7E9C,$7E1D,$7D89
+dc.w	$7CE3,$7C29,$7B5C,$7A7C,$7989,$7884,$776B,$7641
+dc.w	$7504,$73B5,$7254,$70E2,$6F5E,$6DC9,$6C23,$6A6D
+dc.w	$68A6,$66CF,$64E8,$62F1,$60EB,$5ED7,$5CB3,$5A82
+dc.w	$5842,$55F5,$539B,$5133,$4EBF,$4C3F,$49B4,$471C
+dc.w	$447A,$41CE,$3F17,$3C56,$398C,$36BA,$33DF,$30FB
+dc.w	$2E11,$2B1F,$2826,$2528,$2223,$1F1A,$1C0B,$18F9
+dc.w	$15E2,$12C8,$FAB,$C8C,$96A,$648,$324,1,$FCDC
+dc.w	$F9B8,$F696,$F374,$F055,$ED38,$EA1E,$E707,$E3F5
+dc.w	$E0E6,$DDDD,$DAD8,$D7DA,$D4E1,$D1EF,$CF05,$CC21
+dc.w	$C946,$C674,$C3AA,$C0E9,$BE32,$BB86,$B8E4,$B64C
+dc.w	$B3C1,$B141,$AECD,$AC65,$AA0B,$A7BE,$A57E,$A34D
+dc.w	$A129,$9F15,$9D0F,$9B18,$9931,$975A,$9593,$93DD
+dc.w	$9237,$90A2,$8F1E,$8DAC,$8C4B,$8AFC,$89BF,$8895
+dc.w	$877C,$8677,$8584,$84A4,$83D7,$831D,$8277,$81E3
+dc.w	$8164,$80F7,$809F,$805A,$8028,$800B,$8001,$800B
+dc.w	$8028,$805A,$809F,$80F7,$8164,$81E3,$8277,$831D
+dc.w	$83D7,$84A4,$8584,$8677,$877C,$8895,$89BF,$8AFC
+dc.w	$8C4B,$8DAC,$8F1E,$90A2,$9237,$93DD,$9593,$975A
+dc.w	$9931,$9B18,$9D0F,$9F15,$A129,$A34D,$A57E,$A7BE
+dc.w	$AA0B,$AC65,$AECD,$B141,$B3C1,$B64C,$B8E4,$BB86
+dc.w	$BE32,$C0E9,$C3AA,$C674,$C946,$CC21,$CF05,$D1EF
+dc.w	$D4E1,$D7DA,$DAD8,$DDDD,$E0E6,$E3F5,$E707,$EA1E
+dc.w	$ED38,$F055,$F374,$F696,$F9B8,$FCDC,2,$66E8,0
+dc.w	$240,0,0,0,0,1,$324,$648,$96A,$C8C,$FAB,$12C8
+dc.w	$15E2,$18F9,$1C0B,$1F1A,$2223,$2528,$2826,$2B1F
+dc.w	$2E11,$30FB,$33DF,$36BA,$398C,$3C56,$3F17,$41CE
+dc.w	$447A,$471C,$49B4,$4C3F,$4EBF,$5133,$539B,$55F5
+dc.w	$5842,$5A82,$5CB3,$5ED7,$60EB,$62F1,$64E8,$66CF
+dc.w	$68A6,$6A6D,$6C23,$6DC9,$6F5E,$70E2,$7254,$73B5
+dc.w	$7504,$7641,$776B,$7884,$7989,$7A7C,$7B5C,$7C29
+dc.w	$7CE3,$7D89,$7E1D,$7E9C,$7F09,$7F61,$7FA6,$7FD8
+dc.w	$7FF5,$7FFF,$7FF5,$7FD8,$7FA6,$7F61,$7F09,$7E9C
+dc.w    $7E1D,$7D89,$7CE3,$7C29,$7B5C,$7A7C,$7989,$7884
+dc.w	$776B,$7641,$7504,$73B5,$7254,$70E2,$6F5E,$6DC9
+dc.w	$6C23,$6A6D,$68A6,$66CF,$64E8,$62F1,$60EB,$5ED7
+dc.w	$5CB3,$5A82,$5842,$55F5,$539B,$5133,$4EBF,$4C3F
+dc.w	$49B4,$471C,$447A,$41CE,$3F17,$3C56,$398C,$36BA
+dc.w	$33DF,$30FB,$2E11,$2B1F,$2826,$2528,$2223,$1F1A
+dc.w    $1C0B,$18F9,$15E2,$12C8,$FAB,$C8C,$96A,$648,$324
+dc.w	1,$FCDC,$F9B8,$F696,$F374,$F055,$ED38,$EA1E,$E707
+dc.w	$E3F5,$E0E6,$DDDD,$DAD8,$D7DA,$D4E1,$D1EF,$CF05
+dc.w	$CC21,$C946,$C674,$C3AA,$C0E9,$BE32,$BB86,$B8E4
+dc.w	$B64C,$B3C1,$B141,$AECD,$AC65,$AA0B,$A7BE,$A57E
+dc.w	$A34D,$A129,$9F15,$9D0F,$9B18,$9931,$975A,$9593
+dc.w	$93DD,$9237,$90A2,$8F1E,$8DAC,$8C4B,$8AFC,$89BF
+dc.w	$8895,$877C,$8677,$8584,$84A4,$83D7,$831D,$8277
+dc.w	$81E3,$8164,$80F7,$809F,$805A,$8028,$800B,$8001
+dc.w	$800B,$8028,$805A,$809F,$80F7,$8164,$81E3,$8277
+dc.w	$831D,$83D7,$84A4,$8584,$8677,$877C,$8895,$89BF
+dc.w	$8AFC,$8C4B,$8DAC,$8F1E,$90A2,$9237,$93DD,$9593
+dc.w	$975A,$9931,$9B18,$9D0F,$9F15,$A129,$A34D,$A57E
+dc.w	$A7BE,$AA0B,$AC65,$AECD,$B141,$B3C1,$B64C,$B8E4
+dc.w	$BB86,$BE32,$C0E9,$C3AA,$C674,$C946,$CC21,$CF05
+dc.w    $D1EF,$D4E1,$D7DA,$DAD8,$DDDD,$E0E6,$E3F5,$E707
+dc.w    $EA1E,$ED38,$F055,$F374,$F696,$F9B8,$FCDC,2,$66E8
+dc.w    0,$240,0,0,0,0
+
+Asterix of Movement tarafından bir giriş
+==========================================
+
+Carl-Henrik Skårstedt tarafından tatilinde yazılmıştır.
+
+_ _
+/| |\
+/|\ / \
+| / \
+|/_______\
+/
+
+
+1. Önsöz
+=============
+
+Bu metni anlamak için temel Lineer Cebir bilgisine sahip olmanızda fayda vardır,
+ çünkü bu metni okurken, sadece verilen formülleri
+680x0'a dönüştürmekle kalmamalısınız. Rutininizin arkasındaki teoriyi biliyorsanız, onu nasıl
+optimize edeceğinizi veya değiştireceğinizi de bilirsiniz!
+
+Bu metin sadece Amiga'da 3D grafik programlama için değil, iyi bir grafik arayüzü destekleyen ve
+bir karede konkav nesneler oluşturacak kadar hızlı olan tüm
+bilgisayarlarda (PC hariç).
+
+sqr() bu metinde KARE KÖK anlamına gelir.
+
+Bu metnin anlamı, bunun
+Code.txt dosyasının bir parçası olacağı ve bu metin için de aynı kuralların geçerli olacağıdır
+.
+Bu bölümün hakları yazara aittir.
+Kaynak kodları, aşağıdakiler hariç olmak üzere çoğu assembler ile çalışmalıdır
+Sıralama eklemek için 68020 assembler gerekir.
+
+*******************************************************************************
+
+2. Vektörlere giriş
+==========================
+
+Vektör nedir?
+-----------------
+Demo'ları gördüyseniz, dönen küpler vektörler olarak adlandırılır.
+Bunlar toplar, doldurulmuş çokgenler, çizgiler veya başka şeyler olabilir.
+Bu demo'ların ortak özelliği, nesnelerin konumlarının vektör hesaplamalarıdır.
+ Bu, bir, iki veya üç boyutlu olabilir
+
+Örneğin bir küp alalım. Küpün her köşesi
+bir vektörü temsil eder. Dönüş merkezi.
+Tüm vektörler bir yerden başka bir yere gider, normalde
+(0,0) noktasından (a,b) noktasına giden vektörleri kullanırız.
+Bu vektörün miktarı (a,b) şeklindedir.
+
+Vektör tanımı:
+Bir değer ve yön miktarı
+
+veya basitçe bir çizgi.
+Bir çizginin r olarak adlandırabileceğimiz bir uzunluğu ve t olarak adlandırabileceğimiz bir yönü vardır.
+Bu çizgiyi (r, t) şeklinde yazabiliriz.
+Bu vektörü (r,t) = (uzunluk, açı) olarak yazabiliriz.
+Ancak, koordinatları verilen vektörel nesneler için daha sık kullanılan başka bir yol da vardır
+.
+
+(0,0) noktasından (x,y) noktasına giden çizginin uzunluğu sqr(x*x+y*y) olup, bu da vektörün değeridir
+.
+Yön, x ekseni ile vektörün tanımladığı çizgi arasındaki açı olarak görülebilir
+.
+
+Bunu iki boyutlu olarak incelersek, aşağıdaki gibi bir örnek vektör elde edebiliriz
+:
+
+^ y
+| _.(a,b)
+| /|
+| /
+| /
+| / V
+| /
+|/\ - t=x ekseni ile vektör V arasındaki açı
+---+------------>
+(0,0) x
+
+
+Bu vektöre V adını verebiliriz ve gördüğümüz gibi,
+(0,0) noktasından (a,b) noktasına uzanmaktadır.
+Bu vektörü V=(a,b) olarak gösterebiliriz.
+Artık hem V'nin değeri ( (0,0) ile (a,b) arasındaki uzunluk) hem de
+yönü (diyagramdaki açı)
+
+Diyagrama bakarsak, vektörün uzunluğunun
+Pisagor teoremi ile hesaplanabileceğini görebiliriz:
+
+r=sqr(a*a+b*b)
+
+Ve t açıdır (t=tan(y/x) ile hesaplanabilir)
+
+
+Üç Boyut?
+-----------------
+Şimdi, iki boyutta vektörün ne olduğunu gördük, peki üç boyutta vektör nedir
+?
+
+Üç boyutta, her nokta üç koordinata sahiptir, bu nedenle vektörün de
+üç koordinatı olmalıdır.
+
+V=(a,b,c)
+
+Şimdi vektörün uzunluğu şöyle olur:
+
+r=sqr(a*a+b*b+c*c)
+
+Şimdi açı ne oluyor?
+
+Burada farklı tanımlar olabilir, ama bir dakika düşünelim.
+Bir açı ile başlarsak, sadece bir DÜZLEĞİN üzerinde bir noktaya ulaşabiliriz,
+ama biz Uzayda bir yön almak istiyoruz.
+
+İKİ açı ile denersek, daha iyi bir sonuç elde ederiz.
+Bir açı, Z ekseni ile vektör arasındaki açıyı, diğeri ise
+Z ekseni etrafındaki dönüşü temsil edebilir.
+
+Bu alanda başka problemler için (çok sayıda vardır) çok değişkenli hesaplamaları
+ve özellikle üçlü integrallerdeki kutup dönüşümlerini
+veya en azından vektör alanlarındaki yüzey integrallerini inceleyin.
+
+*******************************************************************************
+
+2.1 Vektör işlemleri:
+=========================
+
+(İki veya bir boyutunuz varsa, üç yerine iki veya bir değişkeniniz vardır.
+Daha fazlasına sahipseniz, elbette boyutlar kadar değişkeniniz vardır)
+
+* İki vektörün TOPLAMI (U=V+W) şu şekilde tanımlanır:
+
+V=(vx,vy,vz), W=(wx,wy,wz)=>
+
+=> U=(vx+wx,vy+wy,vz+wz)
+
+* Bir vektörün negasyonu U=-V şu şekilde tanımlanır:
+
+V=(x,y,z) => U=(-x,-y,-z)
+
+* İki vektör arasındaki fark U=V-W şu şekilde tanımlanır:
+
+U=V+(-W)
+
+* İki nokta arasındaki bir vektör (P1(x1,y1,z1) P2(x2,y2,z2))
+şeklinde işlenebilir:
+
+V=(x2-x1,y2-y1,z2-z1,...)
+
+(V, P1'den P2'ye gider)
+
+* Bir vektör bir sabit ile çarpılabilir:
+
+U=k*V
+
+(x*k,y*k,z*k)=k*(x,y,z)
+
+* Bir koordinat sistemi,
+translasyon formülü ile yeni bir noktaya “translasyon” yapılabilir:
+
+x'=x-k
+y'=y-l
+z'=z-m
+
+Burada (k,l,m) YENİ koordinat sisteminin
+(0,0,0) noktasına sahip olması gereken YENİ koordinat sisteminin
+Bu, YENİ bir NOKTA etrafında DÖNDÜRMEK istiyorsanız iyi bir işlemdir!
+
+* Bir vektör döndürülebilir (Bölüm 4'e bakın)
+Vektör her zaman (0,0,0) noktası etrafında döndürülür, böylece onu translasyon yapabilirsiniz.
+
+* Vektörler üzerinde skaler çarpım ve çapraz çarpım yapabiliriz
+(vedere un qualsiasi libro circa l'introduzione all'algebra lineare)
+
+*******************************************************************************
+
+3. tecniche di PROGRAMMAZIONE
+====================
+
+******************************************************************************
+
+Tamsayılarla gerçek sayıları kullanmanın bir yolu
+----------------------------------------------
+
+Şimdiye kadar sadece birkaç formül gördük, ama bunları
+Assembler'da, sadece bayt/kelime/uzun kelimeye sahip olduğumuzda nasıl kullanabiliriz?
+(Eğer bir FPU'nuz yoksa ve sadece FPU'su olanların
+demonuzu görmesini istemiyorsanız, tabii ki!)
+
+68000 programlama için (tüm 680x0 işlemcilerle uyumlu)
+WORDS ile çarpma, bölme vb. işlemleri yapabilmek kullanışlıdır.
+(68020+ işlemciler bunları longword ile de yapabilir)
+
+Ama biz sayıların KIRMIŞ kısımlarına, sayıların kesirli kısımlarına, yani
+“virgülün sonrasındaki” sayılara ihtiyacımız var, ama virgül yoksa ne yapacağız?
+Bir sabit p ile çarpılmış sayıları kullanmayı deneyebiliriz.
+O zaman şu işlemi yapabiliriz:
+
+[cos(a)*p] * 75 (örneğin, cos(x) ile p çarpılmış bir listeden)
+
+Ancak, her çarpma işlemi yaptığımızda bu sayının arttığını görebilirsiniz,
+ bu yüzden onu tekrar p ile bölmemiz gerekir:
+
+[cos(a)*p] * 75 / p
+
+Eğer kodlama uzmanıysanız, kesinlikle şöyle diyeceksiniz: “Oh hayır!
+çok zaman alan bir bölme işlemi olmaz!”.
+Ancak p'yi dikkatlice seçerseniz (yani p = 2 veya 4 veya 8 ...), bölme yerine SHIFT
+kullanabilirsiniz! Şu örneğe bakın:
+
+mulu.w    10(a0),d0    ; 10(a0) cos*256 değerlerinin listesinden alınmıştır
+asr.l    #8,d0        ; ve biz 256'ya “bölüyoruz”!
+
+Şimdi sabit virgüllü bir sayıyı çarptık!
+(Daha küçük bir hata payı elde etmek için bir püf noktası:
+Dx veri kaydını temizleyin ve asr'den sonra addx kullanın, böylece
+‘yuvarlatılmış’, “keskin kenarları yumuşatılmış”" (round-off) elde edersiniz:
+
+moveq    #0,d7        ; d7 kaydını sıfırlayalım
+:
+:
+mulu.w    10(a0),d0    ; tablodan değeri alalım (cos*256)
+asr.l    #8,d0        ; 256 ile “bölüyoruz”
+addx.l    d7,d0        ; sadece EXtend bayrağıyla (d7=0) yuvarlıyoruz
+:
+rts
+
+Bu, hatayı yarıya indirir!)
+
+Aynı sistem bölme işlemleri için de geçerlidir, ancak başka bir şekilde:
+
+:
+ext.l    d0
+ext.l    d1
+asl.l    #8,d0        ;“256 ile çarp”
+divs.w    d1,d0        ; ve z*256 ile böl ...
+:
+rts
+
+Toplama ve çıkarma işlemleri, normal tamsayı işlemleriyle aynıdır
+: (shif gerekmez)
+
+:
+add.w    10(a0),d0
+:
+
+:
+sub.w    16(a1),d1
+:
+
+
+Böylece, önce MUL çarpma, sonra LSR.
+Bölme işlemlerinde önce LSL, sonra DIV.
+
+Çarpma işlemlerinde daha yüksek doğruluk istiyorsanız,
+68020 ve üstü işlemciler, kayan nokta işlemlerini
+(toplam 32 bit) yapmanın ekonomik bir yolunu sunar.
+Ayrıca 32*32->32 tamsayı çarpma işlemleri yapabilir ve
+16 bitlik kosinüs ve sinüs kullanabilirsiniz, bu da ‘LSR’ yerine ‘SWAP’ kullanmanıza olanak tanır.
+
+*******************************************************************************
+
+Sin ve Cos'u assembler kodumda nasıl kullanabilirim?
+---------------------------------------------------
+En kolay ve en hızlı yol, listeye bir sinüs listesi, daha sık SINUS TAB olarak adlandırılan
+bir liste eklemektir.
+0'dan 2*pi'ye kadar, örneğin 1024 kez sayan bir program yazın.
+Değerleri kaydedin ve koda ekleyin.
+
+WORDS ve 1024 farklı sinüs değeri varsa, SENO ve
+COSENO şu şekilde alabilirsiniz:
+
+lea    sinuslist(pc),a0    ; önceden hesaplanmış sinüslerin listesi (tablo)
+and.w    #$7fe,d0		; d0 açıdır (tek sayıları hariç)
+move.w    (a0,d0.w),d1 ; d1=sin(d0)
+add.w    #(1024/4)*2,d0        ; 90° ekle (1/4 açı dönüşü)
+; sinüsü bulmak için. *2 çünkü bunlar
+; tabloda ulaşılması gereken kelimelerdir.
+and.w    #$7fe,d0
+move.w    (a0,d0.w),d0        ; d0=cos (orijinal d0)
+:
+:
+
+Tabloyu oluşturmak için ASMONE'nin kullanışlı “IS” veya “CS” komutlarını kullanabilirsiniz
+veya matematik kütüphaneleri veya diğer dillerle hesaplayabilirsiniz:
+
+pi=3.141592654
+vals=1024
+
+L'yi 0'dan 1024'e kadar artıran bir döngü ile:
+
+açı = L/vals*2*pi
+
+Elbette, assembler kodunda SENO'yu hesaplayan bir program yazabilirsiniz,
+ieee kütüphanelerini kullanarak veya virgola-mobile'da kendi rutininizi programlayarak
+algoritma şöyledir... (sinüs için)
+
+giriş: v=açı (radyan cinsinden)
+Laps=terim sayısı (daha az=daha hızlı, ancak daha fazla hata, tamsayı)
+
+1> Mlop=1
+DFac=1
+Ang2=açı*açı
+Talj=açı
+işaret=1
+Sonuç=0
+2> FOR terimler=1 TO Laps
+2.1> Temp=Talj/Dfac
+2.2> Sonuç=işaret*(Sonuç+Temp)
+2.3> Talj=Talj*Ang2
+2.4> Mlop=Mlop+1
+2.5> Dfac=Dfac*Mlop
+2.6> işaret=-işaret
+3> RETURN sin()=Sonuç
+
+burada sin() -1 ile 1 arasındadır...
+Algoritma MacLaurin polinomlarını kullanır ve bu nedenle sadece
+0'dan çok uzak olmayan değerler için önerilir.
+
+4. Vektörlerin döndürülmesi
+==========================
+
+* İki boyutta
+
+Artık vektörün ne olduğunu biliyoruz ve onu döndürmek istiyoruz.
+Bu çok basittir, uzunluğu ve açısı verilen bir vektörümüz varsa,
+ sadece dönme açısını açıya ekler ve uzunluğu olduğu gibi bırakırız
+:
+
+V=(r,t) -> V'=(r,t+a)
+
+Ancak normalde bu kadar basit bir durumla karşılaşmayız, elimizde
+iki koordinattan oluşan bir vektör vardır:
+
+V=(x,y) burada x ve y xy düzlemindeki koordinatlardır
+
+Bu metinde, bir vektör V=(r,t) 'nin
+rot(V,a) ile döndürülmesini vurgulamaktayız.
+Bununla, vektör V'nin a açısı ile döndürülmesini kastediyorum.
+
+Bu vektörün döndürülmesi, V'yi uzunluk ve yönü olan bir vektöre dönüştürerek yapılabilir,
+ ancak bu, kareler, teğetler,
+kare kökler vb. içerdiğinden, daha hızlı bir yöntem kullanmak daha iyi olacaktır.
+İşte burada trigonometri devreye girer.
+
+Ama önce, bir V=(x,0) vektörümüz olduğunu varsayalım.
+Bu vektörün dönüşü ne olabilir?
+
+V
+----------->
+
+Şimdi, bunu a açısı ile döndürelim:
+
+_
+/|\y' /|
+| /
+|V'/
+| /
+|/\a x'
+----->
+
+Vektörün yeni bileşenleri nelerdir? (x',y') ?
+
+Bu “tanımları” hatırlayın:
+
+Kosinüs:
+hipotenüs/açıya yakın kenar
+
+Sinüs:
+hipotenüs/açıya yakın olmayan kenar
+
+,
+/|
+Uzunluk>/ |< Uzunluk * sin(a)
+/a |
+‘---+
+Uzunluk * cos(a)
+
+
+Bunu orijinal dönme formülüne (V’=rot(V,a)=V(r,t+a)) koyarsak
+r ve t'yi x ve y'ye şu şekilde dönüştürebiliriz:
+
+x=r*cos(t)
+y=r*sin(t)
+
+Dönmüş vektör V=(x,0) problemine geri dönelim.
+Burada r=x (=sqrt(x*x+0*0)), t=0 (=arctan(0/x)
+Bunu formülümüze koyarsak şunu elde ederiz:
+
+V=(r,t) eğer r=x, t=0
+
+Bu vektörü a açıyla döndürürsek şunu elde ederiz:
+
+V=(r,t+a)
+
+Ve bunu belirtilen koordinatımıza geri kaydırırsak:
+
+V=(r*cos(t+a),r*sin(t+a))=(x*cos(a),x*sin(a))
+^x=r, t=0
+
+Ve bu, Y bileşeni olmayan bir vektörün dönüşü için formüldür.
+
+V=(0,y) vektörü için:
+
+
+r=y, t=pi/2 (=90 derece) çünkü şimdi X ekseninden 90
+derece açılı y eksenindeyiz.
+
+
+V=(r,t) => V'=(r,t+a) => V'=(r*cos(t+a),r*sin(t+a)) =>
+V'=(y*cos(pi/2+a),y*sin(pi/2+a))
+
+Şimdi, şunu söyleyen birkaç trigonometrik formül var:
+
+cos(pi/2+a)=sin(a) ve sin(pi/2+a)=-cos(a)
+
+Dolayısıyla şunu elde ederiz:
+
+V'=( y * sin(a) , y * ( -cos(a) ) )
+
+
+Ancak genel duruma bakarsak, hem x hem de y bileşenlerine sahip bir V vektörü vardır
+.
+Şimdi, tekil durumlar için döndürme formüllerini kullanarak genel durumu hesaplayabiliriz.
+ Toplama içeren durum:
+
+
+Vx'=rot((x,0),a) = (x*cos(a) ,x*sin(a))
++ Vy'=rot((0,y),a) = ( +y*sin(a), -y*cos(a))
+----------------------------------------------------------
+V' =rot((x,y),a) = (x*cos(a)+y*sin(a),x*sin(a)-y*cos(a))
+
+
+(Vx' V=(x,0) ‘nin dönüşünü, Vy’ ise V=(0,y) 'nin dönüşünü ifade eder)
+Ve koordinatlarda verilen bir vektörün dönüşünü elde ettik!
+
+*****************************************************************************
+İKİ BOYUTLU DÖNÜŞÜN SON FORMÜLÜ
+*****************************************************************************
+
+.. .
+.
+ rot( (x,y), a)=( x*cos(a)+y*sin(a) , x*sin(a)-y*cos(a) )
+X bileşeni ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^ Y bileşeni
+
+*****************************************************************************
+
+* Tre dimensioni
+
+Nel caso delle 2 dimensioni, x ve y koordinatlarını döndürdük ve
+z koordinatında herhangi bir değişiklik görmüyoruz.
+Bu nedenle buna Z ekseni etrafında dönme diyoruz.
+
+Şimdi, üç boyutta yapılacak en kolay şey yine aynı şeyi yapmaktır,
+ yeni koordinatı elde etmek için herhangi bir eksen etrafında döndürmek yeterlidir
+.
+Dönüş eksenini temsil eden değişkeni dışarıda bırakın
+ ve aynı ifadeyi kullanabilirsiniz.
+
+Yalnızca bir veya iki koordinatı döndürmek istiyorsanız, normal döndürme yöntemini kullanabilirsiniz
+çünkü 3x3 dönüşüm matrisi hesaplaması gerekmez.
+Ancak daha fazla nokta varsa, optimize edilmiş sürümü öneririm.
+
+Bu alanda optimizasyonlar vardır, ancak önce en azından bir vektörü 3 açı ile döndürmenin bir yolunu görelim
+:
+
+*******************************************************************************
+3 BOYUTLU 3 AÇILI VEKTÖRÜ DÖNDÜRMENİN NORMAL YÖNTEMİ:
+*******************************************************************************
+
+V=(x,y,z) vektörünü Z ekseni etrafında a açısı,
+y ekseni etrafında b açısı ve x ekseni etrafında c açısı ile döndürmek istediğimizi varsayalım.
+
+İlk döndürme Z ekseni etrafında yapılır:
+
+U=(x,y) (x,y V vektöründen) =>
+=> U'=rot(U,a)=rot((x,y),a)=(x',y')
+
+Şimdi Y ekseni etrafında döndürmek istiyoruz:
+
+W=(x',z) (x' U'den ve z V'den) =>
+=> W'=rot(W,b)=rot((x',z),b)=(x'‘,z’)
+
+Ve son olarak X ekseni etrafında:
+
+T=(y',z') (y' U'dan ve z' W'den) =>
+=> T'=rot(T,c)=rot((y',z'),c)=(y'‘,z’')
+
+Döndürülen vektör V', koordinat vektörüdür
+
+(x'‘,y’',z'‘) koordinat vektörüdür!
+
+Bu yöntemle, döndürme komutunu şu şekilde genişletebiliriz:
+
+
+V’'= rot(V,açı1,açı2,açı3) burada V orijinal vektördür!
+( V''= rot((x,y,z), açı1, açı2, açı3) )
+
+
+Umarım çok karmaşık görünmemiştir.
+Dediğim gibi, bu yöntemin optimizasyonları vardır.
+Bu optimizasyonlar, yukarıda görülen dönüşlerden birini atlayarak
+veya bazı ön hesaplamalar yaparak yapılabilir.
+
+SIRASI çok önemlidir. X, Y, Z'yi önceki açılarla döndürürseniz aynı sonucu alamazsınız
+.
+
+******************************************************************************
+
+Optimizasyonlar:
+==============
+xyz vektörleri için rotasyonları oluşturmak için denklemleri yazabiliriz:
+
+Düşünün:
+c1=cos(açı1)
+c2=cos(açı2)
+c3=cos(açı3)
+s1=sin(açı1)
+s2=sin(açı2)
+s3=sin(açı3)
+
+(x*cos(a)+y*sin(a),x*sin(a)-y*cos(a))
+
+x' = x*c1+y*s1
+y' = x*s1-y*c1
+
+x'‘= x’*c2+z*s2     <- Döndürülmüş X koordinatı
+z' = x'*s2-z*c2
+
+y'‘= y’*c3+z'*s3 <- Döndürülmüş Y koordinatı
+z'‘= y’*s3-z'*c3 <- Döndürülmüş Z koordinatı
+
+Bu da şunu verir:
+
+x'‘= (x*c1+y*s1)*c2+z*s2= c2*c1 *x + c2*s1 *y + s2 *z
+^^^^^^^^^^^=x’ ^^^^^ xx ^^^^^ xy ^^ xz
+
+y''= (x*s1-y*c1)*c3+((x*c1+y*s1)*s2-z*c2)*s3=
+c3*s1 *x - c3*c1 *y + s3*s2*c1 *x + s3*s2*s1 *y - s3*c2 *z=
+
+(s3*s2*c1+c3*s1) *x + (s3*s2*s1-c3*c1) *y + (-s3*c2) *z
+^^^^^^^^^^^^^^^^ yx ^^^^^^^^^^^^^^^^ yy ^^^^^^^^ yz
+
+z''= (x*s1-y*c1)*s3-((x*c1+y*s1)*s2-z*c2)*c3=
+s3*s1 *x - s3*c1 *y - c3*s2*c1 *x - c3*s2*s1 *y + c3*c2 *z=
+
+(-c3*s2*c1+s3*s1) *x + (-c3*s2*s1-c3*c1) *y + (c3*c2) *z
+^^^^^^^^^^^^^^^^^ zx ^^^^^^^^^^^^^^^^^ zy ^^^^^^^ zz
+
+
+Şimdi, çözümlerin özelliğine, yapısına bakın:
+x'‘ için orijinal (x,y,z) değerini birkaç kez çarptık,
+aynı şeyi y’' ve z'' için de yaptık. Aralarındaki bağlantı nedir?
+
+Verilen birçok vektörü, tüm vektörler için aynı olan üç açı ile döndürmemiz gerektiğini varsayalım.
+Bu durumda, çarpma şeması şöyle olacaktır.
+Yukarıdaki gibi döndürdüğünüzde, bir dönüş yapmak için on iki çarpma işlemi kullanmanız gerekti,
+ama şimdi bu ‘sabitleri’ önceden hesaplayarak
+sadece dokuz çarpma işlemine inebiliriz!
+^^^^
+
+*******************************************************************************
+3 AÇILI 3 BOYUTLU DÖNDÜRME SON FORMÜLÜ:
+*******************************************************************************
+
+x,y,z è la coordinata (x,y,z) originale.
+
+c1=cos(angolo1)
+c2=cos(angolo2)
+c3=cos(angolo3)
+s1=sin(angolo1)
+s2=sin(angolo2)
+s3=sin(açı3)
+
+Aynı açılarla birkaç koordinatı döndürmek istiyorsanız, önce
+şu değerleri hesaplamanız gerekir:
+
+xx=c2*c1
+xy=c2*s1
+xz=s2
+yx=c3*s1+s3*s2*c1
+yy=-c3*c1+s3*s2*s1
+yz=-s3*c2
+zx=s3*s1-c3*s2*c1;s2*c1+c3*s1
+zy=-s3*c1-c3*s2*s1;c3*c1-s2*s1
+zz=c3*c2
+
+Öyleyse, her koordinat için, döndürülmüş koordinatları elde etmek için aşağıdaki çarpımı kullanmalısınız
+:
+
+x'‘=xx * x + xy * y + xz * z
+y’'=yx * x + yy * y + yz * z
+z''=zx * x + zy * y + zz * z
+
+Böylece, her yeni açı için sabitleri yalnızca bir kez hesaplamanız gerekir ve SONRA
+döndürmek istediğiniz her nokta için DOKUZ çarpma işlemi kullanarak
+yeni nokta kümesini elde edebilirsiniz.
+
+Bunun nasıl uygulanabileceğine dair bir örnek için bu metnin sonuna bakın
+68000 assembler.
+
+Bir açıyı atlamak istiyorsanız, daha da optimize edebilirsiniz.
+3. açıyı kaldırmak istiyorsanız, c3=1 ve s3=0 atayın.
+Bunları sabitlerin hesaplamasına ekleyin ve istediğiniz gibi optimize edilecektir.
+
+Hangi yöntemi kullanacağınız elbette ne kadar programlama yapmak istediğinize bağlıdır,
+ancak kişisel olarak optimize edilmiş versiyonu tercih ederim, çünkü
+daha gurur duyulabilir.
+Aynı açılarla sadece birkaç noktayı döndürmek istiyorsanız, ilk versiyon
+(optimize edilmemiş) tercih edilebilir.
+
+İsterseniz, dönüşüm matrisinin
+determinantının 1 olup olmadığını kontrol edebilirsiniz.
+
+*******************************************************************************
+
+5. Çokgenler!
+============
+
+“Çokgen” kelimesi birçok köşe anlamına gelir, bu da çizilmiş çizgilerle
+birçok nokta (köşe) olduğu anlamına gelir.
+Örneğin, 5 noktamız varsa, şu çizgileri çizebiliriz:
+1. noktadan 2. noktaya
+2. noktadan 3. noktaya
+3. noktadan 4. noktaya
+4. noktadan 5. noktaya
+Ve KAPALI bir çokgen istiyorsak, şu çizgiyi de çizmeliyiz
+5. noktadan 1. noktaya
+
+Noktalar: 2
+.
+
+.3
+1
+.
+5..4
+
+Yukarıda görülen noktalardan oluşan AÇIK poligon:
+
+
+/|
+/ |
+/ /
+/ /
+_/
+
+
+Yukarıda görülen noktalardan oluşan KAPALI poligon:
+
+/|
+/ |
+/ /
+/ /
+\_/
+
+
+“Dolgulu vektörler”, yani “dolgulu vektörler”, poligonlar çizilerek
+ve içleri doldurularak oluşturulur.
+Normalde aşağıdaki algoritma kullanılır:
+
+Önce poligon üzerindeki tüm “açılar” vektörler olarak tanımlanır, bu da
+döndürme ve döndükten sonra yeni açılarda çizme imkanı sağlar, ardından
+1. noktadan 2. noktaya bir çizgi çizilir ve bu şekilde devam edilir.
+Son çizgi 5. noktadan 1. noktaya uzanır.
+İşimiz bittiğinde, alanı doldurmak için BLITTER-FILL kullanırız.
+
+BLITTER-FILL'in düzgün çalışması için
+bu çizgileri çizmek üzere özel bir çizgi izleme rutini gerekecektir.
+Bu göreve uygun bir rutin örneği metnin ekinde bulunmaktadır.
+Çizgi DRAW rutiniyle ilgili diğer gereksinimler
+daha sonra tartışılacaktır (Ek B 2).
+
+
+Poligonlardan nesneler oluşturma
+===============================
+
+Bir “nesne”, poligonlarla oluşturulmuş üç boyutlu bir şeydir.
+Peki, nesnenin diğer tarafındaki yüzeyler ne olur?
+Nesnede gizli kısımlar varsa ne yapabiliriz?
+
+Hayal etmesi kolay olan bir küp ile başlayalım.
+Görüldüğü gibi, küpün hiçbir kısmı gözlemcinin gözünden başka bir kısmının üzerinde değildir gözlemcinin
+gözünden (örneğin bir boğa gibi değil).
+Bazı alanlar doğal olarak görünmez, ancak
+poligonun hangi yöne baktığını (gözlemciye doğru mu yoksa
+arkasında gizli mi)
+
+Poligonları, nesnenin tamamında aynı yönde
+(saat yönünde veya saat yönünün tersinde) nesneler olarak tanımlamak gerekir. Hangi noktadan başladığınız önemli değildir,
+önemli olan sıradır.
+
+Bir düzlemden üç nokta alın (nokta 1, nokta 2 ve nokta 3).
+Üç nokta da diğer noktalardan herhangi birine eşit değilse,
+bu noktalar bir düzlemi tanımlar.
+O zaman düzlemin yönünü tanımlamak için sadece 3 noktaya ihtiyacınız olacaktır.
+Aşağıdaki hesaplamayı inceleyin:
+
+c=(x3-x1)*(y2-y1)-(x2-x1)*(y3-y1)
+
+(Bu, 3d->2d projeksiyonundan sonra, yani Z koordinatı yoktur.
+Nasıl çalıştığını öğrenmek istiyorsanız, ek b) bölümüne bakın.
+
+Bu formül, bir poligonu tanımlamak için gereken en az koordinat sayısı olan üç noktaya ihtiyaç duyar
+.
+Bu, düzlem başına iki çarpma işlemi gerektirir, ancak 3d->2d dönüş ve projeksiyonla karşılaştırıldığında çok fazla değildir
+.
+
+Bu denklemden ne elde ettiğimize bakalım:
+
+c negatifse, üç nokta tarafından belirlenen düzlemin normal vektörü
+gözlemciye “doğrultuludur” ( = Düzlem gözlemcinin karşısındadır =>
+düzlem çizilmelidir )...
+
+c pozitifse, düzlemin normal vektörü gözlemcinin bulunduğu alandan “dışına” yöneliktir
+( = Düzlem gözlemci tarafından görülemez =>
+Düzlemi çizmeyin) ...
+
+Ancak, nesnenin bazı kısımlarının nesnenin diğer kısımlarını kapladığı durumlarda,
+ içbükey ve dışbükey nesneler arasında bir ayrım yapmak gerekir.
+
+Dışbükey ve içbükey nesneler
+===========================
+
+“Tanımlar”
+
+Bir dışbükey nesnenin, tüm açılardan bakıldığında
+aynı nesnenin diğer kısımlarını kaplayan hiçbir kısmı yoktur.
+
+Bir içbükey nesnenin, bazı açılardan bakıldığında
+aynı nesnenin diğer kısımlarını kaplayan kısımları vardır.
+
+
+Dışbükey nesneler için, nesnenin içindeki her noktadan nesnenin diğer tüm noktalarına, nesnenin
+dışına çıkan hiçbir çizgi olmadan
+düz bir çizgi çizilebilir. 
+KONVEKS bir nesneye sahip olduğunuzda, görünür düzlemlerin etrafına tüm çizgileri çizebilir
+ve ardından blitter ile doldurabilirsiniz, çünkü çizilen hiçbir poligon
+başka bir poligonu örtmeyecektir.
+Bazı hilelerle, iki kez çizilecek çizgileri atlamanın bir yolunu da bulabilirsiniz.
+KONVEKS nesneler daha fazla sorun çıkarır, KONVEKS nesneleri kullanmanın en kolay yolu, bunları daha küçük KONVEKS nesnelere bölmektir. Bu, tüm nesneler için işe yarar, ancak
+
+KONVEKS nesneler daha fazla sorun çıkarır, KONVEKS nesneleri kullanmanın en kolay yolu
+onları daha küçük KONVEKS nesnelere bölmektir.
+Bu, tüm nesneler için işe yarar, ancak bunu yaparken bazı sorunlar
+yaşayabilirsiniz.
+
+Tabii ki, konveks nesnenin “içinde” olacak birçok düzlemi atlayabilirsiniz
+.
+
+Nesneyi böldüğünüzde, her konveks nesneyi
+geçici bir bellek tamponuna çizip, bu nesneleri
+SORTING (Sıralama) rutinleriyle VECTORBALLS olarak işleyin, bu rutinler hangi parçaların
+diğerlerinin önünde olduğunu bulur.
+
+Z koordinatı, nesnedeki tüm Z değerlerinin ortalamasından alınabilir
+(Yani: nesnedeki tüm Z değerlerinin toplamı, koordinat sayısına bölünür
+).
+
+Nesneleri sıralarken, nesnenin içbükey kısımlarının yanlış sırayla seçilmesi sorunu ortaya çıkabilir,
+ çünkü konveks nesnenin DIŞINDA rastgele bir nokta alınmıştır ve
+bu nokta, mevcut nesnenin başka bir konveks nesneyle paylaştığı bir noktadır.
+Bu sorunu çözmenin bir yolu, konveks nesnenin içindeki bir orta noktayı almak,
+ nesnenin etrafındaki tüm Z değerlerini eklemek ve
+eklenen koordinatların sayısına bölmektir.
+Bu durumda, nesnedeki en az iki düzlemden noktalar alınmalıdır.
+
+Nesnelerin Optimizasyonu
+============================
+
+KONVEKS bir nesnemiz olduğunu varsayalım.
+Eğer kapalıysa, düzlem sayısı kadar nokta vardır.
+(Eğer kapalıysa, düzlem sayısı kadar nokta mı var???)
+Eğer mevcut tüm koordinatları içeren bir liste varsa (hiçbir nokta
+tekrar edilmemelidir), bu, her poligon için bu koordinat için alınması gereken noktaları gösterir
+ve Döndürme sayısını büyük ölçüde azaltabilirsiniz.
+
+Örneğin:
+
+/* Bir küp */
+/* Sıra önemlidir! Burada saat yönündedir */
+
+düzlem sonu=0
+
+nokta listesi:
+
+dc.l    pt4,pt3,pt2,pt1,düzlem sonu
+dc.l    pt5,pt6,pt2,pt1,düzlem sonu
+dc.l	pt6,pt7,pt3,pt2,fine_piano
+dc.l    pt7,pt8,pt4,pt3,fine_piano
+dc.l    pt8,pt5,pt1,pt4,fine_piano
+dc.l    pt5,pt6,pt7,pt8,fine_piano
+
+pt1:    dc.w -1,-1,-1
+pt2:    dc.w 1,-1,-1
+pt3:    dc.w 1,-1,1
+pt4:    dc.w -1,-1,1
+pt5:	dc.w -1,1,-1
+pt6:    dc.w 1,1,-1
+pt7:    dc.w 1,1,1
+pt8:    dc.w -1,1,1
+
+Şimdi, sekiz nokta olan pt1-pt8 noktalarını döndürmek yeterlidir.
+Her kat için dört nokta işleseydik,
+24 döndürme hesaplaması yapmamız gerekirdi!
+
+6. üç boyutlu düzlemler
+=============================
+
+Işık kaynağı (lightsourcing)
+--------------------------------
+
+Işık kaynağı, bir düzlemin bir
+ışık noktasından (küresel) veya bir ışık düzleminden (düzlemsel) ne kadar ışık aldığını bulmanın bir yoludur. Düzlemin rengi
+üzerine düşen ışığı temsil ediyorsa, nesne biraz daha gerçekçi olacaktır.
+
+Bizi ilgilendiren, düzlemin normalinden
+IŞIK KAYNAĞINA (=ışık noktası) arasındaki Vektörün Açısıdır.
+(bu, bir lamba gibi küresel bir ışık kaynağı içindir)
+Güneş gibi düzlemsel aydınlatma için,
+düzlemin Normali ile IŞIK KAYNAĞI Vektörü arasındaki Açı gerekir.
+
+Verilen açının Kosinüsüne ihtiyacımız var.
+
+Ancak, düzlemin normalini elde etmek için poligonda üç nokta alınabilir
+ve bunlardan iki vektör oluşturulabilir.
+
+Örnek:
+
+* (x1,y1,z1) , (x2,y2,z2) ve (x3,y3,z3)
+
+İki vektör V1 ve V2 oluşturalım:
+
+V1=(x2-x1,y2-y1,z2-z1)
+V2=(x3-x1,y3-y1,z3-z1)
+
+Bu vektörlerin normalini bulmak için çarpımlarını alalım:
+
+| i j k |
+N = V1xV2 = |x2-x1 y2-y1 z2-z1| =
+|x3-x1 y3-y1 z3-z1|
+
+n1 n2
+* = ((y2-y1)*(z3-z1)-(y3-y1)*(z2-z1),-((x2-x1)*(z3-z1)-(x3-x1)*(z2-z1)),
+* ,(x2-x1)*(y3-y1)-(x3-x1)*(y2-y1))
+n3
+
+Şimdi N'ye sahibiz. Ayrıca LIGHTSOURCE'un koordinatlarına da sahibiz (verilmiştir).
+
+İki vektör arasındaki açının COS'unu almak için N ve L (=ışık kaynağı vektörü) arasındaki skaler çarpımı
+N ve L'nin uzunluğuna bölerek kullanabiliriz:
+
+<N,L>/(||N||*||L||) =
+
+* (n1*l1+n2*l2+n3*l3)/(sqr(n1*n1+n2*n2+n3*n3)*sqr(l1*l1+l2*l2+l3*l3))
+|
+* (k önceden hesaplanmış bir sabit ise (n1*l1+n2*l2+n3*l3)/k olabilir)
+
+Anlamadığınız bir şey varsa, kenarında ‘*’ işareti olan formüllere bakın.
+n1 “N'nin X koordinatı”, n2 “Y koordinatı” ve benzeri anlamına gelir ve
+aynı şey L için de geçerlidir.
+
+Bu sayı -1 ile 1 arasındadır ve L ve N vektörleri arasındaki açının COS'udur.
+Kare kökler çok zaman alır, ancak nesneyi bozulmadan tutarsak
+(sadece döndürme/kaydırma vb. yaparsak) ve nesnede her zaman aynı noktaları alırsak,
+ ||N|| bozulmaz ve önceden hesaplanabilir.
+
+L'nin uzunluğunun her zaman 1 olduğunu tespit edersek, bölmeye gerek kalmaz ve
+bu birçok döngüden tasarruf sağlar.
+
+Sayı, belirtildiği gibi, -1 ile 1 arasında olabilir. Bölmeden önce
+sayıyı bir şeyle çarpmanız gerekir, böylece yüzün “tonunu” seçmek için daha geniş bir renk yelpazesine sahip olursunuz.
+Sayı negatifse, sıfırlamanız gerekir.
+
+Sayı, pozitif olması gerekirken negatif olabilir, bunun nedeni
+noktaları yanlış sırayla almış olmanızdır, ancak bu durumda sonucu tersine çevirmeniz yeterlidir.
+
+Özel Teknikler - Sıralama Algoritmaları (sorting)
+=======================================================
+
+Sıralama gerektiğinde, genellikle “Bubble-sorting” ile başlanır, ancak
+bu, anlaşılması kolay olsa da oldukça yavaştır.
+“Insert Sorting” veya “Quick Sorting” veya daha hızlı olan diğer yöntemleri kullanmak daha iyidir
+.
+
+Yöntem 1) Bubble Sorting
+-------------------------
+
+Ağırlıklarla (metal!) ilişkili bir değerler listesi olduğunu varsayalım.
+En ağır ağırlıklar en alta düşmeli ve değerleri de beraberinde götürmelidir.
+Bu durumda değerler x¹ ve y¹ koordinatları veya
+vektör toplarının bobları gibi başka şeyler olabilir.
+Ağırlıklar, projeksiyondan önceki Z koordinatları olabilir.
+
+İlk iki öğeyle başlayarak, hangi öğenin en “ağır” olduğunu kontrol ederiz
+ve eğer ‘hafif’ öğenin ÜSTÜNDE ise, Ağırlık ile ilişkili tüm verileri
+ve Ağırlığı “hafif” öğenin yerine taşırız
+ve dolayısıyla “hafif” öğenin verilerini ‘ağır’ öğenin verilerinin olduğu yere koyarsınız
+.
+Bu prosedüre “takas” (swap) işlemi denir.
+
+Ardından 1 öğe aşağı inin ve 2 ve 3 numaralı öğeleri kontrol edin...
+Listenin sonuna gelene kadar çeşitli adımlar atılır.
+
+Ancak ilk döngü “nihai” sıralamayı yapmaz,
+listeyi nesnelerin sayısı -1 kadar kez sıralamak gerekir!
+Dolayısıyla, 30 nesne varsa, açıklanan gibi 29 döngü yapmak gerekir.
+
+Biraz daha “akıllı” bir versiyon, her takas olduğunda
+bir bayrak ayarlamasıdır, böylece liste tüm döngüler tamamlanmadan
+sıralanmışsa rutin durur.
+Eğer liste 2,1,3,4,5,6,7,8,9,10 ise, sıralamak için 1 döngü yeterlidir,
+ 9 değil!
+
+İşte bu algoritmanın bir örneği, bir kelime tablosunu
+en küçüğünden en büyüğüne doğru sıralar:
+
+Bubble:
+lea    Positions(PC),a0 ; Sıralanacak kelimelerin listesi
+moveq    #0,d0        ; d0'ı sıfırlar (değişim gerçekleşti bayrağı)
+Döngü:
+move.w    (a0),d1        ; öğe 1
+cmp.w    2(a0),d1    ; öğe 2
+ble.s    NoSwap        ; öğe 2, öğe 1'den küçük mü? Evet ise OK
+move.w    2(a0),(a0)    ; aksi takdirde öğeleri değiştir
+move.w    d1,2(a0)
+st    d0        ; ve takas yaptığımızı işaretle
+NoSwap:
+addq.w    #2,a0        ; sonraki karşılaştırma
+cmp.l    #EndPos-2,a0    ; Sonunda mıyız?
+bcs.s    Döngü        ; Henüz “tur” bitmediyse
+tst.w    d0		; Değişimleri bitirdik mi?
+bne.s    Bubble        ; Henüz bitirmediyse, bir kez daha gözden geçir
+rts
+
+Pozisyonlar:
+dc.w    8,3,4,5,6,7,8,1,-1,2,6
+EndPos:
+
+Yöntem 2) Ekleme sıralama
+-------------------------
+
+Önceki aynı Değerleri ve Ağırlıkları ele alalım.
+Bu sistem için, bir uzunluk (bayt, kelime, uzun)
+her sıralama tablosu
+(sorting-table veya checklist)
+için bir checklist boyutu
+
+Kelime uzunluğu, sahip olduğunuz girişlerin sayısına
+ve her girişin boyutuna bağlıdır. Normalde, kelime kullanmak daha uygundur
+____. Kontrol listesinin boyutu, sıralanacak
+Z değerlerinin aralığı veya dönüştürülmüş Z değerleridir.
+Örneğin, Z değerlerinizin
+512-1023 arasında olduğunu biliyorsanız, önce her z-değerini 512'den azaltabilir
+ve sonra bir kez lsr' yapabilirsiniz, bu size 256 kelimelik bir kontrol listesi boyutu
+verecektir.
+Ayrıca, sıralanmış verilerinizi koymak için ikinci bir tampona ihtiyacınız olacaktır.
+ Bu 2ndBUF, orijinal listenin bir kopyası gibi olacaktır,
+ ancak girişler sıralanmış olacaktır.
+
+Bu yöntem için sadece bir algoritma sunuyorum,
+garip bir metinden daha kolay anlaşılır.
+checklist(x)
+
+checklist'teki x'inci kelimedir.
+
+Algoritma:
+1> Checklist'i temizleyin (tüm kelimeleri 0 olarak atayın)
+2> Gerekirse tüm ağırlıkları dönüştürün.
+3> L=0 için nesne sayısına
+3.1> ENTRYSIZE'yi checklist(dönüştürülmüş ağırlık) ekleyin
+4> L=0 için boyut-1 checklist
+4.1> checklist(L),checklist(L+1) ekleyin
+5> L=0 için nesne sayısına
+5.1> Girişi 2ndBUF(checklist(dönüştürülmüş ağırlık))'ye koyun
+5.2> ENTRYSIZE'yi bir kontrol listesine ekleyin (dönüştürülmüş ağırlık)
+
+Şimdi, verileriniz 2ndBUF listesinde düzgün bir şekilde sıralanmıştır,
+orijinal liste olduğu gibi bırakılmıştır (Z dönüşümü hariç).
+(ENTRYSIZE girişin boyutudur, yani x, y, z koordinatlarınız
+kelimelerle ifade edilirse, boyutunuz 3 kelime=6 bayttır.)
+Dönüştürürken ne aldığınızı da biraz düşünün.
+Çıkarma, döngüleri en aza indirdiği sürece yararlıdır,
+ ancak ağırlıkları lsr-ing zaman alır ve
+sonucu daha da kötüleştirir. Tabii ki her seferinde listeyi incelemek zorunda değilsiniz,
+sadece en düşük ve en yüksek ağırlıkların ne olduğunu bildiğinizden emin olun
+.
+
+
+Yöntem 3) Hızlı Sıralama
+------------------------
+Bu başka bir sıralama türüdür ve daha verimlidir
+____ işaretçiler kullanarak, her girişin bir sonraki girişe bir işaretçisi olur.
+
+Bir girişi şöyle yapabilirsiniz:
+
+Sonraki Ofset=kelime
+x,y,z=koordinatlar.
+
+(ofsetler sıralama listesinin başlangıç adresinden alınır...)
+
+Bu rutine erişmek için bir İlk giriş
+ve giriş sayısı vermelisiniz. Orijinal uygulamada, ilk giriş
+doğal olarak 0'dır (=ilk giriş) ve giriş sayısı
+doğal olarak toplam giriş sayısıdır.
+Tüm önceki/sonraki işaretçileri atamanız gerekir ____ bir zincir oluşturmak için.
+
+Quicksort özyinelemelidir, yani
+rutini kendi içinden çağırmanız gerekir. Bu hiç de
+karmaşık değildir, sadece bazı eski
+değişkenlerinizi güvenli bir şekilde saklamak için yığına koymanız gerekir.
+
+Yaptığı şey şudur:
++> Listenin ilk girişi PIVOT Girişidir.
+| Birbirini izleyen girişler, onu PIVOT'un Önüne veya Sonuna
+| koyarız. PIVOT'tan küçükse Önüne koyarız,
+| aksi takdirde Sonuna koyarız.
+| Şimdi iki yeni listemiz var, PIVOT'tan önceki tüm girişler
+| ve PIVOT'tan sonraki tüm girişler (ama pivotun kendisi değil,
+| o zaten sıralanmış).
+| Şimdi tüm girişleri quicksort önce pivot'tan sonra quicksort
++< ve sonra pivot'tan sonra tüm girişleri quicksort ederiz.
+(Bunu, zaten içinde bulunduğumuz rutini çağırarak yaparız)
+Bu, sıralanacak çok fazla şey varsa yığınla ilgili sorunlara neden olabilir
+.
+
+Sıralanacak giriş sayısı <=1 olduğunda yineleme döngüsü kırılır
+____.
+
+Bazı insanların inancının aksine, bunu çözmek için herhangi bir ekstra
+listeye ihtiyacınız yoktur.
+
+Algoritma:
+
+Giriş parametreleri: (PivotEntry=listenin ilk öğesi
+Liste boyutu=mevcut listenin boyutu)
+1> Liste boyutu <= 1 ise çık
+2> PivotWeight=Weight(PivotEntry)
+3> l=2nd giriş için liste boyutu-1
+3.1> weight(l) > PivotWeight ise
+3.1.1> girişi liste 1'e ekle
+3.2> Aksi takdirde
+3.2.1> girişi liste 2'ye ekle
+4> Liste 1'i sıralayın (bsr quicksort(liste 1'deki ilk giriş, liste boyutu 1))
+5> Liste 1'i sıralayın (bsr quicksort(liste 2'deki ilk giriş, liste boyutu 2))
+6> Liste 1'i -> PivotEntry -> liste 2'ye bağlayın
+
+(PivotEntry = FirstEntry, böyle görünmesi gerekmez, ama ben
+bunu daha kolay bulduğum için tercih ediyorum.)
+
+
+
+Özel teknikler - Vektör topları
+=================================
+Vektör topları basittir. Topların nerede olduğunu hesaplayın
+(dönüşler, çevirmeler veya her ne
+olursa olsun). Bazen topun boyutunu da hesaplarsınız
+ve benzeri.
+
+Toplara sahip olmanız gerekmez. Dolgulu bir konkav nesnenin konveks
+kısımlarına sahip olabilirsiniz veya
+istediğiniz görüntüleri kullanabilirsiniz. Üç boyutlu
+olduğunda, diğerlerinin önünde olması gereken görüntülerle (toplar veya başka şeyler)
+sorun yaşarsınız, çünkü bunlar
+sizin dışınızda daha uzaktadır. İşte burada Sıralama
+devreye girer. Size en uzak olan görüntüyü blitting'e başlarsanız
+ve her nesneye yaklaşırsanız,
+ 3 boyutlu bir ekran görüntüsü elde edersiniz.
+En yakın görüntü en yakın olacaktır.
+
+Normalde, o anda göstermediğiniz ekranı temizlemeye başlarsınız
+(Yine de bir kısmını temizleyin. Silents'ta bir kişi
+her saniye bir satırı temizlerdi...).
+
+Ardından (blitter çalışırken, döndürmeye,
+sıralamaya ve görüntüleri bob'a hazırlamaya başlarsınız
+
+ve blitter'ın bittiğini kontrol ettikten sonra
+tüm görüntüleri bob'a aktarmaya başlarsınız
+ve kare görüntülendiğinde, ekranları değiştirirsiniz
+böylece bitmiş ekranınızı
+bir sonraki kareye gösterirsiniz.
+
+
+
+
+
+
+Ek A: Örnek kaynaklar.
+
+1 Optimize edilmiş dönüş matrisi hesaplaması
+2 Dolgulu vektörler için bir çizgi çizme rutini
+3 68000 assembler'da Quicksort
+4 68020 assembler'da Sıralama
+
+
+Optimize edilmiş dönüş matrisi hesaplaması
+
+1. Optimize edilmiş bir dönüş matrisi hesaplaması örneği
+============================================================
+
+* Bu rutin için, 1024 değerli bir sinüs tablosuna
+* ve dönüş matrisi için üç kelime ve bir yer (9 kelime) ____ saklama alanına
+* ihtiyacınız vardır.
+* __ .
+* /( |( )|\/ '(|)
+* / )|(|\|/\ |)
+
+Sabitleri_Hesapla
+
+lea Coses_Sines(pc),a0
+lea Angles(pc),a2
+lea Sintab(pc),a1
+
+hareket ettir.w (a2),d0
+e.w #$7fe,d0
+hareket ettir.w (a1,d0.w),(a0)
+ekle.w #$200,d0
+e.w #$7fe,d0
+hareket ettir.w (a1,d0.w),2(a0)
+hareket ettir.w 2(a2),d0
+e.w #$7fe,d0
+hareket ettir.w (a1,d0.w),4(a0)
+ekle.w #$200,d0
+e.w #$7fe,d0
+taşı.w (a1,d0.w),6(a0)
+taşı.w 4(a2),d0
+e.w #$7fe,d0
+taşı.w (a1,d0.w),8(a0)
+ekle.w #$200,d0
+e.w #$7fe,d0
+hareket ettir.w (a1,d0.w),10(a0)
+
+;xx=c2*c1
+;xy=c2*s1
+;xz=s2
+;yx=c3*s1+s3*s2*c1
+;yy=-c3*c1+s3*s2*s1
+;yz=-s3*c2
+;zx=s3*s1-c3*s2*c1;s2*c1+c3*s1
+;zy=-s3*c1-c3*s2*s1;c3*c1-s2*s1
+;zz=c3*c2
+
+lea Sabitler(pc),a1
+hareket.w 6(a0),d0
+hareket.w (a0),d1
+hareket.w d1,d2
+muls d0,d1
+asr.l #8,d1
+hareket ettir.w 2(a0),d3
+muls d3,d0
+asr.l #8,d0
+hareket ettir.w d0,(a1)
+;neg.w d1
+hareket ettir.w d1,2(a1)
+hareket ettir.w 4(a0),4(a1)
+hareket ettir.w 8(a0),d4
+hareket ettir.w d4,d6
+muls 4(a0),d4
+asr.l #8,d4
+hareket ettir.w d4,d5
+muls d2,d5
+muls 10(a0),d2
+muls d3,d4
+muls 10(a0),d3
+ekle.l d4,d2
+alt.l d5,d3
+asr.l #8,d2
+asr.l #8,d3
+hareket.w d2,6(a1)
+neg.w d3
+hareket.w d3,8(a1)
+muls 6(a0),d6
+asr.l #8,d6
+neg.w d6
+hareket ettir.w d6,10(a1)
+hareket ettir.w 10(a0),d0
+hareket ettir.w d0,d4
+muls 4(a0),d0
+asr.l #8,d0
+hareket ettir.w d0,d1
+hareket ettir.w 8(a0),d2
+hareket ettir.w d2,d3
+muls (a0),d0
+muls 2(a0),d1
+muls (a0),d2
+muls 2(a0),d3
+sub.l d1,d2
+asr.l #8,d2
+hareket ettir.w d2,12(a1)
+ekle.l d0,d3
+asr.l #8,d3
+neg.w d3
+hareket ettir.w d3,14(a1)
+muls 6(a0),d4
+asr.l #8,d4
+hareket ettir.w d4,16(a1)
+
+rts
+
+Coses_Sines dc.w 0,0,0,0,0,0
+Açı dc.w 0,0,0
+Sabitler dc.w 0,0,0,0,0,0,0,0,0
+
+;Sintab, 256 yarıçaplı 1024 sinüs değerinden oluşan bir tablodur
+;kodumu daha aşağıya ekledim...
+
+
+
+
+Dolgulu vektörler için bir çizgi çizme rutini
+
+2. Assembler'da dolgulu vektörler için bir çizgi çizme rutini:
+============================================================
+
+* kuma-seka için yıllar önce yazılmış, çok iyi çalışıyor ve
+* özel durumlar için optimize edilebilir...
+* çizgi (x0,y0)-(x1,y1) = (d0,d1)-(d2,d3) şeklindedir...
+* A6'da DFF000 ve
+* a0'da ekranın başlangıç adresi olması gerektiğini unutmayın.
+* Sadece a1-a7 ve d7 değişmeden kalır.
+* __ .
+* /( |( )|\/ '(|)
+* / )|(|\|/\ |)
+
+Ekran_genişliği=40 ;40 bayt geniş ekran...
+satırları_doldur: ;(a6=$dff000, a0=bit düzleminin başlangıcı ____ çiz)
+
+cmp.w d1,d3
+beq.s noline
+ble.s lin1
+exg d1,d3
+exg d0,d2
+lin1: sub.w d2,d0
+hareket ettir.w d2,d5
+asr.w #3,d2
+ext.l d2
+sub.w d3,d1
+muls #Ekran_Genişliği,d3 ;burada optimize edilebilir..
+ekle.l d2,d3
+ekle.l d3,a0
+e.w #$f,d5
+taşı.w d5,d2
+eor.b #$f,d5
+ror.w #4,d2
+o.w #$0b4a,d2
+d2'yi değiştir
+tst.w d0
+bmi.s lin2
+cmp.w d0,d1
+ble.s lin3
+hareket ettir.w #$41,d2
+exg d1,d0
+bra.s lin6
+lin3: hareket ettir.w #$51,d2
+bra.s lin6
+lin2: neg.w d0
+cmp.w d0,d1
+ble.s lin4
+hareket ettir.w #$49,d2
+exg d1,d0
+bra.s lin6
+lin4: hareket ettir.w #$55,d2
+lin6: asl.w #1,d1
+hareket ettir.w d1,d4
+hareket ettir.w d1,d3
+sub.w d0,d3
+ble.s lin5
+e.w #$ffbf,d2
+lin5: hareket ettir.w d3,d1
+sub.w d0,d3
+o.w #2,d2
+lsl.w #6,d0
+eklemek.w #$42,d0
+bltwt: btst #6,2(a6)
+bne.s bltwt
+bchg d5,(a0)
+hareket ettirmek.l d2,$40(a6)
+hareket ettirmek.l #-1,$44(a6)
+hareket ettir.l a0,$48(a6)
+hareket ettir.w d1,$52(a6)
+hareket ettir.l a0,$54(a6)
+hareket ettir.w #Ekran_Genişliği,$60(a6) ;genişlik
+hareket ettir.w d4,$62(a6)
+hareket ettir.w d3,$64(a6)
+hareket ettir.w #Ekran_Genişliği,$66(a6) ;genişlik
+hareket ettir.l #-$8000,$72(a6)
+hareket ettir.w d0,$58(a6)
+noline: rts
+
+
+
+
+68000 assembler'da Quicksort
+
+3. 68000 assembler'da quicksort
+=====================================
+
+* Aşağıdaki gibi bir listeyi sıralar:
+* Sonraki giriş ofseti.w, (x,y,z).w.
+* İlk girişin önceki ofseti
+* ve son girişin sonraki ofseti hariç tüm ofsetler atanmalıdır.
+* Ofsetler, sıralanacak listenin ilk adresinden başlar
+* a5=sıralanacak listenin ilk adresi!
+* __ .
+* /( |( )|\/ '(|)
+* / )|(|\|/\ |)
+
+
+WghtOffs=6
+NextOffs=0
+
+QuickSort ;(a5=sıralama listesinin başlangıcı,
+; d0=0 (ilk girişe işaretçi, ilk sefer=0)
+; d1=giriş sayısı)
+
+
+cmp.w #1,d1
+ble.s .NothingToSort ;giri <=1 ise sıralama yapma
+moveq #0,d4 ;liste boyutu 1
+moveq #0,d5 ;liste boyutu 2
+move.w d0,d6 ;ilk Nentry=d0
+
+muovere.w WghtOffs(a5,d0.w),d2 ;d2=Pivot ağırlık
+muovere.w NextOffs(a5,d0.w),d3 ;d3=2. giriş
+subq.w #2,d1 ;Dbf-loop+ilk atla
+
+.Permute cmp.w WghtOffs(a5,d3.w),d2 ;giriş ağırlığı<pivot ağırlığı?
+ble.s .Alt
+
+hareket ettir.w d6,NextOffs(a5,d3.w) ;İlk Nentry'yi ekle
+addq.w #1,d4 ;liste boyutunu artır 1
+hareket ettir.w d3,d6 ;Yeni Nentry atama
+
+bra.s .Tamam ;Döngüye devam et...
+
+.Alt hareket.w NextOffs(a5,d0.w),NextOffs(a5,d3.w)
+hareket.w d3,NextOffs(a5,d0.w) ;ilk girişin sonrasına ekle
+addq.w #1,d5 ;liste boyutu 2
+
+.Tamam muovere.w NextOffs(a5,d3.w),d3 ;Sonraki girişi al
+dbf d1,.permute
+
+muovere.w d0,-(a7) ;Fentry'yi kaydet..
+
+hareket ettir.w NextOffs(a5,d0.w),d0 ;İlk girişten sonraki girişi sıralama
+hareket ettir.w d5,d1 ;Liste boyutu 2
+
+hareket ettir.w d4/d6,-(a7) ;Önemli kayıtları kaydet
+bsr QuickSort ;ve sıralama listesi 2
+movem.w (a7)+,d4/d6 ;d1 şimdi İlk Giriş...
+muovere.w (a7)+,d1
+
+muovere.w d0,NextOffs(a5,d1.w) ;Fentry'den sonra
+;liste 2'nin ilk girişini koy...
+muovere.w d6,d0 ;Nentry'ye sıralayın
+muovere.w d4,d1 ;liste boyutu 1
+
+bsr QuickSort ;önemli kayıt yok
+;sol...
+.NothingToSort
+;Şimdi ilk girişin ofseti d0'da!
+;____ diğer değerleri doğru sırayla al
+;sadece listeyi aşağı doğru in (nextoffs kullanarak)
+;İlk nesne en ağır olanıdır...
+
+rts
+
+
+
+Sıralama'yı 68020 assembler'a ekle
+
+Bir 4. Sıralama'yı 68020 assembler'a ekle:
+========================================
+
+* Bu, önceki algoritmada açıklanan algoritma ile tam olarak aynı değildir,
+* bir liste oluşturarak başlar ve ardından sıralanan verilerin adreslerini
+* 2ndBUF'ta saklar...
+* Bu, tüm listeleri sıralar, sadece ofset ____ ağırlık (kelime) ve
+* her girişin boyutunu belirtin. Herhangi bir ön biçimlendirmeye gerek yoktur.
+* Bunun ____ çalışmasını istiyorsanız bir satırı değiştirmeniz gerektiğini unutmayın
+* 68000'de. Ben bir noktaya kadar ölçeklendirilmiş bir dizinim var. Bunu
+* noktalı virgülün sonrasındaki satırlarla değiştirin.
+* __ .
+* /( |( )|\/ '(|)
+* / )|(|\|/\ |)
+
+WghtOffs=4
+EntrySize=6
+
+InsertSort
+;(a5=veri başlangıcı
+; a4=kontrol listesi başlangıcı
+; a3=2ndBUF başlangıcı
+; d0 en düşük giriş değeri
+; d1 en yüksek değer
+; d2 giriş sayısı
+
+movem.l a4/a5,-(a7)
+
+sub.w d0,d1 ;bu sıralamanın maksimum kontrol listesi boyutu.
+subq.w #1,d2
+subq.w #1,d1 ;Dbf-loop...
+
+muovere.w d1,d3 ;kullanılan girişleri temizle
+.ClearChecklist clr.w (a4)+
+dbf d3,.ClearCheckList
+
+muovere.w d2,d3 ;dönüştür...
+.Trasformare sub.w d0,WghtOffs(a5)
+addq.w #EntrySize,a5
+dbf d3,.Dönüştür
+
+movem.l    (a7),a4/a5
+
+hareket ettir.w d2,d3 ;Bir sonraki satırı yerine ekle
+.AddisList hareket ettir.w WghtOffs(a5),d0 ;68000 uyumluluğu...
+addq.w #4,(a5,d0.w*2) ;ekle.w d0,d0 addq.w #4,(a5,d0.w)
+addq.w #EntrySize,a5
+dbf d3,.AddisList
+
+moveq #-4,d0 ; #-lwdsize
+.GetMemPos ekle.w d0,(a4)
+taşı.w (a4)+,d0
+dbf d1,.GetMemPos
+
+movem.l (a7)+,a4/a5
+.PutNewList taşı.w WghtOffs(a5),d0
+taşı.w (a4,d0.w),d0
+hareket ettir.l a5,(a3,d0.w)
+addq.w #EntrySize,a5
+dbf d2,.PutNewList
+
+;Bu durumda, her nesneye ait bir adres listesi vardır
+;. Ben bunu daha esnek hale getirmek için bu şekilde yaptım
+;(belki her girişte benden daha fazla
+;verin vardır?).
+
+rts
+
+
+
+Ek Bilgi
+
+Ek B: Ek Bilgi
+
+B 1: Gizli-düzlem eleme denemesi denklem
+================================
+
+Aşağıdaki denklemi sundum:
+c=(x3-x1)*(y2-y1)-(x2-x1)*(y3-y1)
+söz konusu poligonun kapladığı normal düzlem vektörünün
+hesaplanması olarak.
+
+Üç noktamız vardı:
+p1(x1,y1)
+p2(x2,y2)
+p3(x3,y3)
+
+p1'i baz nokta olarak seçersek, diğer noktaların
+vektörlerini şu şekilde oluşturabiliriz:
+
+V1=(x3-x1,y3-y1,p)
+V2=(x2-x1,y2-y1,q)
+
+Burada p ve q z değerinde, bu değere ilgi duymadığımızı
+belirtir, ancak yine de hesaplamalarımızda bunu dikkate almalıyız.
+(Bu değerler, 2d->3d projeksiyonundan sonra orijinal z değerleriyle aynı değildir
+)
+
+
+Şimdi, bu vektörlerin oluşturduğu düzlemin normal vektörünü
+basit bir çapraz çarpımla alabiliriz:
+
+V1 x V2 =
+
+| io j k|
+= |(x3-x1) (x2-x1) p| (eğer io=(1,0,0), j=(0,1,0), k=(0,0,1))
+|(y3-y1) (y2-y1) q| (p ve q önemsizdir)
+
+Ancak biz sadece bu işlemin
+sonuç vektörünün Z yönü ile ilgileniyoruz, bu da
+çapraz çarpımdan sadece Z koordinatını almakla aynıdır:
+
+Z (V1xV2) = (x3-x1)*(y2-y1)-(x2-x1)*(y3-y1)
+
+Şimdi, Z pozitifse, bu, sonuç vektörünün
+ekrana (pozitif z değerleri)
+QED /Asterix
+
+B 2. Çizgi blitter çiziminden bir çizgi dolgusu yapma
+==============================================================
+Çizgi blitter çizimini olduğu gibi kullanamaz ve
+biraz özel değişiklik yapmadan bir poligonun etrafına çizgiler çizemezsiniz.
+
+Normal bir çizgi çizme rutininden bir dolgu çizgisi rutini yapmak için:
+
+Öncelikle, çizgilerin olması gerektiği gibi çizildiğinden emin olun.
+Birçok çizgi çekmecesi gördüm, çizgiler yanlış noktalara çizilmişti.
+O-minterm yerine o-exclusive kullandığınızdan emin olun.
+Çizgileri her zaman aşağı doğru çizin. (Ya da yukarı, tercih ederseniz)
+Çizgiyi çizmeden ve blit kontrolünden önce, çizginin geçeceği ekrandaki ilk noktayı belirleyin.
+Bu, çizgiyi doldurma modunu kullanacaktır.
+
+
+
+
+B 3: M. Vissers'dan 3 boyutlu uzayda dönüşlere alternatif bir yaklaşım
+================================
+
+/* Bu metin Michael Vissers tarafından sağlanmıştır ve biraz
+daha uzundu. 3d->2d projeksiyonla ilgili kısmı çıkardım,
+çünkü bu, bölüm 3'teki diğer metnimle aynıydı.
+Temel lineer cebir bilgisine sahipseniz, bu metin
+4. bölümde tartışılan daha uzun versiyondan daha kolay anlaşılabilir.
+4. bölümdeki sonucu nasıl kullanmanız gerektiğini anlamadıysanız,
+ bunun yerine bu bölümü deneyin. */
+
+[ ] Tek yapmanız gereken bu 3D matrisleri kullanmak:
+
+(A/B/G, Alfa, Beta ve Gama'dır.) /* A, B, C = Dönme açıları */
+
+| cosA -sinA 0 | | cosB 0 -sinB | | 1 0 0 |
+| sinA cosA 0 | | 0 1 0 | | 0 cosG -söyle |
+| 0 0 1 | | sinB 0 cosB | | 0 söyle cosG |
+
+Bunlar x, y ve z eksenleri etrafında dönme matrisleridir. Bunları kullanırsan 12 çarpma elde edersin. Her eksen için dört tane. Ancak,
+bu üç matrisi birbiriyle çarparsanız sadece 9 çarpma işlemi yaparsınız. Neden 9?
+Çok basit: çarptıktan sonra 3x3'lük bir matris elde edersiniz ve 3*3=9!
+
+Bu matrisleri nasıl çarpacağınızı bilmeseniz de önemli değil. Burada önemli değil, bu yüzden çarptıktan sonra 3x3 matrisini vereceğim:
+
+(c = cos, s = sin, A/B/G sırasıyla Alpha, Beta ve Gamma'dır.)
+
+| cA*cB -cB*sA sB |
+| cG*sA-sB*cA*sG cA*cG+sG*sA*sB cB*sG |
+|-sG*sA-sB*cA*cG -cA*sG+sA*sB*cG cG*cB |
+
+Umarım her şeyi hatasız yazmışımdır :) Peki, bu matrisi kullanarak bazı
+koordinatları nasıl bulabiliriz? Yine, püf noktası çarpma işleminde yatıyor.
+Yeni (x,y,x) değerini bulmak için orijinal noktalara ihtiyacımız var ve bunları
+matrisle çarpmalıyız. Basitleştirilmiş bir matrisle çalışacağım. (örneğin H = cA*cB vb...)
+
+x y z ( <= orijinal koordinatlar)
+-------------
+Yeni X = | H Io J |
+Yeni Y = | K L M |
+Yeni Z = | N O P |
+
+Böylece...
+
+Yeni X = x * H + y * Io + z * J
+Yeni Y = x * K + y * L + z * M
+Yeni Z = x * N + y * O + z * P
+
+Ha! Bu 9'dan çok daha fazla. Aslında hayır. Matris
+kullanmak için matris önceden hesaplanmalıdır.
+
+Her zaman orijinal noktalarınızı döndürün ve başka bir yerde saklayın.
+Sadece açılarla değiştirin ____ şekli döndürün.
+Önceki karede döndürdüğünüz noktaları döndürürseniz, hiçbir şey kalmayana kadar tüm ayrıntıları kaybedersiniz
+.
+
+Böylece, her kare şuna benzer : - Verilen açılarla yeni matrisi önceden hesaplayın
+.
+- Saklanan matrisle noktayı hesaplayın
+.
+[ ]
+Ortaya çıkan noktalar (0,0) dikkate alınarak tutulur. Böylece negatif olabilirler.
+Sadece bir ekleme kullanın ____ ekranın ortasına alın.
+
+Not: Her zaman muls, divs, asl, asr vb. kullanın. Veriler hem pozitif hem de negatif olabilir.
+ Ayrıca, koordinatları mümkün olduğunca büyük atayın
+ve döndürdükten sonra tekrar bölün. Bu,
+hareketin kalitesini artıracaktır.
+
+(Michael Vissers)
+
+
+B 4: Daha doğru vektör hesaplamaları için küçük bir matematik ipucu
+=============================================================
+
+Bir değeri ile bir muls yaparken ve ardından değeri aşağı kaydırırken,
+‘addx’ ____ kullanarak kesme hatası yerine yuvarlama hatası alın, örneğin:
+moveq    #0,d7
+DoMtxMul
+:
+muls    (a0),d0        ;*256 değeri ile bir muls yapın
+asr.l    #8,d0
+addx.w    d7,d0        ;roundoff < trunc
+:
+
+Bir ‘asr’ yaptığınızda, son outshifted bit x-flag'e gider.
+kaynak=0 => dest=dest+‘x-flag’ ile bir addx kullanırsanız.
+Bu, hatayı yarıya indirir ve karmaşık vektör nesnelerini
+daha az ‘hacky’ hale getirir.
+
+
+/) __ .
+(( /( |( )|\/ '(|)))
+ / )|(|\|/\ |)
+(/
+
+
+
+
+3d
+
+
+NB: Blitter ile yapılan çizgiler, doldurma, cookie cut
+(çerez kesme), doldurma hakkında bilgi sahibi olmak, dersin bazı kısımlarını daha iyi anlamak için yararlıdır
+.
+
+GİRİŞ:
+
+Ekran üzerinde temsil etmek istediğimiz herhangi bir nesnenin temel ve özet şekli,
+ bir dizi x, y, z koordinatı ile ifade edilir.
+Her koordinat üçlüsü (üçlü, vah),
+x, y, z eksenlerinden bir başlangıç noktasına (0,0,0 koordinatlarında) olan mesafelere karşılık gelir.
+Sonuç olarak, her koordinat üçlüsü,
+3B sistem içindeki tek bir konuma karşılık gelir.
+Bir nesnenin DÜNYA KOORDİNATLARI (dünyaya göre koordinatlar)
+basitçe bu eksen sistemindeki koordinatlarıdır.
+Yani DÜNYA KOORDİNATLARI, oluşturduğumuz dünyayı temsil eder.
+
+TEMEL KAVRAMLAR:
+
+Ekrana nesneyi oluştururken, çeşitli nesnelerin DÜNYA KOORDİNATLARINI belirledikten sonra
+3 ana aşama vardır:
+
+1:    Dünya koordinatları (dünyaya göre koordinatlar) - Nesnenin gerçek şekli
+
+2:    Görünüm koordinatları (mevcut görünüm koordinatları) 
+- Herhangi bir döndürme veya kaydırma işleminden sonra nesnenin 
+koordinatları.
+
+3:    Ekran koordinatları (projansasyon koordinatları) - 3 boyutlu koordinatlar
+perspektif olarak 3 boyutluydu 2 boyutluya (monitörün 2 boyutu olduğu için)
+dönüştürüldükten (projansasyon) sonra nesneyi temsil eden ekran koordinatları.
+
+4:    Nesneyi, 2d'ye dönüştürülen koordinatlara göre çizmek.
+
+Ders sırasında nesneler “yüzler”
+veya “düzlemler”den oluştuğu kabul edilecektir. (Burada “düzlem” ile sonsuz yüzeyleri kastetmiyorum!)
+Örneğin, bir küpün 6 yüzü vardır.
+
+Nesnelerin koordinat gruplarını birbirine bağlayarak oluşturulan bu poligonal yüzeyler
+birbirine “takılabilir” veya “birleştirilebilir” ve
+karmaşık nesneler oluşturabilir, örneğin bir helikopter veya bir katedral (Eh..)
+
+Tek bir taraftan görülebilen ve
+şu anda gizli olan bir düzlem (yüz-yüzey) HIDDEN surface (gizli yüz) olarak adlandırılır.
+Çalışarak
+Hangi yüzlerin görünür ve hangilerinin HIDDEN
+ (gizli) olduğunu bulmak, en karmaşık 3d rutinlerin, yani FILLED VECTORS'ın
+yani “dolgulu” yüzlere sahip katıların en önemli görevlerinden biridir.
+Sonuç olarak, gizli yüzleri bulmak için birçok yöntem icat edildi,
+hatta belirli nesne türleri için özel rutinler geliştirildi.
+Bu elbette maksimum hız için yapıldı.
+Yine de, WIREFRAME'deki 3d rutinlerle başlayacağız, bunu
+“TEL” olarak çevirebiliriz, burada katı sadece çizgilerden oluşur, bu nedenle
+gizli çizgiler de görülür. Ancak bu, başlangıç için işleri kolaylaştırır.
+
+MANIPÜLASYON:
+
+Daha önce de belirtildiği gibi, nesnemizi VIEW COORDINATES, yani
+Görünüm Koordinatlarında görüntülemek için, koordinatlarını çeşitli açılara göre kaydırmalı (hareket ettirmeli) ve döndürmeliyiz
+(katı nesne sabit kalır,
+3D'nin güzelliği hareketindedir!).
+Peki, WORLD koordinatlarını (yani
+“statik” nesnemizin koordinatlarını) VIEW koordinatlarına (çeşitli şekillerde döndürülmüş) dönüştürmek için genel formüller şunlardır:
+
+----------------------------------------------------------------------------
+
+;DÖNÜŞLER: açılar r1,r2,r3
+;     x,y,z koordinatları
+; xa,ya,za geçici değişkenler
+
+xa=cos(r1)*x-sin(r1)*z
+za=sin(r1)*x+cos(r1)*z
+x=cos(r2)*xa+sin(r2)*y
+ya=cos(r2)*y-sin(r2)*xa
+z=cos(r3)*za-sin(r3)*ya
+y=sin(r3)*za+cos(r3)*ya
+
+----------------------------------------------------------------------------
+
+;TRANSLAŞYON: translasyon değişkenleri mx,my,mz
+x=x+mx
+y=y+my
+z=z+mz
+
+(KOLAY!!! x'e mx, y'e my ve z'e mz eklemek yeterlidir!)
+
+----------------------------------------------------------------------------
+
+;PROJEKSİYON: d = ekran mesafesi
+; scx,scy = ekran merkezi (Örnek: 320*256 ekran için 160,128)
+sx=(d*x/z)+scx
+sy=(d*y/z)+scy
+
+----------------------------------------------------------------------------
+
+Umarım kimse paniğe kapılmaz, trigonometri
+ve genel olarak matematiği sevmeyenler olduğunu kabul ediyorum, ama formülleri uygulamak yeterlidir, başka bir şey gerekmez!
+
+İlk yapılan işlem döndürmedir - nesnenin yuvarlanma, eğilme ve sapma
+açısını dikkate alarak. (neredeyiz biz?)
+
+ROLL
+; için, bir arabanın yanından bakıldığında bir tekerleğin dönüşünü
+veya bir diskin yukarıdan bakıldığında dönüşünü kastediyorum.
+Hepsi yanlış
+(RULLIO ekseni - yani
+havacılıkta, hava aracının X ekseni etrafındaki dönme hareketidir,
+gövdenin kartesiyen eksenlerinde ROLL ekseni olarak adlandırılır.
+veya gemilerde, uzunlamasına bir eksen etrafındaki salınım, bu nedenle gemi
+sağa ve sola eğilir.
+
+
+
+PITCH, “eğim”, ‘eğim’ (BECCHEGGIO ekseni) anlamına gelir
+gemilerde, enine ekseni etrafında salınım hareketi,
+pruva ve kıçın dönüşümlü olarak alçalmasıdır. Kısacası, gemi “burnu”,
+ yani pruvasını suya daldırır ve pervaneler, diğer tarafta (kıçta) su yüzüne çıkar.
+
+
+BECCHEGG!            BECCHEG!
+
+|\                     /|
+| \                     / |
+| \                     / /
+\ \_             _/ /
+-- - \ \/ - - - - - -         - - - \/ /- - - - -
+\ \             / /
+\ \             / /
+\ \             ---
+\---
+
+YAW, havacılık terimidir ve “sapma” anlamına gelir, yani
+bir uçağın, beccheggio ve rollio eksenleri tarafından belirlenen düzleme dik eksen etrafında
+dönmesi ve uçağın ağırlık merkezinden geçmesidir.
+ (Z??)
+
+R1, nesnenin dikey eksene (Y) göre dönüşüne karşılık gelir
+
+R2, Pinokyo'nun burnu gibi yerleştirilmiş bir eksene göre, yani
+bizim sadece bir noktasını görebildiğimiz, bizden 90° (Z) uzaklaştığı için.
+
+R3, yatay bir eksene (X) göre
+
+Translasyon oldukça açıklayıcıdır, çünkü basitçe
+farklı koordinatlara sabit bir miktar eklemekten ibarettir.
+
+İzdeleme formülleri, benzer üçgenlerden türetilir ve
+2 boyutlu (düz) bir ekranın, siz ve nesne arasına d mesafesinde yerleştirildiğini varsayar.
+Görüntü, aynı açılara sahip iki üçgen dikkate alınarak hesaplanabilir,
+ biri x koordinatı için, diğeri y koordinatı için.
+
+d doğru atanmazsa, nesnenin görüntüsü
+çarpık (bozuk) görünecektir - nesne çok düz ve ‘3d’ değil veya
+tersine çok çarpık görünecektir.
+Bu, nesnenin çok büyük bir kısmını ekranda görüntülemeye çalışmanızdan kaynaklanır
+- bunu bir çan kulesi veya gökdelenin dibinde yürümekle karşılaştırın: çok yakınsanız, tüm yapıyı göremezsiniz,
+ bu nedenle tüm yapıyı (nesneyi) görmek için
+geri adım atmanız, uzaklaşmanız gerekir.
+Benzer şekilde, ekrandaki açısal bozulma,
+nesneden uzaklığınız nedeniyle ekranda görünmeyecek olanları da göstermeye çalışmanızdan kaynaklanır
+!
+Neyse ki bu değer çok önemli değildir - sadece
+kabul edilebilir bir “görünüm” elde edene kadar değiştirmeyi deneyin.
+
+; burada WIREFRAME örneklerini yükleyin...
+
+Artık, nesnemizi 3 boyutlu olarak temsil etmek için ekrana bir dizi nokta yerleştirebiliriz.
+ Bu noktaları birbirine
+çizgilerle birleştirerek, nesnenin WIRE FRAME (Fil di Ferro) oluşturarak.
+Temsil doğru bir şekilde üç boyutlu olsa da,
+özellikle karmaşık nesneleri temsil etmek için uygun değildir, çünkü
+hangi noktaların önde, hangilerinin arkada olduğu anlaşılmaz, çünkü görüntünün derinliği hakkında net bilgilerimiz yoktur.
+ Gizli çizgileri ortadan kaldırmamız,
+ yani nesnemizi şeffaf hale getirmemiz gerekir.
+
+*******************************************************************************
+
+SUPERFICI NASCOSTE (HIDDEN SURFACES):
+
+Prima facciamo wireframe, solo linee, ma con superfici nascoste...
+
+
+*******************************************************************************
+
+GİZLİ YÜZLER ve “DOLU VEKTÖRLER” (FILLED VECTORS):
+
+Elbette, gerçekten ‘DOLU’ bir görünüm elde etmek için nesnemizi “doldurmamız” gerekir
+.
+Bunu yapmak için, nesnenin yüzlerini doldururken
+sadece doğru yüzleri, yani
+ÖN, GÖRÜNÜR yüzleri doldurmak, çünkü bir küpün “önünü”
+bakarken ‘arkasını’ görmek istemeyiz.
+
+“Doldurulmuş”, yani FILLED 3B nesneleri gerçekçi bir şekilde görüntülemek için iki yöntem açıklayacağım: CONVEX ve ICONVEX vektörleri
+.
+
+1) ARKA YÜZLERİN KALDIRILMASI.
+ (CONVEX VECTORS)
+
+Bu yöntem sadece CONVEX nesnelerde işe yarar.
+CONVEX bir nesne, bir yüzeyin
+başka bir yüzey tarafından kısmen gizlenmesinin mümkün olmadığı bir nesnedir.
+Örnekler: çok yüzlüler, küpler, tetrahedronlar, prizmalar ve hatta bazı tür “uzay gemileri”
+çok karmaşık olmayan bazı “uzay gemileri”.
+Convex nesnenin tanımı bir başlangıç noktası sağlar -
+önümüzde bulunan yüzleri çizebilir ve
+tanım gereği tamamen gizlenmesi gereken geri kalanını yok sayabiliriz.
+
+Düz bir düzlemin önümüzde olup olmadığını, bu düzleme “normal” vektörü hesaplayarak ve
+Z bileşeninin pozitif
+veya negatif bir bileşeni olup olmadığını kontrol ederek hesaplayabiliriz.
+
+Bir düzleme “normal” bir vektör, basitçe, yüzeyine (veya yüzüne) dik düzlemden “dışarı çıkan” bir vektördür.
+‘NORMAL’ ayrıca 90° dik olarak da tanımlanabilir...
+Örneğin, bir masanın ayağı, desteklediği masaya “normal”
+olarak tanımlanabilir, çünkü
+(en azından umarız) üstteki düz masaya dik ve belki de masanın üzerine serilmiş bir örtüye de dik. 
+(en azından umarız) düz üst masaya dik olduğundan (
+masa belki de servis yapılmıştır).
+
+Ancak daha iyi bir yöntem vardır. Yüzeyin kenarındaki noktaların yönünü düşünün...
+Bir diskin kenarındaki köşeleri saat yönünün tersine numaralandırdığınızı hayal edin.
+Şimdi diski ters çevirin ve sayıların sırasına bakın: şimdi saat yönünde sıralanmışlardır! Bu sırayı, yüzün hangi yöne baktığını belirlemek için kullanabiliriz.
+Şimdi diski ters çevirin ve sayıların sırasına bakın: şimdi
+saat yönünde sıralanmışlardır!
+Bu sıra değişikliğini, yüzün hangi yöne baktığını belirlemek için kullanabiliriz
+.
+
+Üç nokta sayısı ve koordinatları verildiğinde, bunların sırasını türetmek mümkündür:
+
+;yönelim:    p1,p2,p3 - yüzdeki noktalar (2D koordinatlar!)
+;        v1,v1 - p1>p2 ve p2>p3 için geçici 2d vektörler
+
+v1.x=p2.x-p1.x
+v1.y=p2.y-p1.y
+
+v2.x=p3.x-p2.x
+v2.y=p3.y-p2.y
+yön=işaret(v1.x*v2.y-v1.y*v2.x)
+;yön +/- 1'dir.
+;2d vektörün çapraz çarpımı normal bir 3d vektörden daha hızlıdır,
+;çünkü hesaplama için daha az çarpma yeterlidir
+
+Böylece, FILLED CONVEX VECTOR OBJECT'i çizmek için, koordinatlarını
+açıklanan şekilde dönüştürür ve ardından, nesnemizde tanımlanan bir nokta listesi kullanarak, sadece saat yönünde poligonları çizeriz.
+nesnemizde tanımlanan bir nokta listesi kullanarak.
+Tüm poligonların, poligon görünür olduğunda saat yönünde sıralanmış nokta numaralarına sahip olduğundan ve nesnenin tamamen
+konveks (CONVEX) olduğundan emin olduğumuz sürece, herhangi bir sorun yaşamayız.
+Bu noktada, konveks vektörlerin temel bir rutini olan v_convex.s kaynağını yüklemek kalır.
+ Kaynakta yeterince açıklama bulunmaktadır.
+
+
+*******************************************************************************
+
+2) “PITTORE” renklendirme algoritması. (INCONVEX VECTORS)
+
+Bu tekniğin adı her şeyi açıklıyor.
+Fikir, bir ressamın resim yaparken sahnenin arka planından
+başlayarak dağları çizmesi, ardından yavaş yavaş resmin çeşitli katmanlarını
+çizerek en yakın nesneleri çizmesidir.
+Böylece, diğer nesnelerin önünde bulunan hiçbir şey örtülmez,
+sadece gerçekten örtülen nesneler örtülür ve doğru görüntü elde edilir.
+Bu fikir, 3D sistemimize kolayca uygulanabilir.
+Gizli tüm düzlemleri yönlerine göre filtreleriz (yukarıdaki gibi)
+ ve ardından Z koordinatından en negatif olanlardan
+Z=0'a en yakın olanlara kadar sırayla çizeriz.
+Negatif Z koordinatları gözlemcinin, yani bizim karşımızdadır,
+Z=0 ise gözlemcinin bulunduğu yerdir. Pozitif Z koordinatları gözlemcinin arkasındadır
+ve bildiğiniz gibi arkamızda olan şeyleri göremeyiz!!!
+
+Bunu pratikte nasıl yapabiliriz?
+
+Peki, bir düzlemi (bir yüzü) ele aldığımızda, doğru yönlendirildiğinde görünür olduğuna karar verdikten sonra,
+ sahnede ne kadar uzakta olduğunu, yani derinliğini buluruz.
+Bunu yapmanın birkaç yolu vardır, ancak daha sonra açıklayacağım nedenlerden dolayı,
+ yüzün (veya düzlemin) köşesinin Z koordinatının ortalamasını hesaplayabiliriz
+.
+Sonra bu değeri ve yüzün tanımına bir işaretçiyi bir tabloya (veya diziye, yani bir tabloya) yerleştiririz.
+Sonra bu değeri ve yüzün tanımına bir işaretçiyi
+tabloya (veya diziye, yani bir tabloya).
+Bunu her yüz (veya düzlem) için yapacağız, ardından tablo (veya
+dizi) en negatif Z ortalamasından 0'a en yakın olana doğru sıralayacağız (SORT).
+Bu noktada, diziden (TABLO'dan) değerleri alıp
+yüzleri tablodaki sırayla çizeceğiz.
+
+Ancak, konveks kaynağı gördüyseniz, yüzlerin
+önceden çizilenlerin üzerine doğrudan çizildiğini fark edeceksiniz - bu konveks durumda sorun değildir
+çünkü yüzler asla üst üste binmez!
+
+Bununla birlikte, INCONVEX durumunda yüzler üst üste gelebilir, bu nedenle
+“ressam” algoritması ve derinlik sıralaması (SORT) vardır.
+Yüzlerimizi geçici bir tampona çizip
+blitter (cookie cut) ile görüntüleme ekranına “kesip kopyalayabiliriz”.
+(Tabii ki "çift tamponlu"!).
+
+Bir ICONVEX vektörünü pratikte görmek için kaynak v_inconvex.s'dir.
+
+Daha önce de belirtildiği gibi, yalnızca yüzlerin köşelerinin her Z koordinatının ortalamasını alarak
+makul derinlikler elde edilebilir.
+Pisagoras teoremi yerine bu yöntemin kullanılmasının nedeni,
+x^2+y^2+z^2 (kökü unutun) hesaplayıp ortalamasını almak yerine bu yöntemi kullanmamızın nedeni, 
+basitçe “çaba”nın gerekli olmadığını düşünmemdir.
+“Ressam” (painter) algoritmasının bir dezavantajı vardır: bir yüzün önemli
+bir z değerleri aralığı üzerinde uzayabileceğini
+dikkate almaz, bu yüzden onu sadece bir ortalama değerle temsil etmek
+gerçek durumu yansıtmaz.
+Bu sorunu gidermek için, büyük düzlemlere, çok geniş yüzlere dikkat etmelisin, belki bunları ikiye bölerek veya
+minimum ve maksimum Z değerlerini de dikkate alarak
+.
+
+
+*******************************************************************************
+
+Oggetti Multipli:
+
+Kısa bir süre önce demo sahnesinde,
+aynı anda çok sayıda bağımsız nesneyi görüntüleyebilme konusunda büyük bir kargaşa vardı...
+ böylece “kaç küp sahnesi” vb. ortaya çıktı, yani
+ekranları küplerle doldurarak yarışılıyordu ve en fazla küp koyan kazanıyordu,
+ ki bu genellikle animasyonlu bir sprite olduğu ortaya çıkıyordu (HAHAHAHA!)
+Ancak bu, yapılması en zor şey değildir, tek bir nesneye uygun
+kod düzenlemeleri yapıp onu değiştirmek yeterlidir.
+
+Yapılması gereken, tüm nesneleri konumlandırmak ve döndürmektir.
+Bu nesnelerin “özel” bilgiler içeren bir tablosu olmalıdır, ancak
+her şeyi hareket ettiren motor aynıdır.
+Önemli olan, derinliği hızlı ve güçlü bir SORT (sıralama) rutini olacaktır,
+ bu da sadece gerekli olanın çizilmesini sağlayacaktır.
+Ayrıca, tüm nesnelerin tanımlarını içeren birçok tablo ve yapı oluşturulması gerekecektir
+.
+
+*******************************************************************************
+
+Çizgiler/Bob:
+
+VECTORBALLS'u uygulamak için, yüzlerde olduğu gibi koordinatları girmemiz,
+SORT rutiniyle Z değerlerini sıralamamız ve
+sonra sahneyi bob'ları doğru derinlikte çizmemiz yeterlidir.
+Bob'lar için bitmap'ler, blitter'ın “cookie cut” özelliği ile
+ekrana kolayca kopyalanabilir.
+
+Çizgiler, Z koordinatlarının ortalamasını hesaplayarak
+(her ikisi de) ve ardından bu ortalamayı derinlik tablosundaki (DEPTH ARRAY)
+çizgi yapısına işaretçi olarak ekleyerek ve
+bob'a benzer şekilde ilerleyerek.
+
+Bu arada, bu çizgi/bob/düzlem tanımlarına bir tür tanımlama işareti
+koymak yardımcı olabilir, böylece
+sıralı derinlikler arasında atladığımızda kod
+ne ile uğraştığını anlar (bir çizgi mi, bir bob mu..)
+
+*******************************************************************************
+
+GÖLGELER (SHADING):
+
+BAZI YÜZLERİN “AĞ” VEYA “NOKTALAMA” YÖNTEMİ
+Noktalı renkleri göstermek için, bitişik piksellerin rengini değiştirmemiz gerekir...
+ Bunu yapmak için, bellekte bir maske atayabiliriz
+(01010101010 vb.) ve bunu yüzleri silmek için maske olarak kullanabiliriz.
+Yapabileceğimiz şey, noktalamak istediğimiz iki rengi
+ve her bir bit düzlemi için bit çiftini kontrol etmektir.
+Her ikisi de 1 olarak ayarlanmışsa, bu, bu bit düzlemi için
+yüzümüzü her zamanki gibi silmemiz gerektiği anlamına gelir (kendi yüzümüzün
+çizildiği bir çerez, kendi maskesi olarak kullanılır).
+Benzer şekilde, ikisi de sıfırsa, aynı şeyi yaparız ve
+yüzün bulunduğu ekran alanını sileriz.
+Farklılarsa (örneğin renk 1 ayarlı ve renk 2 ayarlı değil), blitter'ın “çerez”
+ile yüzü kopyalarız, ancak 010101 maskesini kaynak planımız olarak kullanırız
+ve yüzü maske olarak kullanırız.
+Bu, düzlemin ekranda olduğu yerde bitleri 010101 sırasına indirir.
+Diğer olası durum, renk 1 sıfırlanmış ve renk 2 ayarlanmışsa,
+1010 ile başlayan bir maske kullanmamız gerekir...
+Bunu yapmak için maskeyi ters çevirerek blitter'ı farklı bir şekilde kullanırız.
+
+Hızlı olmasına rağmen, bu yöntemin dezavantajı, maske için tonlarca
+bellek kullanmasıdır. Maske, bir bit düzlemiyle aynı boyutta
+veya en azından görüntülemek istediğiniz en büyük yüz kadar büyük olmalıdır.
+Bunu önlemek için, 1010 verilerinin geçtiği blitter kanalını devre dışı bırakabilirsiniz
+; bu şekilde,
+bu alternatif değerleri BLTxDAT kaydına basitçe girebilirsiniz.
+Ancak şimdi bit düzlemi için iki blitter gerekir, çünkü her 2 satırdan sadece biri
+aynı maskeyi kullanır:
+
+Satır 1: 10101010 \
+Çizgi 2: 01010101 | Yalnızca 1, 3, 5 çizgileri için maskeler aynıdır.
+Çizgi 3: 10101010 / Çizgiler 2, 4, 6.. ters çevrilmiştir.
+
+Yani: Yüzün her çift satırını blitter, BLTxDAT değerini ters çevirin
+,
+ ilk blitterde atlanan satırları yapın (tek!)...
+Bu, BLTSIZE için yarı yükseklik kullanmak ve blitter'a modül değerleri eklemek anlamına gelir,
+ böylece her 2 satırdan sadece biri etkilenir.
+
+*******************************************************************************
+
+IŞIK KAYNAĞI (LIGHT SOURCING):
+
+“Işık kaynağı”, yüzlerin renklerinin
+üzerindeki ışık kaynağının yansımasını temsil etmesini sağlamaktır.
+İki yöntem sıklıkla kullanılır:
+
+Sadece Z Değeri - Bu, basitçe izleyiciye en yakın düzlemi
+en parlak renkle, en uzak olanları ise
+daha koyu renklerle çizmekten ibarettir. Bu, mesafenin Z değerine bakmak yeterli olduğu için basittir,
+ ancak illüzyon açısından en ikna edici yöntem değildir.
+Yüzlerin Z koordinatlarının ortalaması kullanılarak tamamen yapılabilir,
+ Z değerlerine göre renkleri içeren bir tablo veya
+başka yöntemler kullanmak yeterlidir. (Örneğin, renk z/128, yani 
+mesafe bölü 128 ile hesaplanabilir, eğer üretilen renk geçerli bir RGB ise).
+
+Lambert Kosinüs Kuralı - Bu küçük kural, bir yüzeyden yansıyan ışık miktarının
+yüzeye normal açı ile yansıyan ışın yönü arasındaki kosinüs değerini izlediğini
+belirler.
+Uzun açıklamalardan kaçınmak için, yöntemi basitçe şöyle açıklayabiliriz:
+
+Yüzeye normal olanı hesaplayın.
+
+Yüzey üzerinde iki vektör bularak ve 2 vektörün çapraz çarpımıyla normal olanı elde ederek hesaplanır.
+ İki vektör, yüz üzerindeki 3 noktadan herhangi birinden gelebilir - Dolayısıyla a=p2-p1, b=p3-p1,
+ burada p1-3 yüz üzerindeki üç noktanın xyz koordinatlarıdır.
+a-b vektörlerdir.
+Normal, şu şekilde verilir: a*b= (a2*b3-a3*b2,a3*b1-a1*b3,a1*b2-a2*b1)
+
+Normal şu şekilde verilir: a*b= (a2*b3-a3*b2,a3*b1-a1*b3,a1*b2-a2*b1)
+
+“Normal” vektör, modülünden bölünerek birim vektöre indirgenmelidir...
+ Benzer şekilde, gözlemciden düzleme olan vektör de
+birim vektöre dönüştürülmelidir.
+
+Bu iki birim vektör arasındaki açının kosinüsü artık
+basitçe bunların ‘nokta’ çarpımı, yani “*” çarpımıdır
+Yani a1*b1+a2*b2+a3*b3
+
+Bu değer 0 ile 1 arasındadır (burada sabit aritmetik nokta)
+ve yüzeyin aydınlatma faktörünü, dolayısıyla rengini
+tek Z değeri tekniğine benzer bir yöntemle verir.
+
+*******************************************************************************
+
+“ESNEK” veya ‘JELATİNİ’ VEKTÖRLER (FLEXY, JELLY & RUBBER VECTORS):
+
+Bazı demolar, sanki lastik
+(rubber) veya jelatin (jelly) gibi “bükülen” ve esneyen vektörler içerir.
+3D vektörlerimizi “bükmek” göründüğü kadar karmaşık değildir, çünkü
+deformasyon genellikle her bakır satırda tekrarlanan BPLCON2 ($dff102) ile basit yatay dalgalanmalar
+veya bir sinescroller'a benzer şekilde, bir tamponda ‘doğru’ vektör çizilir
+"
+ve dalgalandırmak için şeritler halinde bliçlenir.ve dalgalanmasını sağlamak için şeritler halinde bliçlenir.
+Bu iki yöntemi birleştirirsek, daha da gerçekçi görünecektir.
+Her neyse, bu katıların jelatin gibi “görünmesini” sağlamak için birçok yöntem vardır,
+ ancak bunların çoğu önceden hesaplanmış veya %90 oranında sahte efektlerdir.
+Gerçekçi bir sonuç elde etmek için Real3d veya Imagine gibi bir Ray-Tracing programı
+ya da aranızda bir dahi varsa onun yardımı gerekir.
+
+*******************************************************************************
+
+STENCIL VECTORS (“süslemeli şablon” vektör):
+
+Yüzleri geometrik bir desenle süslemek için,
+SHADING'e benzer bir teknik kullanarak tarama/noktalamalı bir yöntem kullanmak gerekir.
+SCENCIL VECTORS'ın yüzlerindeki grafiklerin perspektif olarak bozulmadığını,
+ hareket eden yüzlerin üzerinde “sabit” kaldığını unutmayın.
+Bellekte, tekrarlanan veya daha doğrusu tekrarlanabilir bir grafik desen
+olmalıdır, tıpkı, daha doğrusu bir mozaikteki gibi.
+Yüzleri aşağı attığımızda, geçici tampondaki yüzün yerine bu grafik bit düzlemlerini
+kaynak olarak kullanmalıyız. Daha sonra bir maske için başka bir
+geçici tampon kullanacağız (her zamanki gibi).
+Bellekte çok büyük ham grafik parçaları olmasını önlemek için,
+blitter ile daha küçük parçalara “cookie” kopyalama işlemi yapabiliriz, yani
+işlemi “taksitlere” bölebiliriz.
+
+*******************************************************************************
+
+Diğer vektörlerin yüzlerine SARILMIŞ vektörler:
+
+Bu vektörler genellikle bir veya daha fazla yüzünde
+dönen başka bir vektörün görülebildiği bir tür “monitör” bulunan küplerdir ve
+bu vektörün yüzünde başka bir vektör olabilir.
+Bunun İTALYAN bir örneği, LUYZ tarafından programlanan DIVINA'nın “TRIPLE HERMAPHRODITE CUBE” demosudur.
+Bu demo, bir yüzünde ‘monitör’ bulunan ışık kaynaklı bir küp gösterir.
+Bu küpün bir yüzünde, üzerinde yine ışık kaynaklı bir küp bulunan başka bir “monitör” vardır.
+Bu küpün üzerinde de bir küp bulunur.
+
+*******************************************************************************
+
+
+OPTIMIZATION:
+
+v_convex.s ve v_iconvex.s dosyalarını incelediğinizde bazı optimizasyonlar fark etmiş olacaksınız.
+
+-Ekranın veya geçici tamponun sadece bir kısmını temizleyin veya bliçleyin.
+Kulağa mantıklı ve doğru geliyor, ancak bunu yapmak için “pencere” inceliyoruz, bu pencere
+minimum ve maksimum x/y koordinatlarından oluşuyor, böylece
+sadece gerekli minimum sayıda kelimeyi kopyalayıp temizliyoruz.
+
+-Blitter için WaiBlit bekleme döngüsünde işlemciyi kilitlemeyin,
+gerçekten gerekli değilse. CPU ve BLITTER aynı anda çalışabilir
+, bu nedenle CPU'yu blitter'ı beklemek için bir döngüde durdurmak,
+aynı CPU blitter'ın yaptığı işi yapabilirken veya
+başka hesaplamalar yaparken, bir hatadır.
+Sadece başka bir
+blitter işlemi yapmadan önce blitter işleminin bitmesini beklemek gerekir. Bununla birlikte, blitter
+işlemcinin çarpma ve bölme işlemleri yaparken çalışacak şekilde rutinleri düzenlemek
+ve işlemcinin boşta beklemesini önlemek de çok önemlidir.
+Gerektiğinde blitter işlemini gerçekleştiren bir kesme kullanabilirsiniz.
+Optimizasyonun basit bir örneği ekranı silmektir.
+Blitter'ı tek başına kullanmak yerine, yarısını blitter ile
+yarısını “çoklu görev” modunda işlemci ile temizleyebilirsiniz. CPU
+ve blitter arasındaki iş yükünü dengelemek çok önemlidir. Aslında, 68020+ işlemcilerde
+hemen hemen her şeyi işlemciye yaptırmak daha uygundur, ancak 68000'de sorun devam eder.
+
+-Bir başka örnek ise ekstrüzyondur. Ekstrüzyon, diş macunu tüpü sıkıldığında
+tüpün şeklini alarak dışarı çıkmasıdır.
+ Tüp yıldız şeklinde ise yıldız şeklinde bir katı çıkar, daire şeklinde ise
+silindir şeklinde çıkar, vb.
+Vektörler açısından bu, bir nesnede sabit bir çapraz kesit
+olduğu anlamına gelir.
+Bu aynı zamanda nesnenin her iki ucundaki noktaların
+ortak bir vektörle birbirine bağlı olduğu anlamına gelir. Birçok noktanın hesaplanmasını önlemek için
+sadece bir uç ve bu ortak vektör hesaplanabilir.
+Böylece diğer ucun koordinatlarını oluşturmak için bu
+vektörü diğer ucun koordinatlarıyla eklemek yeterlidir.
+
+-Derinliği sıralama. Sahne karmaşıksa, SORT rutini
+genel hız için belirleyici olacaktır
+
+*******************************************************************************
+
+CLIPPING:
+
+Bazı durumlarda, koordinatları “ekranın dışında” olan çizgileri de ekrana çizmeniz gerekecektir,
+ örneğin bir nesneye çok yaklaştığımızda
+ve bazı kısımları ekranın ‘dışına’ çıktığında.
+“Poligon kırpıcı” kaynağını yükleyin...
+Birkaç yöntem kullanılabilir, genellikle kesişim yüzleri, ancak
+bu konuyu yazarların takdirine bırakıyorum
+
+Manzaralar (LANDSCAPE):
+
+Şey... ben nasıl yapıldığını bilmiyorum...
+
+*******************************************************************************
+
+Referanslar:
+
+Bu kitapları bulursanız ve meraklıysanız, başvurabilirsiniz:
+
+COMPUTER GRAPHICS - Steven Harrington. ISBN 0-07-100472-6
+2D ve 3D grafik tekniklerinin çok özenli bir şekilde ele alınması,
+ ÇOK TEKNİK (yeni başlayanlar merhaba!)
+ve Amiga'ya özel değil, dolayısıyla 2D-3D grafikler hakkında
+“soyut” bir inceleme.
+Sanal gerçeklik için tasarımlar yapmak istiyorsanız
+A4000 turbo tabanlı bir sistem yeterli olacaktır...
+
+Teşekkürler:
+
+ACC (Amiga Coders Club) yazarları, özellikle 
+
+Paul Kent
+
+

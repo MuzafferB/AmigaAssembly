@@ -1,0 +1,1073 @@
+
+ASSEMBLER COURSE - LESSON 12
+
+Author: Fabio Ciucci
+
+In this lesson, you will learn techniques for achieving code COMPATIBILITY,
+ which is extremely important: think about how important it is that the game
+or demo you are programming works on all Amiga models!
+This is not difficult at all, even though it is well known that many
+old games and demos do not work on kick 2.0, 68020, a1200, or even
+there are things that only work on an unexpanded A500 1.3, just put
+the fast RAM or the new kickstart that no longer work.
+All these problems stem from a few causes, the same stupid causes.
+In fact, 99% of the code of a demo or game that only runs on a500 1.3
+would work on all Amigas, if it weren't for those 2 or 3 lines of
+“DIRTY” code that cause everything to crash, usually at boot.
+Personally, I have always tried to understand all these BUGs, i.e. programming errors
+visible only on machines above 500 1.3, and very
+often I have managed to FIX, i.e. “repair” games or demos that
+didn't work, simply by disassembling the code and modifying the
+recurring errors. In this way, I combined business with pleasure: on the one hand, I made the game or demo that my friends with A1200 or other computers liked so much when they still had the 500 1.3 before
+selling it work for them, and on the other hand, I gained a fair amount of knowledge about the causes of
+spectacular “crashes” with guru, and I found that it is always the same few “programming flaws” that I will list below.
+‘freezes’ with Guru Spectacular, and I found that they are always the
+usual few programming ‘flaws’, which I will list below.
+ 
+Because of these flaws, most of the software written in
+direct assembler on Amiga hardware has earned a reputation for being
+incompatible and unsafe, so the assembler itself has been
+blamed for being an unsafe language, especially the
+‘hardware direct’ or ‘metalbashing’ assembler.
+All these problems can easily be avoided by NOT DOING
+certain things, and the game/demo will definitely run on all Amigas.
+In fact, all the listings in this course, for example, work on both Amiga
+500 1.3 and Amiga 4000/040, and of course they also run on all other
+intermediate computers, with any configuration.
+Of course, I cannot guarantee compatibility with hypothetical Amiga models
+with RISC or AAA chipsets, but in that case NOT EVEN ONE GAME would work,
+ let alone programs such as protracker. I hope that the 680x0 series and downward compatibility with the ECS (at least) will be maintained
+or we would end up with PCs called “Amiga” but not MSDOS compatible.
+I would rather make computers based on 68060 at 150Mhz, which is just as good as a RISC, and a “local bus” for the chip RAM, i.e.
+faster access to this type of memory, which is too slow on current models
+is too slow (damn last-minute C= engineers).
+I decided to deal with this topic only now, partly because in order to make
+mistakes you need to know how to program, so it wasn't logical
+to put this lesson before explaining the basics of programming.
+After this lesson, you may be able to get your old incompatible game to work
+!
+In this course, you have seen ‘HOW TO PROGRAM’, with all the
+correct procedures, so ignore the nonsense that was done years ago.
+Here is a list of the most common mistakes I found in
+programs that do not work on all machines: (tested on A4000/040)
+
+****************************************************************************
+PART 1: ERRORS RELATING TO THE $dffXXX REGISTERS, i.e. COPPERLIST and BLITTER
+****************************************************************************
+
+1) Among the ‘remediable’ errors, we find the least serious one, which is not really an
+error in older productions, since they couldn't have known about AGA:
+it is ‘forgetting’ to reset AGA with these 3 instructions after
+pointing the copperlist: (Not before!)
+
+lea    $dff000,a5    ; CUSTOM base address in A5 for offsets
+move.l    #copper,$80(a5)    ; COP1LC - Point to the copperlist
+move.w    d0,$88(a5)    ; COPJMP1 - start the copperlist
+
+;    disable AGA:
+
+move.w    #0,$1fc(a5)    ; reset sprites wide and DISABLE 64 bit burst
+MOVE.W    #$c00,$106(A5)    ; reset AGA palette , sprite resolution
+; and double playfield palette
+MOVE.W    #$11,$10c(A5)    ; reset AGA sprite palette
+
+This error can be remedied by booting the computer and pressing both
+mouse buttons, and selecting the old chipset emulation.
+However, the copper problems do not end there. In fact, just
+forget to define any of the COPPER registers, and the error will
+appear! In fact, I found many copperlists from old demos/games that did not
+define the modules, so the values of the system copperlist REMAIN
+and there is no way of knowing what they are. In fact, the most common error
+is not setting the modules ($108 and $10a), assuming that
+they are reset. THIS WAS TRUE FOR KICKSTART 1.3!!! BUT SINCE 2.0, THE MODULE
+IS NOT ZERO!!! Therefore, intros/demos/games are seen as ‘streaks’, unless
+you load kickstart 1.3. The same applies to DiwStart/DiwStop
+etc. ALWAYS remember to put all registers in the copperlist,
+even if they are reset, to avoid uncertain values remaining in the
+operating system!!!
+
+dc.w    $108,0        ; Bpl1Mod
+dc.w    $10a,0        ; Bpl2Mod
+dc.w    $8e,$2c81    ; DiwStrt
+dc.w    $90,$2cc1	; DiwStop
+dc.w    $92,$38        ; DdfStart
+dc.w    $94,$d0        ; DdfStop
+dc.w    $102,0        ; BplCon1
+dc.w    $104,0        ; BplCon2
+
+I also found other silly errors while combing through the old copperlists.
+Instead of NOT SETTING some registers, mysteriously they SET TOO MANY!
+In fact, you should NEVER ACCESS AN UNKNOWN REGISTER, OR
+NOT YET USED, NOR SHOULD YOU SET OR RESET RESERVED OR UNUSED BITS
+IN KNOWN REGISTERS, as this may activate
+strange functions in future chipsets. For now, the biggest evolution
+has been from ECS to AGA, and there are more
+“blind setting” errors than I expected. For example, I found this oddity in the
+copperlist of a very old Ackerlight intro:
+
+....
+dc.w    $100,$5000    ; BPLCON0
+dc.w    $0092,$30    ; DDFSTRT
+;--->    dc.w	$106,$FE5    ; Why did they add a register to that
+; time that didn't exist? On the fake AGA, the palette
+dc.w    $102,$CC    ; BPLCON1
+dc.w    $108,$A8    ; BPL1MOD
+dc.w    $10A,$A8    ; BPL2MOD
+....
+
+This error went unnoticed until the AGAs came out,
+and mind you, this error is ABSOLUTELY UNREMOVABLE. In fact,
+before disassembling the material that doesn't work, I do all the tests
+possible to figure out the problem: I remove the fastmemory, load kick 1.3,
+disable the cache, the MMU, reset the VBR, etc. This error still
+occurred: the colours were wrong, everything else worked.
+In fact, the only way to correct these errors is to find them and
+remove them from the code. I replaced that $106,$fe5 with a $92,$30, i.e.
+I replicated the previous line, and everything worked perfectly.
+Perhaps the coder didn't even notice that move, it could be a
+typing error, maybe he wanted to write $108 and not $106, who knows, but
+be careful to work only on known registers or bits, or you'll be
+disappointed to see your production not working on your grandchildren's Amiga 9000,
+ all because of a single, stupid line of copperlist.
+Also pay attention to sprite structures, since even from OCS to
+ECS there are extra bits in the fourth control byte: many sprites that
+appear ‘dirty’ or stretched to the end of the screen are in that
+state ONLY on ECS/AGA machines, and not on old a500/a2000 machines, because the
+sprite management routine, instead of resetting that bit, left it
+set. The designers recommend leaving unused bits
+of known registers RESET, and NOT ACCESSING those that are not
+yet known. I strongly advise you not to forget this.
+
+-    -    -    -    -    -    -    -    -
+
+2) Do not use the CLR instruction on $dffXXX registers, because this instruction
+behaves differently on 68000 and 68020/30/40 processors. In fact,
+ on 68000 it causes a read and a write, i.e. 2 accesses, while on
+68020/30/40 it causes only one access.
+ To avoid different results on different processors, remember to access STROBE type registers
+(COPJMP1 = $dff080, COPJMP2 = $dff088, etc.) in another way. One way is
+to use MOVE.W d0,$dff080. I have also encountered problems when
+CLR is used on other $dffXXX registers, for example $dff064 (BLTAMOD)
+
+Example 1:
+MOVE.W    #0,$DFF088    ; never do CLR.W $dff088!
+or:
+MOVE.W    d0,$dff088
+...
+
+Example 2:
+MOVE.W    #0,$DFF064    ; never do CLR.W $dff064!
+or:
+MOVEQ    #0,d0
+MOVE.W    d0,$dff064
+...
+
+To be on the safe side, I recommend accessing via registers or direct values
+(#0,$dffxxx), never use a CLR on a $dffxxx register.
+
+-    -    -    -    -    -    -    -
+
+3) In 1988-1989, a rather stupid way of pointing to copperlists was in use,
+which later proved to be incompatible with operating system versions
+from 2.0 onwards, as certain system structures were taken for granted
+which, of course, were not documented by Commodore, were changed, leaving
+the “clever ones” with their source codes that no longer pointed to the copperlists on A500+ and A600.
+Unfortunately, someone with little programming experience continued to “steal” pieces of old listings that they found around, containing this ridiculous copperlist pointing code, so even some demos from 1990-91
+programming continued to “steal” pieces of old listings they
+found lying around, containing this ridiculous copperlist pointing code,
+ so even some demos from 1990-91 require
+kickstart 1.3 to run because of this oversight.
+Here is the embarrassing code invented by some ‘clever’ coding pioneer:
+
+move.l 4.w,a6        ; execbase
+move.l (a6),a6        ; ???
+move.l (a6),a6		; HAHAHA! GFXBASE??? Only in kick1.3!
+move.l    $26(a6),OLDCOP    ; HAHAHA! SAVE OLD COPLIST???
+move.l    #MYCOP,$32(a6)    ; DOUBLE HAHAHAHA! POINT COPLIST???
+...
+
+Unfortunately, this piece of code is very common in old listings
+found in databases and in intros (e.g. ORACLE).
+ALWAYS remember not to make the DOUBLE mistake contained in these
+4 lines of FILTHY code: First of all, GFXBASE is found by opening
+the graphics.library as shown in the course examples, and certainly not
+by doing ‘move.l (a6),a6’, which happens only in
+kickstart 1.2 and 1.3 due to the particular structure of the old library.
+The second mistake is to point to the copperlist by putting its
+address in the GFXBASE structure instead of in the $dff080 register, which
+causes endless disasters. Always point to the copperlist with a nice:
+
+MOVE.L    #Copperlist,$dff080    ; COP1LC
+move.w    d0,$dff088        ; COPJMP1
+
+-    -    -    -    -    -    -    -    -
+
+4) A habit of the old generation of coders was also not to
+wait for one blit to finish before doing another. This is
+very easy to find in code written before 1990, but there are
+some who still continue to skip over the WaitBlit routines.
+In fact, when Amigas only had the 68000 as a processor,
+ there were cases where, between one blit and another, the processor had to
+do so many operations that the blitter had already finished.
+Demo programmers (and unfortunately also game programmers) often thought
+that it was pointless to wait for the blitter if, even without the Wait routine,
+ everything worked. An example is the game PANG...
+But if they saved two lines of code in their demo/game, not only did they not
+increase the execution speed (it's certainly not a couple of
+‘btst #6,$dff002’ to slow things down...), but they didn't consider that on
+faster processors the time between one blitter operation and the next was
+shortened, since it is well known that the 68020 is faster than the 68000,
+so the crash is total.
+Unfortunately, the blitter remained just as slow on ECS and AGA
+(on a4000 or a1200 accelerated it is even slower than normal!).
+To solve the problems caused by such programming ‘lightness’, it is sometimes enough to remove the cache and fast RAM, so even a 68020,
+if working in chip RAM with the cache disabled, sometimes slows down
+enough to avoid one blit on top of another already in progress.
+The bad thing is that, for hardware synchronisation reasons, on computers
+such as A4000 or A1200 accelerated with 68030, the blitter is SLOWER THAN IN THE OLD A500, so even if we manage to avoid one blit on top of another already in progress, we still have to deal with the time between one blit and the next, which is
+such as A4000 or A1200 accelerated with 68030, the blitter is SLOWER THAN
+IN THE OLD A500, so even if we manage to slow down the processor
+to a basic 68000, it is the slower blitter that makes the crash inevitable
+and certainly not welcome.
+Among other things, keep in mind that even if there are all the routines that
+wait for the end of the blitter before doing another one, the blitter,
+being slower on the A4000, can cause horrible ‘jerkiness’ in
+games or demos that run smoothly (at 50 frames per second) on an A500,
+making the incredulous A4000 owner nervous, who instead believed that
+the game or demo was running faster.
+So ALWAYS and IN ANY CASE wait for the blitter to finish:
+
+LEA    $dff000,a5
+WaitBlit0:
+BTST.B    #6,2(a5)
+WaitBlit1:
+BTST.B    #6,2(a5)    ; check twice for an error in the A1000
+BNE.S    WaitBlit1
+
+P.S: Sometimes you may find ‘btst #14,$dff002’ instead of
+‘btst #6,$dff002’, but the effect is the same, since
+bit 6 is always tested. In fact, 6+8 equals 14. BTST works
+only on bytes and always tests the sixth bit.
+ For aesthetic (and logical) reasons, it is preferable to use btst #6 rather than btst #14!
+
+To give you an idea of how much the blitter slows down on accelerated machines,
+consider that, for example, a routine that blitted 14 bobs per
+frame on a base A1200, blitted only 12 on an A4000 and only
+9 on an A1200 with a 40 MHz GVP 030 accelerator card!!!!
+Therefore, consider that, when possible, it is better to use the processor
+than the blitter.
+It is also always a good idea to leave a few raster lines ‘free’ instead of
+blitting until the last millisecond. In fact, in the latter case,
+with the slowdown of the blitter on accelerated A4000 or A1200, it
+would no longer be able to do it in one frame, and everything would become extremely jerky.
+
+****************************************************************************
+PART 2: CIAA/CIAB ERRORS - KEYBOARD, TIMERS, TRACKLOADERS
+****************************************************************************
+
+5) Routines that make the caps lock key LED flash do not work
+on the A1200 because it has a cheap keyboard that is different from the standard ones.
+Such routines are present in certain demos for ‘beauty’, here is one
+below, try it and you will notice the flash on A500/a2000/a3000/a4000,
+and, instead, a nice reset on an A1200:
+
+CAPSLOCK:
+LEA    $BFE000,A2
+MOVEQ    #6,D1        ; bit 6 of $bfee01-input-output bit of $bfec01
+CLR.B    $801(A2)    ; reset TODLO - bit 7-0 of 50-60hz timer
+CLR.B    $C01(A2)    ; Clear the SDR (synchronous serial shift
+; connected to the keyboard)
+DOFLASH:
+BSET    D1,$E01(A2)    ; Output
+BCLR    D1,$E01(A2)    ; Input
+CMPI.B    #50,$801(A2)    ; Wait 50 blanks (CIA timer) 
+BGE.S    DONE
+BSET    D1,$E01(A2)    ; Output
+BCLR    D1,$E01(A2)    ; Input
+MOVE.W    $DFF01E,D0    ; Intreqr in d0
+ANDI.W    #%00000010,D0    ; checks I/O PORTS
+BEQ.S    DOFLASH
+DONE:
+RTS
+
+The Amiga 1200 has a cheap keyboard controller. Try
+this test to check: press the ‘r’ key, hold it down, and
+press another key, for example ‘u’. On an A1200, nothing happens,
+while on another computer, ‘u’ appears on the screen.
+So don't mess with the keyboard management routines!
+One of the demos that doesn't work on the A1200 because of this routine is ODISSEY.
+
+As for the routines that ‘move’ the drive heads,
+the fundamental error is to make a mistake in the synchronisation routines,
+ doing them with simple ‘empty’ loops or series of NOPs
+which, on faster processors, are executed too quickly to
+wait long enough. Time them with VBLANK or CIA!
+
+****************************************************************************
+PARTE 3: ERRORI RIGUARDANTI I PROCESSORI 68010/20/30/40/60
+****************************************************************************
+
+6) First of all, you need to look for errors in the utilities you use,
+not just in your executable. In fact, I have often found that
+demos or intros (which ‘crashed’ immediately) worked simply by unpacking them
+and repacking them with a modern cruncher, such as Powerpacker or
+StoneCracker 4. In fact, many of the old compactors (crunchers) at
+absolute addresses do not work on 68010+, so even if the demo itself
+works, the mere fact of being compacted with an old ByteKiller
+or TetraPacker causes it to crash before starting, during decrunching.
+So, first of all, don't compact your program with old
+crunchers; use Stone Cracker4, PowerPacker or Titan Cruncher.
+Furthermore, it is always better to use relocatable code rather than code with absolute addresses
+!!!
+
+-    -    -    -    -    -    -    -    -
+
+7) Address errors:
+Some old productions contain accesses to ROM addresses,
+ for example:
+
+JSR    $fce220
+
+Well, kickstart 1.2/1.3 is located, in old Amigas, at
+memory locations $fc0000, up to $ffffff, for a total of 256k.
+It is obvious that in these kickstarts each routine has its own address: as
+we have already seen, there is a ‘JMP table’ at the Execbase address,
+i.e. we know that, for example, if the execbase is in a6, we will find,
+$84 bytes before, the JMP that jumps into ROM to execute Forbid:
+
+jsr    -$84(a6)    ; Forbid, disable multitasking
+
+For example, in kickstart 3.0 (Version 39.106), this is the
+JMP table of the execbase (a disassembled part of it):
+
+...
+JMP    $00F815CC    ; ...
+JMP    $00F815A2    ; -$96(a6)
+JMP    $00F81586    ; -$90(a6)
+JMP    $00F8286C    ; -$8a(a6) - permit routine
+---»    JMP    $00F82864    ; -$84(a6) - FORBID routine
+JMP    $00F817F8    ; -$7e(a6)
+JMP    $00F817EA    ; ...
+...
+
+On a computer with kickstart V39.106, you can get a FORBID with:
+
+JSR    $F82864        ; Forbid on kickstart V39.106 of A1200/A4000
+
+But if, for example, kickstart V39.106 is loaded via software and is not
+in ROM, the JMP table will point to the RAM addresses where
+the kick was loaded. So NEVER access kickstart in
+this way, or your production will only work on your computer.
+With this example, however, you can see that you can modify
+the JMP tables by replacing the address in ROM with one of your own,
+so that your modified routines are executed. This is how
+programs that modify the operating system work, for example
+utilities that add a gadget to windows or increase
+options in the workbench.
+It is because of this ‘RELATIVITY’ of the operating system that you should NEVER jump
+into the ROM. The only fixed address in the Amiga operating system is $0004,
+i.e. the EXECBASE, which contains the address from which to make offsets.
+Therefore, if you want to deal with the operating system, always follow
+the standard instructions. And even if you don't want to deal with it!
+This type of error is fatal, so much so that many very old demos made
+on Amiga500 Kick1.2 do not work on Amiga500 Kick1.3 or higher,
+even when loading kickstart 1.2 via software.
+
+Other address errors, slightly less serious, are those that assume
+that fast RAM is at $c00000.
+Originally, Amiga had 512k of CHIP RAM, but later
+an internal expansion became popular, bringing it to 1MB, and it is well known that the additional 512k of
+fast RAM is from $c00000 to $c80000.
+Demos and games also began to be designed to
+fill the entire megabyte of memory, and since at that time
+the vast majority of programs were at absolute addresses, coders 
+decided to assemble the program in fast RAM, in locations from
+$c00000 to $c80000, and load the graphics and music into chip RAM,
+from $00000 to $80000. So the program, in addition to being unpacked
+into the absolute addresses $c00000, had instructions allocated for
+that area:
+
+...
+MOVE.L    #$c23b40,d0
+jsr    $c32100
+...
+
+These demos or games worked on A500s internally expanded with the
+classic card, but when the A500 Plus came out, also equipped with 1MB
+of memory, but only CHIP, all these programs became
+unusable. This happened because with 1MB of chip, the memory is
+arranged in this way: the first 512k are always located from $00000 to
+$80000, but the second 512k are located from $80000 to $100000!!!
+So a ‘JSR $c32100’ leads nowhere, but it certainly leads
+to a spectacular crash with fireworks on the screen.
+Following this, subsequent games and demos used different methods
+to exploit the memory beyond the first 512k.
+One of these is to abandon absolute addressing altogether,
+ forgetting the ORG and LOAD commands, and even autoboot programs,
+ since those, with their own loader, must necessarily be
+placed at absolute addresses.
+While many subsequent DOS-loadable demos/games became
+100% relocatable via SECTIONS, with no parts loaded at fixed addresses,
+ others did not want to give up autoboot and fixed addresses
+in order to use every last byte of memory. The latter solved the
+problem in a couple of ways: one is to assemble two main programs
+, one fixed with ORG and LOAD at $c00000, if it was determined that
+the computer had half a megabyte of CHIP and half a megabyte of FAST, and another fixed
+at address $80000, to be loaded instead if the computer had
+1MB or more of CHIP. In this way, at boot time, a routine checks which
+case we are in and loads one or the other main program to the
+correct address, while data such as graphics and sounds are then loaded later by the
+main program.
+ This system has the disadvantage of wasting disk space for the two versions of the main program.
+Others who are more ‘skilled’ have instead programmed a small operating system,
+which at boot time notes which memory segments are present
+in the computer, and through its own allocation routine reallocates the
+various parts of the program to the address where they find the FAST RAM.
+This is definitely the best way to make an AUTOBOOT programme, even
+though it is rather difficult, and the advantages are as follows: imagine loading
+a demo or game onto an A4000 with the two main programme system:
+on boot, the program recognises the memory and, noticing that there is no
+memory at $c00000, loads the code into CHIP RAM at $80000.
+The same demo/game, on the other hand, is modified to load with the mini
+operating system: at boot, it recognises that there are two memory blocks,
+ CHIP from $000000 to $200000 and FAST from $7c00000 to
+$7ffffff, and consequently relocates all parts of the code to FAST RAM and
+loads the graphics and sound into CHIP RAM; As is well known, code in
+FAST RAM is much faster than in CHIP RAM, especially on
+TURBO processors such as the 68040, so the demo or game will run much faster
+with the code relocated to FAST.
+However, it should be noted that those who used their operating systems
+have seen their demos crash with the advent of the 68040, or
+even with the advent of the simple 68020, because Motorola guarantees
+full backwards compatibility ONLY in user mode, and not in
+supervisor mode: in fact, the 68040 has its own instructions for
+supervisor mode, and even the 68060 is only 100% compatible in usermode...
+Imagine future processors or computers, which may emulate
+the 680x0...NEVER GO INTO SUPERVISOR AND DON'T MAKE YOURSELVES OPERATING SYSTEMS,
+to give you an idea, the beautiful WOC 92 demo by Sanity, because of
+its operating system, does not work on 68040.... and the same thing
+happened to the Italian demo IT CAN'T BE DONE, by a friend of mine, and in this
+last case, I was the one who found the error: the supervisor routine!!!
+All in all, I think it's easier and SAFER to use SECTIONS to
+create executable code, also because there is the advantage of being able to 
+install it on the hard disk, and in the coming years Amiga will certainly have to
+become more competitive with MSDOS, and by this I mean that
+the BASIC computer will have to have a hard disk and FAST RAM, otherwise
+there will only be a few of us left to see the 1MB games that load from the diskette
+in autoboot, and which don't even take advantage of the processor speed by
+not loading the code into FAST RAM!
+
+So far, I have indicated how it is better to make relocatable code, but what
+happens if we use absolute addresses for an executable file that can be loaded
+from DOS? Well, the introduction of the A500+, with 1MB of CHIP, led to
+many of the “MIXED” code productions not working, i.e.
+with relocatable code, created with “SECTION”, but with the use of buffers
+for graphics NOT allocated via Section BSS or AllocMem, but
+arbitrarily established:
+
+lea    $30000,a0    ; Bitplane buffer address
+bsr.s    PrintText    ; Print text at $30000
+
+In this case, it is not the code that is non-relocatable, but the graphics buffer.
+ As a result, there is no bitplane pointing routine
+in copperlist, because the value
+$30000 is placed directly by the programmer: (HORROR!!!)
+
+...
+dc.w    $e0,$0003    ; bpl0pth
+dc.w    $e2,$0000    ; bpl0ptl
+...
+
+Let's see what happens on old computers, those with 512k of CHIP and 512k
+of FAST: assuming that the intro has a CODE section of 20k and a CHIP
+section of 40k (containing the character FONT and the music), the first section
+is loaded into FAST and the second into CHIP, so we don't get to
+location $30000, but, let's say, to $2a000. In this case, everything works,
+as long as this intro is the first thing loaded by DOS.
+On newer machines, with ONLY 1MB or 2MB of chip, since there is no 
+FAST MEM, everything is loaded into CHIP, both the CODE section and the other one,
+so that the last Kb of code (or music, graphics, etc.)
+are located beyond address $30000. Imagine what a nice CRASH happens
+when the routine prints the characters over the code!
+The despair of ‘lightweight’ coders when the A500+ and A600 came out, was
+also that they couldn't correct the listings on those computers,
+because the ASMONE itself was loaded into CHIP RAM, going beyond the
+locations $30000 or $40000 used as absolute buffers, so that at JMP
+it could even work (BY CHANCE) , but on exit, ASMONE
+was PERFORATED by the routines and CRASH was inevitable.
+This also taught intro producers that they needed to make a
+nice relocatable buffer:
+
+SECTION    BufferOK,BSS_C
+
+ds.b    10000
+
+To conclude the series of errors concerning addresses, I will now report
+some errors that you would hardly have made, since they are
+illogical actions, but for safety's sake it is good to know that:
+
+- Some clever coders have sometimes used the high byte of addresses
+to write messages or simply for the fun of it.
+You should know that 16-bit CPUs such as the 68000 or 68010 ignore the
+high byte of an address, so doing:
+
+JSR    $00005a00
+JSR    $00120d00
+JSR    $00c152b0
+JSR    $00013cd0
+
+is equivalent to writing
+
+JSR    $C0005a00
+JSR    $DE120d00
+JSR    $FEc152b0
+JSR    $DE013cd0
+
+The first bytes clearly read ‘C0DE-FEDE’, which may be a
+message left by an Emilio Fede coder many years ago, who
+signed his name this way.
+ It should be noted that with hexadecimals, many words can be formed (A, B, C, D, E, F, and 0 as an ‘O’), for example:
+FEDE, AFA, ABAC0, FACCE, F0CA, CACCA, CADE, C0DE, ...
+These clever people left entire messages, poems, and love letters
+in the high bytes of the addresses in the subroutine series or in other
+places, where those who disassembled could also read insults!
+Fortunately, this game did not last long, but the intro/demo that
+have them do not work on 32-bit processors, because on such processors
+the maximum addressing has increased, so the JSR really looks for
+those strange locations. Among other things, you may have noticed that the FAST RAM of the
+old A500s is at $00c00000, while that of the A4000 is at $07c00000,
+i.e. outside the addressing range of a 68000.
+
+The last of the address errors, and no less unusual than the
+previous one, is that of the 512k CHIP memory, which is “repeated”
+four times in the address bus, in the sense that although it
+is located from $00000 to $7ffff, it can also be accessed by operating on
+$80000-$FFFFF, or $100000-$17ffff, or $180000-$1FFFFF.
+In practice, the $80000 bytes (512k) are 1/4 of the $200000 (2MB) of the bus,
+and on OCS machines (old Amigas that could only address 512k of
+CHIP, the rest FAST), each byte of CHIP memory is accessible from four
+different addresses, spaced 512kb apart.
+This is, of course, a property that is lost on ECS and AGA machines, i.e.
+those that can address 1MB or more of memory.
+Let's take an example: if we write the value $12345678 to location $0,
+we can ‘retrieve’ that value from $0+$80000, $0+$80000*2, as well as
+$0+$80000*3 and $0+$80000*4. Let's look at a listing:
+
+move.l #$12345678,$0    ; put this value in the first 4 bytes
+
+move.l    $80000,d0    ; d0 = $12345678
+move.l    $100000,d1    ; d1 = $12345678
+move.l    $180000,d2    ; d2 = $12345678
+
+Reading from $80000,$100000 and $180000 is like reading from $0!!!!
+Unfortunately, some idiot used this strange property for their
+routines, and this causes the a500+ and a600 to malfunction in
+various ways, and note that even though the processor is still
+the 68000, the error also occurs with kickstart 1.3 in ROM.
+
+So now you know all the address errors that
+have been made in the past. Try not to make them and don't invent
+any new ones!!!!
+
+-    -    -    -    -    -    -    -    -
+
+8) Problems with SR in 68010 and higher processors:
+One of the most frequent incompatibility problems in 68010 and
+higher processors compared to 68000 code is that of the ‘MOVE SR,dest’ instructions,
+ for example ‘MOVE SR,d0’ or ‘MOVE SR,$1234’ or ‘MOVE SR,LABEL’.
+In fact, these instructions on 68000-based processors can be used normally in
+user mode (USER MODE) like any other instruction: programs such as
+emulators (PC Transformer, C64 Emulator, etc.) do not work on 68010+
+precisely because they perform this operation in USER mode, which on 68010+
+is no longer possible and causes a ‘Privilege Violation’ guru.
+Many games and demos also crash due to the presence of this instruction
+at the beginning of the routines that take control of the system.
+Motorola decided to add to processors from the 68010 onwards the
+ability to simulate the operation of new operating systems for
+machines not yet available, which meant that
+the MOVE SR,dest instruction had to be made privileged, i.e. executable only in
+supervisor mode. Otherwise, the result is a ‘Privilege Violation’ GURU.
+To access the SR in user mode, however, Motorola designers
+added the MOVE CCR,dest instruction to processors from the 68010 onwards to be used
+instead of MOVE SR,dest, which was not available on the 68000, so
+some programs for the Amiga 68000 were written using
+the MOVE SR,dest instruction in user mode, and we now see this when a
+game or demo freezes at boot with a sinister GURU
+MEDITATION or SOFTWARE FAILURE on accelerated A1200/A3000/A4000 or A2000.
+In reality, the ‘mistake’ was made by Motorola, as those who
+trustingly used MOVE SR,dest in user mode (USER) certainly did not
+expect it to become an instruction to be executed only in
+supervisor mode! (after a TRAP or EXCEPTION from the processor).
+However, the important thing is to know this, and now we can be sure not to
+run into the problem, and this is possible by remembering to always execute
+the MOVE SR,dest instruction in SUPERVISOR mode, i.e. after a TRAP, or in an
+INTERRUPT, etc. This way, the instruction will work on all
+processors. Another solution could be to check which
+processor is on the machine and execute the appropriate code, i.e.
+a ‘MOVE SR,dest’ on 68000, or a ‘MOVE CCR,dest’ on 68020, both in
+USER mode to avoid having to execute them in SUPERVISOR mode, but I believe that
+the fastest and most reasonable solution is to always execute the
+‘MOVE SR,dest’ in SUPERVISOR mode. To recap:
+
+CPU        USER mode    SUPERVISOR mode
+
+68000        MOVE SR,dest        MOVE SR,dest
+68010/20/30/40    MOVE CCR,dest        MOVE SR,dest
+
+You will agree that it is always better to execute the old ‘MOVE SR,dest’ in
+supervisor mode, as this saves time and routines.
+If, on the other hand, the game/program/demo you are programming is only intended for
+68010+ processors, for example if the demo is only AGA, you can use the new
+MOVE CCR,dest in user mode, since you are on a 68020+, but remember
+that this instruction does not exist on 68000, so it is not assembled
+by basic 68000 assemblers, such as this TRASH'M-One; in order to assemble
+68010+ instructions like this, you must use TFA ASMONE or DEVPAC 3.
+On the other hand, I strongly advise you NEVER TO USE THIS INSTRUCTION, and
+NEVER GO INTO SUPERVISOR MODE... what do you need it for? To take a risk?
+When an error of this type occurs, the SOFTWARE FAILURE number from
+the operating system is #80000008, which is not difficult to identify.
+However, for programming demos or games, acting on the SR register is not
+essential, so I STRONGLY advise you NEVER to access
+this register, also because its bits are different from processor
+to processor, and it is very easy to cause incompatibility problems.
+
+-    -    -    -    -    -    -    -
+
+9) With the 68010, in addition to the MOVE CCR,SR command we have seen,
+other new features have been introduced, which, if not known, can cause
+incompatibility errors. This is the VBR, or VECTOR BASE REGISTER,
+which means “vector base register”. We saw this
+register in the lesson on interrupts, and we know that when
+an interrupt or trap occurs (TRAP #xx instruction), the processor
+INTERRUPTS the program it was executing in USER mode,
+switches to SUPERVISOR mode and executes the routine at the address it finds
+in the specific VECTOR, which can be one of the interrupt levels,
+or one of the TRAPS, etc.
+In new processors, in addition to using vectors that had no function in the 68000
+(see, for example, $18 and $1c), the
+possibility of moving the BASE of these vectors has been implemented.
+While on a 68000 we are sure that the VBLANC interrupt is always
+at address $6c, on a 68010 or higher we cannot be sure.
+This is because the base of these OFFSETS may no longer be $000000.
+In fact, just run ‘MOVEC d0,VBR’ in supervisor mode, and everything changes.
+Of course, at boot time, the VBR is reset, so the vectors
+are all in the same place as on the 68000. It is the AmigaDos SetPatch that
+moves the VBR, normally to FAST RAM, copying the vector addresses
+to the new address. Alternatively, the ‘move’ is done by other utilities.
+In fact, once WorkBench is loaded on a computer with a
+68010+, it is very likely that the VBR is not zero, so old
+demos and games (not just old ones!), when loaded from the Shell or
+WorkBench, often have no music or freeze, because
+they put the interrupt routines in $6c, when they should put them
+in VBR+$6c. Therefore, NEVER do the following:
+
+MOVE.L    #IntRoutine,$6c
+
+First, you could ‘optimise’ it to:
+
+MOVE.L    #IntRoutine,$6c.w
+
+But the most important thing is that it only works if loaded at boot, before
+running SetPatch or other utilities.
+To get around this problem, all you need is a few lines of code that check
+if there is a 68000 or a 68010+, and in the latter case, read the
+value of the VBR to perform the necessary offsets.
+At the end of the programme, just remember to do the same to
+put the old interrupt back in place.
+This precaution is present in startup2.s used in the advanced listings
+of the course. Note that the MOVEC VBR,A1 instruction, being 68010+, is not
+assembled by all assemblers (including this ASMONE),
+so it is better to use its hexadecimal equivalent.
+In fact, nothing prevents you from writing ‘dc.w $4e75’ instead of RTS!
+
+- - - - - - - -
+
+10) Now let's look at the programming oversights that have been made evident
+with the introduction of INSTRUCTION CACHE in processors from the 68020 onwards.
+ By ‘made evident’ I mean that these errors lead to a frightening system crash.
+ Fortunately, many of these errors can
+be resolved by disabling the CACHE using software utilities.
+Let's briefly look at what these CACHE are: they are very fast memory
+located INSIDE the processor rather than outside, unlike
+CHIP or FAST RAM, which can only be accessed via the autoBUS.
+We have already seen the data and address REGISTERS, which are
+nothing more than LONG internal memory within the processor, which we can read and
+write. Well, CACHE are similar memory banks, but we cannot
+read or write them with instructions; they are read and written
+automatically by the processor using special hardware.
+The purpose of cache is to speed up LOOPS, i.e. routines that
+are executed cyclically many times. I should point out that on the 68020 and 68030
+the INSTRUCTION cache is 256 bytes, while on the 68040 it is 4096 bytes.
+On the 68060, I believe it is 8192, and in the future, who knows...
+Well, imagine this loop:
+
+...
+MOVEQ    #100,d0
+Loop1:
+move.w    LABEL1(PC),d2
+add.w    d3,d2
+....
+other instructions
+....
+DBRA    d0,loop1
+...
+
+Even by increasing the processor speed, this loop requires
+reading the instructions between the label ‘loop1:’ and ‘DBRA d0,loop1’ every
+cycle, and reading from RAM, especially if it is CHIP RAM, is very slow.
+Motorola designers therefore came up with this trick: ‘What if
+we automatically put the last 256 bytes that
+have been executed into the cache memory? We would then have a situation where, when a loop smaller than
+256 bytes occurs, all the instructions in the loop are in the CACHE and
+the processor can read the remaining times from the fast CACHE memory
+instead of from RAM!’. This is more or less how the Instruction CACHE works.
+The first loop would be read from the RAM only the first time, then,
+once the DBRA is reached, the processor “realises” that Loop1: is close enough
+to always be contained in the CACHE, and the remaining 99 times
+the instruction reading time is significantly reduced as it is
+executed from the CACHE instead of the CHIP/FAST RAM.
+
+You may ask: but then what errors can occur?????
+The most common is when someone has ‘timed’ certain routines
+based on the time it takes the 68000 base to perform a certain number of
+‘empty’ loops (now you end up with a printout to throw away).
+Let's see how the “clever ones” managed to “waste time” waiting,
+for example, for the disk drive heads to move, or to
+time a piece of music, or something else:
+
+....
+MOVE.W    #2500,d0
+Wait time:
+dbra    d0,Wait time
+...
+
+These examples of clumsy and approximate programming are,
+unfortunately, very common in track loaders and routines that
+play music. The ‘music.s’ routine in the course originally had
+a couple of these ‘empty loops’, which I promptly
+replaced with reliable ‘time-wasting’ routines, which we will now look at.
+If you have any replay routines for noisetracker/protracker, you will almost
+certainly find stupid loops of this type, which cause
+the loss of some notes when listening to the tortured music.
+A note: even in Gerardo Proia's course listings there are
+stupid loops of this type, I hope you haven't taken them as an example!
+Look for these cursed loops in the listings you've found around,
+and if you find them, throw away those crappy sources or replace those
+parts with routines that use CIA or VBLANK for timing.
+The principle of operation of an empty loop is that the processor
+must read, in this case 2500 times, the DBRA instruction from memory,
+subtract #1 from d0 and jump back to “Wait:”.
+On a computer with cache enabled, it can be read up to 50,000 times,
+but, having ended up in CACHE, the DBRA will be executed in a fraction of a
+second anyway, so the drive does not read the tracks, and the music
+‘cuts’ the notes. Moreover, even the 68010, in fact, has a
+small 3-word CACHE to speed up small DBRA loops like this one,
+so these loops only ‘work’ on 68000 at 7Mhz.
+Since the MAI course does not teach how to time with empty loops,
+I hope that no one will start doing such *BULLSHIT* on their own.
+In general, it can be said that you should NEVER take the
+execution speed of the 680x0 CPU as a reference, since
+it varies from processor to processor, and even depending on what
+type of memory is being read.
+ The only certainties, from a timing point of view, are THE VBLANK VIDEO REFRESH, which in PAL standard
+will always be executed 50 times per second, and the CIA timers, which are the same
+chip for all Amigas, so 1 millisecond is the same on an
+A500 as on an A4000. Be careful not to rely on the speed of the
+blitter, because it varies depending on the computer's processor
+
+Here's how to time trackloaders, signals for external peripherals
+or robot arms connected to the parallel port:
+
+First, let's see how to wait for a few ‘raster lines’ with VBLANK:
+
+LEA    $DFF000,A5        ; Custom register base in a5
+PerdiTempo:
+MOVE.w    #LINEE-1,D1    ; NUMBER OF LINES to WAIT (304=1 frame)
+VBWAITY:
+MOVE.B    6(A5),D0    ; $dff006, VHPOSR.
+WBLAN1:
+CMP.B    6(A5),D0    ; VHPOSR
+BEQ.S    WBLAN1
+WBLAN2:
+DBRA    D1,VBWAITY
+
+If you are not using the CIA timers for other routines, then you could
+use them, although it is best to touch them as little as possible, since they are used by
+the operating system. In lesson 11 you will find sources on the subject.
+When using CIA timers, bear in mind that the operating system also
+uses some of them for certain purposes: (it is better to use CIAB!)
+
+CIAA, timer A    Used for interfacing with the keyboard
+
+CIAA, timer B    Used by exec for task exchange, etc.
+
+CIAA, TOD        50/60 Hz timer used by Timer.device
+
+* CIAB, timer A    Not used, available for programs
+
+* CIAB, timer B    Not used, available for programs
+
+CIAB, TOD        Used by graphics.library to track
+the positions of the electronic brush.
+
+If you need to use timers that are also used by the operating system, only do so
+if you have disabled multitasking and system interrupts, i.e. if you have
+taken complete control of the system. However, it is always more
+dangerous to use the CIA than the vblank, because when we exit our
+production, if we have messed up a timer, who knows what could happen.
+
+- - - -
+
+In addition to the problem of timing loops, there is also another problem caused
+by another programming flaw, which, fortunately, has almost disappeared nowadays.
+This is the legendary and mysterious “SELF-MODIFYING” code: this type of code is called self-modifying
+because it modifies itself.
+In fact, it is possible to create “creatures” that, in addition to modifying data, also modify their own instructions during execution. Unfortunately, this type of programming has been used since ancient times, probably because it allows the creation of “creatures” that, in addition to modifying data, also modify their own instructions during execution. In fact, it is possible to create
+“creatures” that, in addition to modifying data, also modify their own
+instructions during execution.
+Unfortunately, this type of programming has been used since ancient times,
+probably because it seemed like a way to write faster or
+more powerful. In reality, what is done with self-modifying code
+can be rewritten with 100% normal code and, sometimes, you can
+gain speed. So forget about writing code of this 
+type, unless it is for experimental purposes, because such code does not
+work with the 68020/30/40/60 CACHE active. Anyone with an A1200 is
+certainly aware of how many games and demos don't work
+just because of the caches! In fact, I believe that most
+errors in old software are of this type. To recognise a game
+or demo that has self-modifying code, just try if it works
+by removing the caches (without loading old kicks), then try again with the
+caches enabled. If it still doesn't work, it's obvious that only
+the active caches are causing the problem, and caches cause only two types
+of errors: the cancellation of DBRA delay cycles, which we have
+already seen, and those due to self-modifying code.
+Here is how a listing containing self-modifying code might look:
+
+...
+divu.w    #3,d0
+MYLABEL:
+moveq    #0,d0
+...
+
+This is assembled in memory as follows:
+
+...
+dc.l    $80FC0003    ; DIVU.W #$0003,D0
+MYLABEL:
+dc.w    $7000        ; MOVEQ     #$00,D0
+...
+
+So far, we have modified data in memory, in the copperlists, we have
+put values in the custom registers $dffXXX, but we have never acted INSIDE
+an instruction!!! This is because it is INCOMPATIBLE.
+(Actually, we modified a JMP at the end of an interrupt in the listing
+on loading from DOS in Lesson 11.txt, but that is the only ‘useful’ case!).
+Imagine that, further on in the listing, there is this instruction:
+
+...
+move.w    #5,MYLABEL-2
+...
+
+What happens? The word before the label MYLABEL is $0003 of
+DIVU #3,d0, which becomes $0005, so DIVU #3,d0 becomes DIVU #5,d0!!!
+In the same way, all other instructions can be modified. Alternatively
+, you can write:
+
+...
+divu.w    #3,d0
+MYLABEL:    EQU    *-2
+moveq    #0,d0
+...
+
+Now, to modify the DIVU number, all you need is MOVE.W #xxxx,MYLABEL, because
+EQU *-2 makes MYLABEL correspond to the label -2.
+The asterisk can be translated as “this point”, so “*-2” becomes
+“this point minus 2 bytes”. Now suppose we have this situation in a
+list with self-modifying code:
+
+...
+divu.w    #0,d0    ; to be modified to the desired number
+MYLABEL:
+EQU    *-2
+...
+
+Imagine what happens when ICACHE is active: the instruction goes into the cache
+as it is in memory, i.e. DIVU.W #0,d0, probably
+before it is modified, so when the following is executed:
+
+move.w    #5,MYLABEL
+
+the DIVU instruction is modified in RAM, but not in CACHE! In fact, this
+instruction will be executed as it was, i.e. DIVU.W #0,d0, which causes
+a nice system crash due to DIVISION BY ZERO!
+
+divu.w    #0,d0    ; the value ‘0’ will be replaced before this
+MYLABEL:        ; instruction is executed, but with ICACHE active
+EQU    *-2    ; this instruction will be read from the cache as it was
+; originally, and a nice DIVISION BY ZERO guru
+; will stop our fun.
+Similarly, a:
+
+JMP    0    ; the address will be put at this point by a move,
+MYLABEL:        ; but with the cache we will get a nice JUMP to 0!! (guru!!)
+EQU    *-6    ; (EQU *-4, EQU *-8, depending on the size
+; of the address or the stupid ‘modification’.
+
+
+In some cases, instead of a real GURU, there are problems
+with routine malfunctions, for example a loop of this type:
+
+...
+MOVE.W    #100,d0
+Loop1:
+...
+divu.w    #2,d2
+MYLABEL:
+EQU    *-2
+....
+addq.w    #1,MYLABEL
+DBRA    d0,loop1
+...
+
+There is no system crash, but while the divu.w should change in each cycle
+to DIVU.W #3,d2, DIVU.W #4,d2, etc., it instead remains
+always DIVU.W #2,d2 (being read from the CACHE and not from RAM).
+If, for example, this was a routine that moved a 3D solid, you can be sure
+that the solid will remain stationary or will not even be displayed.
+
+- HOW WE SHOULD HAVE DONE IT:
+
+The same thing could have been done by dividing by a LABEL or a
+REGISTER instead of by an absolute value (divu.w LABEL(PC),d2 instead of
+divu.w #xxx,d2), and then the add could have been done on the label, maintaining
+compatibility with the cache and without losing speed.
+So DON'T BE STUPID: writing self-modifying code is not something to
+brag about, because it is neither difficult nor useful, but rather incompatible.
+Please do not use old listings that have self-modifying code.
+However, there is a way, other than disabling the cache, to
+make self-modifying code work: you can RESET, i.e.
+CLEAR the cache with a special instruction, which will
+delete the old instruction from the CACHE and the processor will have to
+read the modified one from RAM.
+If you want to write ‘bacterial’ or artificial intelligence programs, or
+who knows what kind, that self-modify, just put a
+‘BSR.w CACHECLR’ before executing the modified instruction.
+On kickstart 2.0+, there is a special ExecLib function:
+
+ClearMyCache:
+movem.l    d0-d7/a0-a6,-(SP)
+move.l    4.w,a6
+MOVE.W    $14(A6),D0    ; lib version
+CMP.W    #37,D0        ; is it V37+? (kick 2.0+)
+blo.s    nocaches    ; If kick1.3, the problem is that it can't
+; even know if it's a 68040, so
+; it's risky.. and hopefully some
+; idiot who has a 68020+ on a kick1.3
+; also has the caches disabled!
+jsr    -$27c(a6)    ; cache cleaR U (for load, modifications, etc.)
+nocaches:
+movem.l    (sp)+,d0-d7/a0-a6
+rts
+
+In startup2.s there is this subroutine, which can be executed.
+Note: if we are on kick 1.3 it exits without doing the JSR, so there are no
+problems on old computers.
+Execute this routine even after loading data into memory with a trackloader,
+ or after making other changes to areas of
+memory containing code. Be careful that sometimes a program
+with self-modifying code may work by chance on 68020/68030,
+because there are more than 256 bytes between the modified instruction
+and the one that modifies it, so the instruction is read from RAM, but
+on the A4000 the cache is 4096 bytes, and who knows how much it
+can be increased on future processors! So NEVER fall into self-modification, as
+some demo coders for the A1200 continue to do, only to
+end up with their creations not working on the A4000.
+
+In 68030 and 68040 processors there is also a DATA CACHE, which does the same
+thing as the INSTRUCTION CACHE, but on data (such as tables), but only if
+such data is in FAST RAM. On CHIP RAM the DATA cache does not work.
+DATA CACHE errors are less frequent, as it is difficult for
+tables, for example, to be changed. However, to be on the safe side,
+ you can do a CACHECLR, also because the 68040 has copyback,
+a ‘enhancement’ of the DATA CACHE that is really nasty, so much so that
+some programs compiled in C language do not even work.
+For this reason, every now and then, do a ‘ClearMyCache’, which does no harm.
+
+-    -    -    -    -    -    -	-
+
+11) Another incompatibility problem I encountered is that of
+interrupts on the A4000. I noticed that many demos, even AGA ones, which worked
+very well on the A1200, played music at double speed on the A4000,
+were jerky and sometimes crashed the system. I realised
+that this was due to an oversight, which, like all
+oversights, becomes noticeable when the code runs on the A4000.
+Take a look at this level 3 interrupt (the $6c, to be clear):
+
+INTERRUPT:
+MOVEM.L    D0-D7/A0-A6,-(SP)
+BSR.W    ROUTINE1
+BSR.W    ROUTINE2
+BSR.W    ROUTINE3
+BSR.W    ROUTINE4
+MOVEM.L    (SP)+,D0-D7/A0-A6
+NOINT:
+move.w    #$20,$dff09c    ; INTREQ - vertb (bit 5 - $20 = %100000)
+rte
+
+What's wrong? Note that it has been placed correctly in VBR+$6c, so
+it is executed regularly.
+The solution is:    THE BIT TEST IN INTREQR IS MISSING!!!!
+Here's how it should be modified:
+
+INTERRUPT:
+btst.b    #5,$dff01f	; INTREQR - vertb int? (bit5)
+beq.s    NOINT        ; not a real VERTB interrupt
+MOVEM.L    D0-D7/A0-A6,-(SP)
+BSR.W    ROUTINE1
+BSR.W    ROUTINE2
+BSR.W    ROUTINE3
+BSR.W    ROUTINE4
+MOVEM.L    (SP)+,D0-D7/A0-A6
+NOINT:
+move.w    #$20,$dff09c    ; INTREQ - vertb (bit 5 - $20 = %100000)
+rte
+
+Actually, very often on a500/a1200 the interrupt works fine even
+without checking the bit in INTREQR, but on A4000 it must ALWAYS be set,
+otherwise the interrupt is executed a billion times too many.
+So NEVER, EVER forget to test the bits that generated an
+interrupt in INTREQR! As we have already seen, for each interrupt level
+there is a bit in $dff01f (INTREQR) to test.
+
+A reminder:
+
+INT $64    LEVEL1    bits 0 (soft) ,1 (dskblk) ,2 (serial port tbe)
+
+INT $68    LEVEL2    bit 3 (ports)
+
+INT $6c    LEVEL3    bits 4 (copper) ,5 (verticalblank) ,6 (blitter)
+
+INT $70    LEVEL4    bits 7 (aud0) ,8 (aud1) ,9 (aud2) ,10 (aud3)
+
+INT $74    LEVEL5    bits 11 (serial port rbf) ,12 (disksyn)
+
+INT $78    LEVEL6    bit 13 (external int)
+
+Remember to always do btst at the beginning of the interrupt, and if
+the bit is not set (beq), exit without executing the routines.
+Upon exit, always act on $dff09c to remove the interrupt request
+; in practice, we ‘mark’ that the interrupt has been executed.
+Be careful not to make the mistake that I made in the past,
+of doing, for example, a ‘BTST #11,$dff01f’
+. In this case, you are actually testing bit 11-8, i.e. bit 3 of $dff01f. You will remember the
+waitblit issue, where writing btst ‘#6,$dff002’ is the same as writing
+‘btst #14,$dff002’
+. Some assemblers also assemble
+BTST instructions on addresses with a bit number greater than 7, even though
+they are useless since the number of such bits is scaled by 8.
+Other assemblers, such as Devpac 3, give an error and do not allow
+such useless BTSTs to be assembled.b. (NOTE the .BYTE! = from 0 to 7 max!)
+
+-    -    -    -    -    -    -    -    -
+
+- WOE TO THOSE WHO MAKE ONE OF THE ERRORS DESCRIBED IN THE LESSON!!!!!!!!!!!!

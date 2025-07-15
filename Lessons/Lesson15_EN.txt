@@ -1,0 +1,1510 @@
+
+*************************************************************
+*                LESSON 15: AGA                 *
+*************************************************************
+
+This is the eagerly awaited lesson on the new AGA chipset, found in the A1200 and
+the A4000. When the Amiga 4000 came out at the end of 1992, a friend of mine
+bought it right away, and I basically went to live at his house, so much so that I used
+it more than he did. In those first few months, I disassembled the operating system's copperlists
+and entire pieces of KickStart, because the defunct Commodore didn't give
+anyone any documentation on AGA. Strange, but true. Anyway, through trial and error
+I began to understand something, but I also lacked the AGA iffconverter, and I had to
+‘convert’ the figures from IFF to RAW by hand. The only program that was able
+to display AGA screens at that time was the new DeLuxePaint, so
+I loaded a 256-colour image, then in multitasking I loaded the asmone and
+searched the memory for the .raw image and the copperlist to save them.
+Then I reloaded the raw, pointed it to the copperlist and
+crossed my fingers. However, I didn't manage to be the first to make an AGA demo.
+ The first was made by ABYSS, a small demo that displayed the
+fateful 256 colours. Nothing exceptional, but they were the first.
+More or less, however, I was at the same point as Abyss in discovering AGA,
+and I wasn't discouraged. It was now February 1993, and I was almost ready for an intro
+with a 640*256 logo in 256 colours that waved with the fluidity of 1/4 of
+pixel (using the new BPLCON1), when the first REAL AGA demo came out, namely
+PLANET GROOVE by TEAM HOI.
+I immediately called their BBS in Holland, leaving a message for the coder, Rhino.
+From that day on, a (costly) exchange of messages began between us, where we
+shared our latest discoveries and the function of the last unknown bits.
+Shortly before, ZOOL AGA had been released, which in reality had nothing AGA about it,
+so the only decent AGHIZZATO code was Rhino's demo, who
+also programmed an AGA Iffconverter (the first to be released), which I used with great 
+pleasure.
+Since there was no documentation on the 1200 hardware, and
+consequently no AGA demos or games were available, I put together the information
+I had discovered with Rhino in an AGADOC.TXT file, but when I was almost
+ready to distribute it on the BBS, a small text file called hard1200.txt was released by
+Yragael, a French coder. This text contained some things I didn't know
+, but it was missing a lot of things that I knew. I called a few BBSes in
+France and managed to find him, and I learned that he was also programming an
+iffconverter for the AGA, which also saved 64-pixel-wide sprites.
+That historic IffConverter is included in the course utility disc.
+I put all the information together and wrote a great text, filled with
+information about the 68020. This text circulated on BBSs and also at
+parties. In theory, I was ready to make an AGA demo, and in fact I made one for
+the SMAU in Milan in October 1993, but in reality it was a
+‘very technical’ slideshow rather than a demo (I programmed it in two weeks, I always do
+things at the last minute!). However, there were 256-colour figures in
+interlaced hires, 24-bit AGA fades (like in the cinema!), as well as a figure
+in HAM8 (I think it was the first figure in HAM8 to be displayed in a demo!!!), and
+a 24-bit “cross” fade effect that was very successful.
+Nowadays, there are lots of AGA demos coming out, and games like SUPER STARDUST and BRIAN
+THE LION are finally taking advantage of the new possibilities.
+Despite having programmed the first Italian AGA demo, I then “stopped”
+and didn't do anything else, so much so that the last demo I did was for the A500.
+Why? I don't know.
+Anyway, with my AGADOC.TXT and some advice, I contributed to the
+programming of the second Italian AGA demo, IT CAN'T BE DONE,
+programmed by EXECUTOR/RAM JAM, which has various texture mapping.
+While Executor included a thank you in his demo for the help
+I gave him, very few of the first foreign AGA demos contain greetings
+for me, but I think many used my precious (at least in those days)
+agadoc.
+Some time later, Commodore began sending the AGA specifications manual
+to software houses, so someone “stole” it and
+transcribed it (it was COMBAT 18), and as a result, my agadoc became less
+“exclusive”.
+This was the story of the discovery of AGA, where I can consider myself among the
+first 10 pioneers, although I still wonder if it was worth it, given that
+they all passed me by a few months later after reading the
+beautifully prepared documentation.
+Here is a translation into Italian of my first AGADOC, since I
+wrote it in English.
+First of all, it should be noted that to view AGA images, it is not necessary to
+use 68020 instructions; you could make an AGA demo with all
+basic 68000 instructions, since the differences are in COPPER. This means that
+you can also program with TRASH'M'ONE, which does not support 68020 instructions,
+but obviously if you use them, it is better to switch to TFA ASMONE 1.25 on the
+Utility disk: among other things, it has online help for AGA registers, as in
+TRASH'M'ONE, except that instead of using ‘=C’ you need to use ‘=R’. For example,
+ to see the $dff106 (BPLCON3) register, just type ‘=R 106’.
+We have already seen how to ‘disable’ the aga:
+
+move.w    #0,$1fc(a5)        ; FMODE - disables 64/32 bit fetch.
+move.w    #$c00,$106(a5)        ; BPLCON3 - disables 24-bit palette
+move.w    #$11,$10c(a5)        ; BPLCON4 - normal palette.
+
+Well, now we'll have to see how to enable everything!
+Let's start with a summary of the new possibilities, just to whet your appetite
+to learn how to use them: instead of being 12 bits, i.e. 4096
+colours, it has been increased to 24 bits, i.e. 16 million.
+Whereas before you could choose a number from 0 to 15 for each RGB component,
+now you can choose a number between 0 and 255.
+So: 16*16*16=4096 possible colours in the old OCS and ECS mode, while
+256*256*256=16777216 colours to choose from in AGA.
+For example, previously you could create a maximum of 16 shades of grey, i.e. you
+entered $0000, $0111, $0222, $0333 etc. in the colour registers, whereas now you
+can create 256 shades of grey.
+The number of available bitplanes has also increased, and there can now be
+8, i.e. 256 colours. (8 bits = 256 possibilities).
+There is also a special HAM8 mode, with 262,144 “theoretical” colours on the screen,
+but with some limitations (slight “smudging”), similar to normal HAM6.
+HAM8 stands for HAM with 8 bitplanes, while HAM6 is normal HAM with 6 bitplanes.
+The new Dual Playfield can have up to 4 bitplanes per playfield (16 colours
+on one playfield and 16 on the other), and the 16-colour bank in the 256-colour palette is
+independently selectable for each playfield.
+As if that weren't enough, the sprites have also “evolved”.
+Remember the 16-pixel width limit? Well, the 8 sprites can now
+be 32 or 64 pixels wide each, and you can choose whether they should
+be in lowres or HIRES, regardless of the screen resolution.
+For example, you can display 8 sprites in hires, 64 pixels wide, on
+a lowres screen with 256 colours. Attached sprites are always available.
+Even and odd sprites can use their own independent bank of 16
+colours from the total palette of 256. However, an unattached sprite always has
+a maximum of 3 colours + background and an attached sprite has 15 colours + background.
+Another new feature is that sprites can also appear at the edges,
+i.e. outside the DIWSTART-DIWSTOP window, whereas normally they could not.
+To enable this, simply set bit 1 of $dff106 (BPLCON3).
+As if that weren't enough, horizontal positioning has been increased to 32ns,
+i.e. instead of making 320 ‘steps’ to move horizontally across the screen,
+they can now make smaller steps, even a quarter of a pixel, as if the
+screen were 1280*256, and 1 pixel at a time.
+This allows sprites to wave like no other SUPER VGA card on a
+MS-DOS PC can do.
+The possibility of extremely smooth scrolling in 1/4 pixel steps has also been
+implemented for bitplanes, which are ‘extra’ bits in $dff102, in the
+good old BPLCON1. It is possible to create dozens of parallax levels with the
+most incredible scrolling in the history of computers.
+The new $dff102, in addition to allowing scrolling in 1/4 pixel increments at a
+time, can now scroll up to a maximum of 64 pixels, instead of 16.
+Although of lesser interest to us, it is already possible from the ECS to manage
+31khz screens, i.e. for multisync monitors. With the AGA chipset, it is possible to
+"deinterlace‘ 15Khz screens, including bitplanes and sprites, for
+SUPERVGA monitors. However, demos and games are usually in PAL!
+All these new features, however, do not interfere with
+compatibility with the old chipset if they are not ’activated", as you will have verified by running the
+OCS/ECS sources from the previous lessons.
+In particular, you need to reset $dff1fc (FMODE) and bit 0 of BPLCON0.
+We have always kept this bit reset in previous lessons.
+Setting it enables other bits in BPLCON3 ($dff106), including
+BRDRSPRT, which controls sprites outside the ‘edges’.
+To detect collisions with bitplanes 7 and 8, which are not supported
+by CLXCON, there is CLXCON2 ($dff10e), which is reset by writing to the old 
+CLXCON, allowing correct collision detection in OCS games.
+It is not known at this time whether any Amigas released in the future
+will support AGA or only ECS. It has been said that they may only support
+OCS/ECS in emulation and have a different graphics system.
+However, due to the problems encountered in selling Commodore, etc., the
+delay has led to the release of these new models being postponed, so
+AGA will be around for many years, and this will probably lead to it being supported
+in any new Amiga machines.
+However, there is also the CD32, which supports AGA.
+If you want to program games for the CD32, bear in mind that it has two joystick ports that
+support 11 “buttons”, so you will need to adapt the code to this joystick.
+Other differences of the CD32 are 1Kb of flash RAM, where you can save
+the HIGH SCORE or game passwords, as well as the AKIKO chip, which should
+be able to convert graphics from Chunky to Planar, but it seems that it is not
+very fast.
+Converting from Chunky (video mode like VGA) to Amiga Bitplanes is needed for
+texture mapping graphics, see DOOM on PC MSDOS.
+Later on, we may make our own DOOM.
+
+First, we need to see if the computer has AGA. We have already seen
+the routine for detecting it:
+
+LEA    $DFF000,A5
+MOVE.W    $7C(A5),D0    ; DeniseID (or LisaID AGA)
+MOVEQ    #100,D7        ; Check 100 times (to be on the safe side, given
+; that the old Denise gives random values)
+DENLOOP:
+MOVE.W    $7C(A5),D1    ; Denise ID (or LisaID AGA)
+CMP.B    d0,d1        ; Same value?
+BNE.S    NOTAGA		; Not the same value: Denise OCS!
+DBRA    D7,DENLOOP
+BTST.L    #2,d0        ; BIT 2 reset=AGA. Is AGA present?
+BNE.S    NOTAGA        ; no...
+ST.B    AGA         ; yes... let's set the ‘AGA’ flag then.
+NOTAGA:                ; not AGA... or OCS/ECS or the future AAA...
+...
+
+*****************************************************************************
+*            THE NEW 24-BIT PALETTE             *
+*****************************************************************************
+
+Ok, now let's see in practice how to display 128 or 256 colours, how to make
+gradients with ‘24-bit’ copper, etc.
+First of all, it is important to understand how the new palette works, because
+then the rest is just a matter of setting a few bits here and there to
+add bitplanes or enlarge sprites.
+We said that for each of the three components RED, GREEN and BLUE, you can
+give a value from 0 to 255 instead of 0 to 15.
+If before, to set yellow, you had to put $F for red, $F for green and 0
+for blue, now you need $FF for red, $ff for green and $00 for blue.
+So far, so good. If before we had to put the value $0ff0 in $dff180 for
+yellow ($0RGB), where do we put $00FFFF00 now?
+In the register, which is a word, there is no room for $00ffff00, i.e. $00RRGGBB.
+The designers found a way to maintain compatibility with the OCS
+and to fit 256 colours at 24 bits into the old 32 12-bit registers!
+Let's see how they solved the first problem, i.e. how to fit
+1 colour $RRGGBB, for example, into COLOR0 ($dff180).
+Let's consider this: if we had the 12-bit colour ‘$f32’, what
+would be the 24-bit equivalent? Of course, $f03020. Now, you can see
+that the 4-bit colours normally used in OCS/ECS are the upper 4 bits, or
+in other words, the high nibble of the 8-bit AGA colours.
+And that's exactly how it is! If we reset the AGA registers and put a value in COLOR0
+or another colour register, we change the 4 high bits of the 3
+RGB components, leaving the 4 low bits at zero, so the resulting colour
+is the same as that of an OCS. You may have guessed that to set a 24-bit colour
+,
+ you need to put the high bits ($RxGxBx) separately in $dff180, then
+“swap” something and put the low bits ($xRxGxB) in $dff180.
+Let's take an example: we have the 24-bit colour $437efa, i.e. RED = $43,
+GREEN = $7e, BLUE = $fa. Here's how we do it in copperlist:
+
+dc.w    $180,$47f    ; put the high nibbles
+‘swap’
+dc.w    $180,$3ea    ; put the low nibbles
+
+For now, we have set ‘swap’; let's see what we need to do to swap
+the function of $dff180 from ‘lower nibble receiver’ to ‘upper nibble receiver
+’ of the 24-bit colour.
+To select the upper bits, we have set the value $c00 in BPLCON3 ($dff106)
+because in ECS emulation, the colour registers always act as receivers of
+high bits of the colour. In theory, we could also put $000 in $dff106,
+because setting bits 10 and 11 is only necessary in DUAL PLAYFIELD mode to reset
+some things that we will see later.
+It is therefore clear that when ‘a certain bit’ of $dff106 is reset, the
+colour registers receive the high bits, while when it is set, they receive the
+low bits.
+It may seem convoluted to split the RGB values in this way, but since the
+palette for the figures is saved by the IFF converter ready-made, there is no need to
+complain.
+In addition, you can create routines that do copperlist or ‘split’
+colours in this way.
+The bit in $dff106 that is responsible for ‘swapping’ the function of the colour registers
+is the ninth, called LOCT. Since when we write to the high nibbles (MSB), the
+low ones (LSB) are reset for compatibility with OCS/ECS, when you want to
+set a 24-bit colour, you must first load the high bits, then the low bits.
+
+
+Here is a diagram of the colour %RRRRrrrrGGGGggggBBBBbbbb (binary), where the
+capital letters are the high bits of the hue, and the lowercase letters are the low bits.
+
+BIT# 11,10, 9, 8 7, 6, 5, 4 3, 2, 1, 0
+---- ----------- ----------- -----------
+LOCT=0 R7 R6 R5 R4 G7 G6 G5 G4 B7 B6 B5 B4
+LOCT=1 r3 r2 r1 r0 g3 g2 g1 g0 b3 b2 b1 b0
+
+R = RED G = GREEN B = BLUE
+
+
+It can be said that AGA colour registers have two sides, and you can switch between them
+by setting or clearing bit 9 of $dff106.
+Bit 9 set produces the value $200 (%0000001000000000). So you can
+replace ‘swap’ with $106,$200:
+
+
+dc.w    $106,$000    ; I select the high nibbles
+dc.w    $180,$47f    ; I set the high nibbles
+dc.w    $106,$200    ; I select the low nibbles
+dc.w    $180,$3ea    ; I set the low nibbles
+
+
+Many also set bits 10 and 11, which, as we have said, are only used for the
+dual playfield, but they do no harm:
+
+
+dc.w    $106,$c00    ; Select the high nibbles
+dc.w    $180,$47f    ; set the high nibbles
+dc.w    $106,$e00    ; Select the low nibbles
+dc.w    $180,$3ea    ; set the low nibbles
+
+
+So $c00 to select the high bits, then $e00 to select the low bits.
+Of course, if you need to set 10 colours, don't put
+BPLCON3 between each colour, just do:
+
+
+dc.w    $106,$c00	; Select the high nibbles
+
+dc.w    $180,$47f    ; set the high nibbles of all colours
+dc.w    $182,$123
+dc.w    $184,$456
+dc.w    $186,$789
+dc.w    $188,$abc
+dc.w    $18a,$def
+
+dc.w    $106,$e00    ; Select the low nibbles
+
+dc.w    $180,$3ea    ; Set the low nibbles of all colours
+dc.w    $182,$111
+dc.w    $184,$444
+dc.w    $186,$888
+dc.w    $188,$434
+dc.w    $18a,$abc
+
+
+Now it's time to check if all this works in practice. let's try
+to make some ‘bars’ like in lesson 3, but AGA: see Lesson 15a.s
+
+You will notice that it takes a loooong time to write the copperlist in AGA. So for
+certain nuances or repetitive things, it is quicker to create a routine.
+In particular, see Lesson 15b.s to create nuances.
+
+*****************************************************************************
+*         THE NEW 128 AND 256 COLOUR MODES             *
+*****************************************************************************
+
+Now let's see how it is possible to ‘load’ 256 colours if there are only 32 colour registers
+.
+In fact, we know that each colour register has two sides, one showing the low nibbles
+and the other showing the high nibbles, but we can only make a 32-colour image at most,
+ even if these colours are chosen from a 24-bit palette.
+Well, there is another trick, also in $dff106.
+There should be 256 colour registers, but there are only 32, i.e. one eighth of
+those we need. If we reset $dff106 to access the first 32 colours,
+we can guess that there must be a bit which, when set, gives access to the
+colour registers from 33 to 64, always writing to $dff180-$dff1be.
+In fact, there are 8 banks with 32 colour registers each, and you have to decide
+(with bits 13, 14 and 15 of $dff106) which of the 8 banks to access by writing
+in the colour registers:
+
+------- bit --- $dff106 (BPLCON3) ------------------------------------
+
+15    BANK2     | These 3 bits select one of the 8 banks
+14    BANK1     | of registers to access the 256 AGA colours
+13    BANK0     |
+----------------------------------------------------------------------
+
+The ‘bank’ selection works in a similar way to the bitplane selection
+in BPLCON0 ($dff100). These 3 bits are read ‘together’ and, depending on
+the number they contain, select the corresponding bank:
+
+value of the 3 bits - corresponding colour bank - value of $dff106
+
+000        COLOUR 00 - COLOUR 31        $c00 / $e00
+001        COLOUR 32 - COLOUR 63        $2c00 / $2e00
+010        COLOUR 64 - COLOUR 95        $4c00 / $4e00
+011        COLOUR 96 - COLOUR 127        $6c00 / $6e00
+100        COLOUR 128 - COLOUR 159        $8c00 / $8e00
+101		COLOUR 160 - COLOUR 191        $ac00 / $ae00
+110        COLOUR 192 - COLOUR 223        $cc00 / $ce00
+111        COLOUR 224 - COLOUR 255        $ec00 / $ee00
+
+
+This table explains how to reuse the old colour registers from $180 to $1be
+to access the 256 colours. On the right are the values that
+bits 13, 14, and 15 of $dff106 (BPLCON3) must take to access the various banks.
+
+Let's take an example: If you want to change colour 33, you need to do the following:
+
+
+DC.W    $106,$2C00    ; SELECT PALETTE 1 (32-63), HIGH NIBBLES
+dc.w    $182,$47f    ; set the high nibbles
+DC.W    $106,$2E00    ; SELECT PALETTE 1 (32-63), LOWER NIBBLES
+dc.w    $182,$3ea    ; set the lower nibbles
+
+
+In fact, you must choose the bank that goes from colour 32 to 63, and
+therefore writing in $dff180 will mean writing in colour 32;
+writing in $dff182 will mean writing in colour 33, and so on, up to
+$dff1be, which would normally be colour 31, but in this case
+becomes colour 63, i.e. 31+32.
+If we had chosen the bank ranging from colour 64 to 95, $dff182 would
+have been colour 65, and so on.
+
+Here is the list of values for $dff106 ready to be put in the copperlist, which may
+be useful for ‘cut and paste’ operations with Amiga+b+c+i:
+
+
+DC.W    $106,$c00    ; SELECT PALETTE 0 (0-31), HIGH NIBBLES
+DC.W    $106,$e00    ; SELECT PALETTE 0 (0-31), LOWER NIBBLES
+DC.W    $106,$2C00    ; SELECT PALETTE 1 (32-63), UPPER NIBBLES
+DC.W    $106,$2E00    ; SELECT PALETTE 1 (32-63), LOW NIBBLE
+DC.W    $106,$4C00    ; SELECT PALETTE 2 (64-95), HIGH NIBBLE
+DC.W    $106,$4E00	; SELECT PALETTE 2 (64-95), LOW NIBBLE
+DC.W    $106,$6C00    ; SELECT PALETTE 3 (96-127), HIGH NIBBLE
+DC.W    $106,$6E00	; SELECT PALETTE 3 (96-127), LOW NIBBLE
+DC.W    $106,$8C00    ; SELECT PALETTE 4 (128-159), HIGH NIBBLE
+DC.W	$106,$8E00    ; SELECT PALETTE 4 (128-159), LOW NIBBLE
+DC.W    $106,$AC00    ; SELECT PALETTE 5 (160-191), HIGH NIBBLE
+DC.W	$106,$AE00    ; SELECT PALETTE 5 (160-191), LOW NIBBLE
+DC.W    $106,$CC00    ; SELECT PALETTE 6 (192-223), HIGH NIBBLE
+DC.W    $106,$CE00	; SELECT PALETTE 6 (192-223), LOW NIBBLE
+DC.W    $106,$EC00    ; SELECT PALETTE 7 (224-255), HIGH NIBBLE
+DC.W    $106,$EE00	; SELECT PALETTE 7 (224-255), LOW NIBBLE
+
+
+Everything seems perfect. But one detail is missing! How do you choose
+8 bitplanes in BPLCON0? There is only room for 7 bitplanes.
+In fact, bits 12, 13 and 14 are available, which can range from %000 for
+zero bitplanes to %111 for 7 bitplanes, i.e. 128 colours. It would be necessary to
+have one more high bit in order to obtain %1000, i.e. 8.
+No problem, this bit has been assigned as the fourth bit of $dff100.
+To set 8 bitplanes, therefore, you need to reset bits 12, 13 and 14 and set
+the fourth, and that's it. For example:
+
+;5432109876543210
+dc.w	$100,%0000001000010001	; 8 low-resolution bitplanes (320*256)
+dc.w    $100,%1000001000010001    ; 8 high-resolution bitplanes (640*256)
+dc.w    $100,%011100100000001    ; 7 lowres bitplanes (320*256)
+
+Note that we always leave bit 9 set for genlock, and set
+bit 0, ECSENA, which enables special bits that we will see later.
+Note that you can also have 6 non-extra half-bright bitplanes, i.e.
+64 colours from which you can choose the palette normally, just choose 6
+bitplanes and set bit 9 (KillEHB) of BPLCON2 ($dff104). If this bit
+is not set, the old EHB is emulated, with 32 colours + 32 ‘darkened’ colours.
+
+Now, to verify what we have said, let's display a
+256-colour image in Lesson15c.s
+
+The picture is mine. I admit I was inspired by the style of games such as AGONY
+and SHADOW OF THE BEAST, nothing artistically innovative, but I think it
+works, doesn't it? Anyway, it serves the purpose of the listing well.
+You may have noticed that before the copperlist and the image there are:
+
+CNOP    0.8    ; align to 64 bits
+
+In reality, with FMODE ($dff1fc) set to zero, it is not ‘necessary’; you will see why later.
+
+As we saw for non-AGA figures, you can ‘attach’ the palette at
+the bottom of the figure, to be put in the copperlist with a routine.
+This routine is a little more complex, but not too much: Lesson15c2.s
+
+Now that we have that routine, it will be easier to understand how to get a
+24-bit fade by modifying the fade routine seen in Lesson 8.
+See it in Lesson15c3.s
+
+Now let's try to ‘optimise’ it in Lesson15c4.s
+
+Finally, let's do it in 100% ‘real time’: Lesson15c5.s
+
+Now you can try converting your image to 320*256 at 128 or 256 colours,
+as you prefer, using PicCon, IffConv or AgaConv on the utility disc.
+I strongly recommend that you read the PicCon instructions on the disc.
+
+*****************************************************************************
+*                FMODE                     *
+*****************************************************************************
+
+Were you able to view your AGA image?
+Well, if you tried to view an image in 640*256 hires, even if
+you included the correct RAW and PALETTE and set bit 15 of BPLCON0, you
+would get nothing but a black screen...
+This is because we left $dff1fc (FMODE) set to zero.
+This register controls the BURST, i.e. the way in which data is transferred
+from memory to the “video”.
+Normally, the transfer is 16-bit, but to display more
+“advanced” graphics, you need to set the transfer to 32-bit or 64-bit.
+If the transfer is 16-bit, what needs to be transferred must
+be at an even address, i.e. aligned to WORD (16 bits).
+In fact, you must not point a bitplane to an odd address!
+Now, if the burst is in 32-bit blocks, the data must be at an address
+aligned to 32 bits, i.e. longword! For example, an address such as $16dfc
+is a multiple of 4 (4*23423) and as such a multiple of 4 bytes of 8 bits, i.e.
+of 4*8=32 bits. In short, it is a 32-bit aligned address.
+To align data to 32-bit addresses, there is the ‘CNOP 0,4’ directive.
+While “EVEN”, i.e. ‘CNOP 0,2’, aligns to 2 bytes, i.e. 16 bits, cnoppare 0,4
+aligns to 4 bytes, i.e. 32 bits.
+If the burst is 64 bits, you need to put ‘CNOP 0.8’ before the copperlists,
+sprites and bitplanes to ensure 64-bit alignment.
+If the assembler were to cause problems and not align, the figure would appear
+‘sliced’, i.e. in vertical stripes, since the 32- or 64-bit blocks
+do not correspond to the beginning of the figure.
+To check if a label is aligned to 64 bits, assemble, then check
+the address of that label with the ‘M’ command, then divide the address
+by 8, and multiply the result by 8 again.
+If the original address returns, it means that it is a multiple of 8, and everything is
+OK. If it is different, it means that there is a remainder and it is not a multiple of 8.
+Then put ‘dc.w 0’ above the address and try to align it ‘by hand’.
+Of course, it would be good to always keep the burst (bandwidth) set to the
+maximum, i.e. 64 bits. This can be done by setting the value 3 in $dff1fc.
+However, you must be careful that if you want to widen the bitplanes,
+they must be widened in ‘blocks’ of 8 bytes at a time. For example, we have
+seen how it is convenient in certain cases to have a piece of bitplane ‘to the side’
+the video window, for example for scrolling and text scrolling with the
+blitter. In this case, we cannot add just 2 bytes, but 8.
+Another thing is that you should NEVER use Allocmem to find space in
+memory for the bitplanes, because it gives addresses aligned to 16 bits, which
+only by chance can also be aligned to 64 bits.
+Even in the first sources of the lesson, although it was not necessary,
+the alignment rule was followed:
+
+
+CNOP 0,8        ; align to 64-bit address
+sprite:
+incbin ‘agasprite1’
+
+CNOP 0,8        ; align to 64-bit address
+pic:
+incbin ‘AGAbitplanes’
+
+Let's take a closer look at the first two bits of the FMODE register ($dff1fc):
+
+bit 1    BPAGEM    | Bitplane Page Mode (double CAS)
+bit 0    BLP32	| 32-bit wide bitplane
+
+We said that if both bits are set to zero, the burst is ‘OCS/ECS emulation
+’, i.e. the transfer is 16-bit.
+If both are set, the mode is 64-bit.
+Let's look at the four cases in which the first two bits can be found:
+
+
+[x1]    %00    - Transfer of 2 bytes of bitplane data at a time (16 bits)
+Memory cycles: Normal CAS
+Bus width 16 bits
+Required: Bitplanes aligned to 16 bits
+
+[x2]    %01    - Transfer of 4 bytes of bitplane data at a time (32 bits)
+Memory cycles: Normal CAS
+Bus width 32 bits
+Required: Bitplanes aligned to 32 bits (Double)
+Module = Module -4
+
+[x2]    %10    - Data bitplane transfer of 4 bytes at a time (32bit)
+Memory cycles: DOUBLE CAS
+Bus width 16 bit
+Required: 32-bit aligned bitplanes (Double)
+Module = Module -4
+
+[x4]    %11	- Data bitplane transfer of 8 bytes at a time (64 bits)
+Memory cycles: DOUBLE CAS
+Bus width 32 bits
+Required: 64-bit aligned bitplanes (Quadruple)
+Module = Module -8
+
+
+I would say that it is fine to always use %11, i.e. $3. The only problem that may
+arise is a DMA tangle if the blitter and the
+processor (not equipped with FAST RAM) stumble upon the 64-bit river
+of the AGA chip's hypergalactic transfer. In case of such turbulence,
+you could opt for %01 or %10 if you see improvements.
+Let's now look at the minimum bandwidth required for the various AGA graphics resolutions
+(although we will always try to set it to 64-bit!).
+
+As already seen, for 320*256 lowres at 8 bitplanes, 16-bit ($1fc,0) is sufficient:
+
+LORES (320x256),     For 64, 128, 256 colours or HAM8, 16 bits are sufficient
+
+HIRES (640x245),     For 32, 64, 128, 256 colours or HAM8, 32 bits are required
+
+SUPERHIRES (1280x200)    For 2, 4 colours, 16 bits are sufficient
+For 8, 16 colours, 32 bits are required
+For 32, 64, 128, 256, HAM8, 64 bits are required
+
+In the meantime, we could start by setting BURST to maximum in the display
+of our quiet figure in lowres. Even if nothing visible happens,
+ the transfer will be more GALACTIC.
+However, a VERY IMPORTANT clarification is necessary: Changing the FETCH also involves
+a correction of the MODULE, due to hardware circumstances.
+Therefore, if the FMODE is set to zero and the transfer is 16 bits, the module
+must be 0, or else it is normal.
+If, on the other hand, the BURST is 32 bits, the module is equal to the module -4, so
+if it was zero, you need to put -4 in BPL1MOD/BPL2MOD to compensate.
+If the BURST is 64 bits, the module is equal to the normal module -8:
+
+
+BANDWIDTH 1: dc.w $1FC,0    ; Then the bitplanes must be aligned
+; at least to word (16 bits), and the module is
+; the normal one.
+
+BANDWIDTH 2: dc.w $1FC,1 or 2    ; Then the bitplanes must be aligned
+; at least to long (32 bits), and the module is
+; equal to the normal module minus 4
+
+BANDWIDTH 4: dc.w $1FC,3    ; Then the bitplanes must be aligned
+; at least to quadword (64 bits), and the module is
+; equal to the normal module minus 8
+
+To check everything, reload Lesson15c.s, and try changing
+the FMODE in copperlist by setting it to 1 or 2, activating the 32-bit burst.
+You will notice that if you do not make any other changes, the figure appears with the wrong module
+.
+Then change the module as well, setting it to -4, and you will see that the pic
+‘straightens up’.
+Similarly, try setting the burst to 64 bits by setting the value $3
+to ‘dc.w $1fc’ (FMODE) in copperlist.
+Now you will need to set the module, both $108 and $10a, to -8 to see the PIC.
+
+Once this is clear, always keep FMODE at $3, i.e. always set the
+first 2 bits, and you will also be able to view hires at 256 colours.
+
+There is one last detail regarding the effects of 32-bit or 64-bit burst.
+The values of DDFSTRT and DDFSTOP are also modified.
+With a normal 16-bit burst to open a hires screen starting
+at the horizontal position MIOX, it was determined with the ‘formula’:
+
+DDFSTRT=(MIOX-9)/2
+
+With the 32-bit burst, however, you need to do:
+
+DDFSTRT=(MIOX-17)/2
+
+This is because a longword is read instead of a word.
+However, if you use standard width screens, there are no problems, and if there are
+any, you can try trial and error!
+In practice, with the burst active, if you display a figure in high resolution
+, you don't need to set DDFSTART and DDFSTOP to $003c and $00d4, but in the same
+way as for lowres:
+
+dc.w    $92,$0038    ; DdfStart lowres, suitable for HIRES with burst
+dc.w    $94,$00d0    ; DdfStop lowres, as above
+
+This is due to the memory cycles required for a ‘turbo’ transfer
+from ChipRam to Chip Lisa.
+
+Let's try to display a 256-colour hires image in Lesson15d.s
+The image in question is the work of Cristiano Evangelisti, handle ‘KREEX’,
+an ‘independent’ who is doing the graphics for an adventure game that
+one of my students is programming.
+
+*****************************************************************************
+*                HAM8                     *
+*****************************************************************************
+
+The good old 6-bitplane HAM has been ‘broken’ by the new HAM8, with 8
+bitplanes.
+Six bitplanes are used for colours and two for control bits.
+It is also available in all resolutions, not just LowRes.
+To activate it, just set 8 bitplanes and the HAM bit in BPLCON0 ($100).
+Of the 8 bits, the upper 6 bits are used as 64 24-bit base colour registers, or
+as a 6-bit MODIFY value, plus the lower 2 bits for hold or
+modify mode. This allows more than 256,000 colours to be displayed.
+The 2 control planes and 6 colour planes are “internally” merged into the 8
+bits of the HAM8, but reversing the order: first planes 3, 4, 5, 6, 7, 8, then 1 and 2.
+This causes bitplane swaps, which we will see.
+
+Here is a comparison between the old HAM6 and the new HAM8.
+
+Function of control bitplanes 5 and 6 in the HAM6:
+
++-----+-----+--------+--------+------------------+
+| BP6 | BP5 | RED | GREEN | BLUE         |
++-----+-----+--------+--------+------------------+
+| 0 | 0 | select the new base register (1 of 16) |
++-----+-----+--------+--------+------------------+
+| 0 | 1 | hold | hold | modify         |
++-----+-----+--------+--------+------------------+
+| 1 | 0 | modify | hold | hold         |
++-----+-----+--------+--------+------------------+
+| 1 | 1 | hold | modify | hold         |
++-----+-----+--------+--------+------------------+
+
+In HAM8, the control bitplanes are 1 and 2:
+
++-----+-----+--------+--------+------------------+
+| BP2 | BP1 | RED | GREEN | BLUE         |
++-----+-----+--------+--------+------------------+
+| 0 | 0 | select the new base register (1 of 64) |
++-----+-----+--------+--------+------------------+
+| 0 | 1 | hold | hold | modify         |
++-----+-----+--------+--------+------------------+
+| 1 | 0 | modify | hold | hold         |
++-----+-----+--------+--------+------------------+
+| 1 | 1 | hold | modify | hold         |
++-----+-----+--------+--------+------------------+
+
+These 2 LOW bits are the command: new base register or alter one of the
+RED, GREEN, BLUE components. Please note that the 2 low bits of the colour
+cannot be modified, so the initial palette must be chosen
+carefully. (However, this is up to the graphic designers and programmes such as AdPro or ImageFX).
+
+Now, let's see in practice how to display a HAM8 image. First of all, the
+palette has 64 colours, not 256: in fact, only those “few” colours are needed
+to generate the ham, thanks to the control bits that “hold” or “modify”
+the RGB components.
+ To activate it, simply set 8 bitplanes in BPLCON0 and the HAM mode, i.e. set bit 4 and bit 11.
+However, there is one last ‘special feature’. We have already mentioned that bitplanes
+1-2 are internally ‘swapped’ with bitplanes 3-4-5-6-7-8. Well,
+in fact, when ‘pointing’ the bitplanes, this problem arises.
+If you save the RAW with PicCon, you can point the image normally, as
+you did for a 256-colour image. This is because PicCon swaps
+the order in the RAW so that it then “comes back”.
+If, on the other hand, you save the raw with AgaConv or other iffconverters, the raw
+will be saved “as is”, so you will have to point the first 6 bitplanes
+as if they were bitplanes 3,4,5,6,7,8, and finally point planes 1 and 2.
+
+; This is the order of the bitplanes if you save the RAW with AgaConv or with another
+; iffconverter that does not ‘reverse’ the planes by itself.
+
+BPLPOINTERS:
+dc.w $e8,0,$ea,0    ; third     bitplane
+dc.w $ec,0,$ee,0    ; fourth     "
+dc.w $f0,0,$f2,0    ; fifth     ‘
+dc.w $f4,0,$f6,0    ; sixth         ’
+dc.w $f8,0,$fA,0    ; seventh     "
+dc.w $fC,0,$fE,0    ; eighth     ‘
+dc.w $e0,0,$e2,0    ; first      ’
+dc.w $e4,0,$e6,0    ; second	 "
+
+In the example listing, the RAW is saved with PicCon, so the planes are
+pointed in the normal way. Load Lesson15e.s
+
+Now we can compare HAM8 with normal 256 colours.
+See for yourself in Lesson15e2.s
+
+Note that changing the entire AGA palette is an operation that requires
+about ten raster lines! In this example, we are changing ‘only’ 64 colours,
+so 2 or 3 lines are enough, but if we wanted to make, for example, an adventure game
+with a 256-colour pic at the top of the screen and a
+control panel at the bottom, when changing the palette
+we would have to leave 10 pixels ‘black’ while waiting for the palette to change completely,
+and we would also have to consider the ‘re-paletting’ time.
+Remember that each MOVE of the copper takes up 8 lowres pixels, and about 52
+moves occupy one line?
+
+**************************************************************************
+*                SPRITE                     *
+**************************************************************************
+
+There are many new features regarding sprites.
+First of all, you can decide on the width, choosing between 16, 32
+or 64 pixels. As you know, the maximum width was normally 16 pixels!
+In addition, the sprite can be displayed in lowres, hires or superhires,
+regardless of the resolution of the pic in the background.
+Let's see how to do this in practice.
+
+The sprite resolution is determined by bits 6 and 7 of the BPLCON3 register
+($dff106), and the width of the sprites is irrelevant:
+
+bit 7 bit 6
+
+0    0    LOW RES, OCS/ECS emulation (140ns)
+0    1    LOW RES, (140ns) (This is not the standard ECS mode!)
+1    0    HIRES (70ns)
+1    1    SUPER HIRES (35ns)
+
+
+These two bits are called SPRES0 and SPRES1, for a change.
+Let's look at an example of a sprite in hires, since all you need to do is set bit
+7 of $dff106, in Lesson15f.s
+
+32 OR 64 PIXEL WIDE SPRITES
+
+Now we need to see how to make sprites that are 32 or 64 pixels wide.
+First, you need an iffconverter that saves sprites of this
+type! PicCon or AgaConv save them properly, no problem.
+As usual, there are a couple of bits that determine the width.
+These are bits 3 and 2 of the FMODE register ($dff1fc), called SPAGEM and SPR32.
+The SPAGEM and SPR32 bits determine the width of the sprite, and consequently whether the
+data to be passed to SPRxDATA must be 16, 32 or 64 bits, in a similar way
+to how it is done for bitplanes.
+Similarly, 32-bit sprites must be aligned with
+a "cnop 0.4‘ and 64-bit sprites with a ’cnop 0.8‘.
+This is due to the well-known fact that 16-bit transfers require
+bandwidth *1, while 32-bit transfers require *2, and consequently
+64-bit transfers require *4.
+In the case of sprites, however, the control words vary, which ’expand"
+together with the rest of the sprite, in both 32-bit and 64-bit cases.
+
+Let's look at a table of FMODE SPAGEM and SPR32 bit values:
+
+bit 3 | bit 2 | Width | Control word
+------+-------+-------------+----------------------------------
+0 | 0 | 16 pixels | 2 words (normal) - requires cnop 0.2
+1 | 0 | 32 pixels | 2 longwords - requires cnop 0.4
+0 | 1 | 32 pixels | 2 long words - requires cnop 0.4
+1 | 1 | 64 pixels | 4 long words - requires cnop 0.8
+---------------------------------------------------------------
+
+‘Enlarged’ sprites are not available if the DMA cannot handle it
+, especially in 256-colour interlaced superhires overscan.
+
+So, having saved a 32- or 64-pixel-wide sprite with theiffconverter,
+and having aligned it to a multiple address of 4 or 8, can we access
+its control words in the same way as a 16-pixel-wide sprite?
+NO, certainly not, and here's why:
+
+This is the structure of a normal sprite, 16 pixels wide:
+
+
+MIOSPRITE16:
+VSTART:
+dc.b $50    ; Vertical position of sprite start (from $2c to $f2)
+HSTART:
+dc.b $90    ; Horizontal position of sprite start (from $40 to $d8)
+VSTOP:
+dc.b $5d    ; $50+13=$5d    ; vertical position of the end of the sprite
+VHBITS:
+dc.b $00    ; bit
+
+dc.w	%0000000000000000,%0000110000110000 ; dati
+dc.w	%0000000000000000,%0000111001110000
+...
+dc.w    0,0    ; 2 words reset to zero define the end of the sprite.
+
+That is:
+
+------------------------------------------------------------------------------
+dc.w 0,0            ; 2 control words
+dc.w dataPlane1,dataPlane2    ; 2 words (16 bits - 16 pixels) with the 2 ‘planes’
+dc.w dataPlane1,dataPlane2    ; 2 words (16 bits - 16 pixels) with the 2 “planes”
+dc.w dataPlane1,dataPlane2    ; 2 words (16 bits - 16 pixels) with the 2 ‘planes’
+....
+dc.w 0,0            ; 2 words reset to zero to terminate
+------------------------------------------------------------------------------
+
+Now, the structure of the 32-pixel wide sprites is as follows:
+
+------------------------------------------------------------------------------
+dc.l 0,0            ; 2 control longwords
+dc.l dataPlane1,dataPlane2    ; 2 longwords (32 bits/pixel) with the 2 ‘planes’
+dc.l dataPlane1,dataPlane2    ; 2 longwords (32 bits/pixel) with the 2 ‘planes’
+dc.l dataPlane1,dataPlane2    ; 2 longwords (32 bits/pixel) with the 2 ‘planes’
+....
+dc.l 0,0            ; 2 longwords reset to zero to terminate
+------------------------------------------------------------------------------
+
+While the one for 64-pixel-wide sprites is this:
+
+------------------------------------------------------------------------------
+dc.l 0,0,0,0                ; 2 double control longwords
+dc.l data1a,data1b,data2a,data2b    ; 2 double longwords (64 bits/pixel)
+dc.l data1a,data1b,data2a,data2b	; 2 double longwords (64 bits/pixel)
+dc.l data1a,data1b,data2a,data2b    ; 2 double longwords (64 bits/pixel)
+....
+dc.l 0,0,0,0                ; 2 double longwords = 0 to terminate
+------------------------------------------------------------------------------
+
+Now, what we want to do is find our bits in the new control words
+extended to longwords and double longwords.
+As for the 32-bit wide sprites:
+
+------------------------------------------------------------------------------
+SPRITE32:
+VSTART:
+dc.b $50    ; Vertical position of sprite start (from $2c to $f2)
+HSTART:
+dc.b $90    ; Horizontal position of sprite start (from $40 to $d8)
+DC.W 0        ; Word ‘added’ to the 32-pixel wide sprite
+VSTOP:
+dc.b $5d    ; $50+13=$5d    ; vertical position of sprite end
+VHBITS:
+dc.b $00    ; bit
+DC.W 0        ; Word ‘added’ to the 32-pixel wide sprite
+
+dc.l %00000000000000111100000000000000,%0000000000001000000000000000000 ; dati
+dc.l %00000000000011111111000000000000,%0000000000010111100000000000000
+...
+dc.l    0,0        ; End of sprite (2 longwords instead of 2 words).
+------------------------------------------------------------------------------
+
+As you can see, the 2 control words have become 2 long words, and the control bits
+have remained those of the high word.
+
+Now let's look at the case of 64-pixel-wide pixels:
+
+------------------------------------------------------------------------------
+SPRITE64:
+VSTART:
+dc.b $50    ; Vertical position of sprite start (from $2c to $f2)
+HSTART:
+dc.b $90    ; Horizontal position of sprite start (from $40 to $d8)
+dc.w 0        ; Word + longword added to reach double
+dc.l 0        ; longword in the 64-pixel wide sprite (2 long!)
+VSTOP:
+dc.b $5d    ; $50+13=$5d    ; vertical position of sprite end
+VHBITS:
+dc.b $00    ; bit
+dc.w 0		; Word + longword added to reach double
+dc.l 0        ; longword in 64-pixel wide sprite (2 long!)
+
+dc.l data1a,data1b,data2a,data2b    ; 2 double longwords (64 bits/pixel)
+dc.l data1a,data1b,data2a,data2b    ; 2 double longwords (64 bits/pixel)
+dc.l data1a,data1b,data2a,data2b    ; 2 double longwords (64 bits/pixel)
+...
+dc.l    0,0,0,0        ; End of sprite (2 double longwords!).
+------------------------------------------------------------------------------
+
+This means that you need to make some small changes to UniMuoviSprite,
+so that it accesses the bytes moved in the second control word.
+
+An example of a 32-pixel wide sprite is Lesson15f2.s
+
+An example of a 64-pixel wide sprite is Lesson15f3.s
+
+Did you see that big bug? You can make 8 of them, or 4 with 16 colours in
+attached mode.
+
+Note that PicCon saves attached sprites without bit 7 (attach)
+set to the odd sprite, so you have to set it “by hand” if you save it
+with this IffConverter.
+
+NEW HORIZONTAL POSITIONING at 1/4 PIXEL
+
+A quarter of a pixel? Yes, indeed!
+Two ‘low’ bits have been added to the horizontal position of the sprite,
+making it possible to move it in increments 4 times smaller, and therefore more fluid.
+Let's see where these bits have been placed by analysing SPRxCTL, the series of
+registers that is an ‘equivalent’ of the second control word of the sprite:
+
+$dff142/14A/152/15A/162/16A/172/17A - SPRxCTL - Sprite control and position
+
++-------+-------+-------------------------------------------------------+
+| BIT | name    |    FUNCTION                    |
++-------+-------+-------------------------------------------------------+
+| 15-08    | EV7-0    | VSTOP - The 8 low bits of the vertical end position)    |
+| 07	| ATT    | Attached control bit (odd sprites only)    |
+| 06    | SV9    | Tenth bit of the vertical start position    |
+| 05    | EV9    | Tenth bit of the vertical end position        |
+| 04    | SH1=0	| Horizontal position, increment 70nS (half pixel)    |
+| 03    | SH0=0    | Horizontal position, increment 35nS (1/4 pixel)    |
+| 02    | SV8    | Ninth bit of the vertical start position (vstart)    |
+| 01    | EV8	| Ninth bit of the vertical end position (vstop)    |
+| 00    | SH2    | Horizontal position, increment 140nS (1 pixel)    |
++-------+----------+----------------------------------------------------+
+
+The bits we are interested in are SH0, SH1, SH2, i.e. Start Horizontal.
+As you can see, in addition to the familiar SV8 and EV8 bits, i.e. the eighth bits of VSTART and
+VSTOP, there are also two new bits relating to HSTART: in addition to the
+“low” bit, which allows us to scroll one pixel at a time, a couple of even “lower” bits have been added
+, which allow us to scroll half
+a pixel or 1/4 of a pixel at a time.
+140ns (nanoseconds) refers to the video scrolling ‘time’.
+However, it is clearer to say that 140ns corresponds to 1 low-resolution pixel, while
+140/2= 70ns corresponds to one high-resolution pixel (or half a low-resolution pixel). Finally,
+it is obvious that 70/2 = 35ns is equivalent to 1/4 of a low-resolution pixel, or
+one pixel in 1280*xxx resolution, i.e. super-high resolution.
+
+But how do you move the sprite in 1/4 pixel increments?
+One way is to modify the UniMuoviSprite routine so that
+it accepts an X position from 0 to 1280 instead of from 0 to 320. In this
+way, if we add 1 each time, the scroll will be 1/4 of a pixel; if
+adding 2 it will be half a pixel, or adding 4 at a time will result in a
+scroll of one pixel at a time. Simple, isn't it?
+
+See the implementation in Lesson15f4.s and Lesson15f5.s
+
+In practice, the AGA horizontal position is an 11-bit number instead of 9.
+
+THE BRDRSPRT BIT
+
+When set, the BRDRSPRT bit allows sprites to be displayed
+even outside the edges defined by diwstart/diwstop.
+Note that with this bit enabled, sprites are displayed even if
+the bitplanes are disabled in bplcon0!
+However, remember to also set bit 0 of bplcon0 ($dff100),
+which also enables other special bits.
+The bit in question is the second (01) of $dff106 (bplcon3).
+
+Let's see its implementation in Lesson15f6.s
+
+
+ATTACHED MODE
+
+Sprites can be attached in any mode except ECS mode
+SHRES (1280*xxx, 35ns).
+
+THE AGA SPRITE PALETTE
+
+Any 16-colour bank
+taken from the 256-colour palette can be used as a palette for sprites.
+The bits from ESPRM7 to ESPRM4 allow you to ‘relocate’ the colomap of even sprites,
+ while the bits from OSPRM7 to OSPRN4 allow you to relocate the colormap of
+odd sprites.
+In OCS/ECS, the 16 sprite colours were always and necessarily from
+colour16 ($dff1a0) to colour31 ($dff1be), so a figure that had more
+than 16 colours had to share colours 16 to 31 with the sprites.
+WithAGA, however, it is possible to move this bank of 16 colours to
+any of the 256 segments. If, for example, we had a 128-colour figure,
+we could move the sprite colours to position colour129 onwards,
+so as not to have to share the palette with the figure.
+This is therefore useful for figures with more than 16 colours.
+However, if there areplanes are 8 and the colours are 256, we can choose which bank
+of 16 to use, but those 16 colours will always be shared with the figure.
+Here is how the palette colours are assigned to sprites in the OCS:
+
+Sprites | Colours
+------------------
+0-1 | 00-03    ; $dff1a0/1a2/1a4/1a6
+2-3 | 04-07
+4-5 | 08-11
+6-7 | 12-15
+------------------
+
+So there are 4 pairs of 3-colour sprites.
+For example, to define the 3 colours of the first sprite:
+
+dc.w    $1A2,$462    ; colour17, low nibble
+dc.w    $1A4,$2e4    ; colour18, low nibble
+dc.w    $1A6,$672    ; colour19, low nibble
+
+In the AGA chipset, on the other hand, in addition to being able to choose which part of the
+256-colour palette to use for sprites, it is possible to select 2 palettes, one for
+even sprites and one for odd sprites, giving a total of 32-8 colours,
+i.e. 24, since colour 0 is transparent and does not count.
+To recap, while in OCS we had 8 sprites with 3 effective colours each,
+but linked by a ‘pair’ relationship, the total colours were 3*4=12, in AGA
+the sprites are always 3 colours, but they do not share the palette in pairs!
+However, if the sprites are attached, the same
+16-colour palette is used for all of them, the one assigned to the odd sprites.
+
+So, in the 256-colour AGA palette, we have 16 palettes of 16 colours to choose from
+, using the low byte of bplcon4 ($dff10c).
+Bits 7 to 4 are used to choose the ‘number’ of the sub-palette of
+16 to use for even sprites, while bits 3 to 0 are used to choose
+the subpalette for odd sprites.
+
+Let's look at the 8 low bits of the bplcon4 register ($dff10c):
+
+bit    ‘name’
+
+0    ESPRM7 \ Choose the subpalette to
+1    ESPRM6 \ use for EVEN sprites
+2    ESPRM5 /
+3    ESPRM4 /
+4    OSPRM7 \ Choose the subpalette to
+5    OSPRM6 \ use for ODD sprites
+6    OSPRM5 /
+7    OSPRM4 /
+
+Here is a reference table for choosing the palette:
+
+bit 3 | bit 2 | bit 1 | bit 0 | Even sprites
+bit 7 | bit 6 | bit 5 | bit 4 | Odd sprites
+------+-------+-------+-------+------------------------------------------
+0 | 0 | 0 | 0 | $180/palette 0 (colour 0)
+0 | 0 | 0 | 1 | $1A0/palette 0 (colour 16)
+0 | 0 | 1 | 0 | $180/palette 1 (colour 32)
+0 | 0 | 1 | 1 | $1A0/palette 1 (colour 48)
+0 | 1 | 0 | 0 | $180/palette 2 (colour 64)
+0 | 1 | 0 | 1 | $1A0/palette 2 (colour 80)
+0 | 1 | 1 | 0 | $180/palette 3 (colour 96)
+0 | 1 | 1 | 1 | $1A0/palette 3 (colour 112)
+1 | 0 | 0 | 0 | $180/palette 4 (colour 128)
+1 | 0 | 0 | 1 | $1A0/palette 4 (colour 144)
+1 | 0 | 1 | 0 | $180/palette 5 (colour 160)
+1 | 0 | 1 | 1 | $1A0/palette 5 (colour 176)
+1 | 1 | 0 | 0 | $180/palette 6 (colour 192)
+1 | 1 | 0 | 1 | $1A0/palette 6 (colour 208)
+1 | 1 | 1 | 0 | $180/palette 7 (colour 224)
+1 | 1 | 1 | 1 | $1A0/palette 7 (colour 240)
+-------------------------------------------------------------------------
+
+Here's how to use it: if, for example, you wanted to choose the second palette, from colour 16 to colour 31, for both even and odd sprites, you would have to
+put %0001 in bits 0 to 3 for even sprites, and %
+00010001 in bits 4 to 7 for odd sprites.
+0001 in bits 4
+to 7 for odd sprites. So the low byte would be %00010001.
+Now, my preference corresponds to the OCS/ECS mode, where
+the sprite palette is always from colour 16 to colour 31.
+In fact, %00010001 in hexadecimal is $11, which is why we do:
+
+move.w    #$11,$10c(a5)        ; BPLCON4 reset
+
+To reset the sprite palette!!!
+Now that we've solved this mystery, let's change the setting to something more useful
+for future use: let's move the sprite palette to the bottom, i.e. we decide
+that it will be from colour 240 to colour 256. In this case we have %11111111.
+Now, however, we could choose a 16-bit bank for even sprites that is different from
+the one for odd sprites!
+For example, let's assign colours 224 to 240 to even sprites, and colours
+240 to 256 to odd sprites. The result in $dff10c is %11101111.
+
+Let's put this into practice in Lesson15f7.s
+
+******************************************************************************
+NEW SUPER-SMOOTH HORIZONTAL SCROLLING (1/4 pixel) FOR BITPLANES
+******************************************************************************
+
+1/4 pixel horizontal scrolling has also been implemented for
+bitplanes. And guess how? By adding bits to BPLCON1 ($dff102).
+As we saw for sprites, a couple of ‘low’ bits
+of the scroll value have been added. In addition, two high bits have also been added, which
+allow 16-pixel jumps at a time, for a maximum of 64 pixels.
+Note that 16- and 32-pixel jumps are only ‘enabled’ when the
+burst (FMODE-$dff1fc) is 32 or 64 bits, respectively.
+So now the scroll can go from 0 to 64 pixels, in 1/4 pixel jumps.
+But let's recap:
+If previously the horizontal offset value of each playfield could
+range from 0 to 15 (%1111), and two low bits and two high bits have been added, 
+it can now range from 0 to %11111111, i.e. from 0 to 255 (an 8-bit value!),
+to be understood, however, as 1/4 pixel increments, so the maximum scroll when
+measured in low-resolution pixels is 256/4=64.
+But let's see where these bits have been “slotted” into the high byte
+of the old bplcon1 ($dff102):
+
+BIT	‘name’        description
+
+15    PF2H7    \ high bits (6 and 7) of the scroll playfield 2 value
+14    PF2H6	/
+13    PF2H1    \ low bits (0 and 1) of the scroll playfield 2 value
+12    PF2H0    /
+11    PF1H7    \ high bits (6 and 7) of the scroll playfield 1 value
+10    PF1H6    /
+09    PF1H1    \ low bits (0 and 1) of the scroll playfield 1 value
+08    PF1H0    /
+
+07    PF2H5    \
+06    PF2H4     \ ‘middle’ bits (2,3,4,5) of the scroll playfield value 2
+05    PF2H3     /
+04    PF2H2    /
+03    PF1H5    \
+02    PF1H4     \ ‘middle’ bits (2,3,4,5) of scroll playfield value 1
+01    PF1H3     /
+00    PF1H2    /
+
+Note:
+The PFxH0 bit scrolls by 1/4 pixel (35ns)
+The PFxH1 bit scrolls by 1/2 pixel (70ns)
+The PFxH2 bit scrolls by 1 pixel (140ns)
+The PFxH3 bit scrolls by 2 pixels
+The PFxH4 bit scrolls by 4 pixels
+The PFxH5 bit scrolls by 8 pixels
+The PFxH6 bit scrolls by 16 pixels (32-bit burst must be active)
+The PFxH7 bit scrolls by 32 pixels (64-bit burst must be active)
+
+As you can see, the low byte is the same, while the high byte is AGA only.
+
+Now, suppose we want to scroll a bitplane to the right in increments of
+1/4 pixel increments, up to the maximum possible with bplcon1, i.e. 256 positions
+equivalent to 64 low-resolution pixels.
+We would have to break down the value of scoll, from 0 to 255, into 3 ‘pieces’: the two low bits
+should be placed in PHxH0/1, the 4 ‘middle’ bits in PFxH2-5, and the two
+high bits in PFxH6/7. This can be done easily with a few AND and LSL/LSR operations.
+
+Let's see an implementation in Lesson15g1.s (1 playfield)
+
+Let's see an implementation in Lesson15g2.s (2 playfields)
+
+Now let's try to create a ‘wave’ effect with 1/4 pixel precision,
+converting a synthab into values for bplcon1 and changing the latter into
+copperlist once per line: Lesson15g3.s
+
+A peculiarity: if the figure is in hires, the highest bit
+of the scroll does not ‘work’, so the values can range from 0 to 127. Lesson15g4.s
+
+*****************************************************************************
+A NEW POSSIBILITY FOR CYCLING THE PALETTE
+*****************************************************************************
+
+We have already seen the function of the low bits of BPLCON4. The high bits, on the other hand,
+are used to ‘swap’ colours in the palette without having to change the contents
+of the palette registers themselves.
+
+BPLTCON4 ($dff10c)
+
+BIT    NAME
+
+15    BPLAM7
+14    BPLAM6
+13    BPLAM5
+12    BPLAM4
+11    BPLAM3
+10    BPLAM2
+09    BPLAM1
+08    BPLAM0
+
+
+BPLAMx = This 8-bit field is XOR`ed with the 8-bit plane colour address, thereby
+altering the colour address sent to the colour table (x=1-8)
+Bits 15 thru 8 of BPLCON4 comprise an 8-bit mask for the 8 bitplane address,
+XOR'ing the individual bits. This allows the copper to exchange colour maps
+with a single instruction.
+
+Let's see a practical example of swapping colour A and colour B:
+
+- The contents of the hardware colour register is not modified
+
+- All pixels that were displayed using colour A are now
+displayed using colour B, and all pixels that were displayed
+with colour B are displayed with colour A. (in practice: SWAPPED!)
+
+- The group of 2^n colours from colour 00 to colour (2^n)-1 is
+swapped with the group of 2^n colours from colour 2^n to colour 2^n+(2^n)-1
+
+- The group of 2^n colours from colour 2*2^n to colour 2*2^n+(2^n)-1
+is swapped with the group of 2^n colours from colour 3*2^n to colour
+3*2^n+(2^n)-1
+
+The swap operation ends when the hardware finds no more groups of
+colours to swap.
+
+Let's take an example: if we set the second bit, BPLAM1 (bit 9 of BPLCON4),
+this is how the palette looks before and after the operation:
+
+BEFORE        |    AFTER
+---------------------------------------
+Colour 00    |    Colour 02
+Colour 01    |    Colour 03
+Colour 02    |    Colour 00
+Colour 03    |    Colour 01
+Colour 04    |    Colour 06
+Colour 05    |    Colour 07
+Colour 06    |    Colour 04
+Colour 07	|    Colour 05
+...        |    ...
+
+The colours have been swapped, using groups of 2^1=2 colours.
+
+You cannot swap a single colour. If you change a BPLAMx bit, you change
+the entire palette.
+
+However, swap operations can be combined. If more than one
+BPLAMx bits are set, the swap operations for each bit will be performed
+one after the other, starting from bit BPLAM0 to BPLAM7.
+
+Example: $dff10c contains $0500 (%0000010100000000). Bits BPLAM0 and BPLAM2
+are set. First, they will be swapped using groups of 2^0 colours,
+THEN the resulting palette will be swapped using groups of 2^2 colours
+as in this table:
+
+FIRST        | Swap BPLAM0    | Swap BPLAM1
+-----------------------------------------------------------------
+Colour 00    |    Colour 01	|    Colour 05
+Colour 01     |    Colour 00    |    Colour 04
+Colour 02    |    Colour 03    |    Colour 07
+Colour 03    |    Colour 02    |    Colour 06
+Colour 04    |    Colour 05    |    Colour 01
+Colour 05    |    Colour 04    |	Colour 00
+Colour 06    |    Colour 07    |    Colour 03
+Colour 07    |    Colour 06    |    Colour 02
+Colour 08    |    Colour 09    |    Colour 13
+Colour 09    |    Colour 08    |    Colour 12
+Colour 10    |    Colour 11    |    Colour 15
+Colour 11    |    Colour 10    |    Colour 14
+Colour 12    |    Colour 13    |    Colour 09
+Colour 13    |    Colour 12    |    Colour 08
+Colour 14    |    Colour 15    |    Colour 11
+Colour 15    |    Colour 14    |    Colour 10...
+        |    ...     |    ...
+
+In practice, the 8 bits BPLAM0-7 of BPLCON4 are a mask for the address
+of the 8 bitplanes, since an XOR (EOR) is performed on each bit.
+
+Let's look at a simple example of the effects of these bits: Lesson 15h.s
+
+
+****************************************************************************
+DUAL PLAYFIELD AGA
+****************************************************************************
+
+The new Dual Playfield can have up to 4 bitplanes per playfield (16 colours
+on one playfield and 16 on the other), and the 16-colour bank in the 256-colour palette
+can be selected independently for each playfield.
+
+To activate the double Playfield, set bit 10 of BPLCON0 as
+usual, choose the bitplanes (for 8 planes, reset bits 12, 13, 14 of
+BPLCON0 and set 4, otherwise use bits 12,13, 14 and reset 
+4). Now you need to point the 2 figures, one in the even bplpointer and one in the
+odd bplpointers. Then you have to choose which colour banks to use for
+the 2 pics, in a similar way to what we saw for the sprites.
+
+This is decided with bits 10, 11, 12 of BPLCON3 ($dff106):
+
+| PF20F | BITPLANE INVOLVED | OFFSET |
++---+---+---+-------------------------------+------------+
+| 2 | 1 | 0 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | (decimal) |
++---+---+---+-------------------------------+------------+
+| 0 | 0 | 0 | - | - | - | - | - | - | - | - | 0 |
+| 0 | 0 | 1 | - | - | - | - | - | - | 1 | - | 2 |
+| 0 | 1 | 0 | - | - | - | - | - | 1 | - | - | 4 |
+| 0 | 1 | 1 | - | - | - | - | - | 1 | - | - | 8 (default)|
+| 1 | 0 | 0 | - | - | - | 1 | - | - | - | - | 16 |
+| 1 | 0 | 1 | - | - | 1 | - | - | - | - | - | 32 |
+| 1 | 1 | 0 | - | 1 | - | - | - | - | - | - | 64 |
+| 1 | 1 | 1 | 1 | - | - | - | - | - | - | - | 128 |
++---+---+---+---+---+---+---+---+---+---+---+------------+
+
+This means that Playfield 2 has priority over Playfield 1. As you can see, the
+default situation occurs when bits 10 and 11 are set; in fact,
+by default we put $c00 (%110000000000) in $dff106.
+
+******************************************************************************
+*		VGA/PRODUCTIVITY 640x480 non interlacciato		 *
+******************************************************************************
+
+Demos and games work normally in PAL or NTSC resolution, which are
+supported by televisions or monitors such as the 1084.
+The PAL vertical frequency is 50Hz, while the NTSC frequency is 60Hz.
+The horizontal frequency is 15Khz.
+As you know, to choose between these two frequencies, do the following:
+
+move.w    #$20,$dff1dc    ; BEAMCON0 - PAL mode
+
+move.w    #$00,$dff1dc    ; BEAMCON0 - NTSC mode
+
+However, this does not work on older Amiga computers manufactured before 1990
+or 1991. In practice, the A1000 and the first a500/a2000 do not have FAT AGNUS,
+which ‘owns’ BEAMCON0, while this register began to appear
+in the A500/a2000 kickstart 1.3 manufactured after 1990-91.
+However, an AGA machine DEFINITELY also has this register.
+
+You may have noticed that from Workbench 2.0 onwards, you can choose the
+type of monitor and set a non-interlaced ‘VGA’ video frequency,
+i.e. 640x480 at 31KHz, or even 800x600 and other special resolutions.
+
+NTSC (525 lines, 227.5 colour clocks per scan line) 15Khz
+PAL (625 lines, 227.5 colour clocks per scan line) 15Khz
+VGA (525 lines, 114.0 colour clocks per scan line) 31Khz
+
+However, to view these resolutions, you need at least a ‘VGA’ monitor,
+or a multisync/multiscan monitor. ‘Normal’ televisions and monitors such as the
+1084 cannot lock onto those frequencies.
+
+So you might think: I'll buy a VGA/multisync monitor so at least I can
+see both PAL/NTSC and non-interlaced 31Khz resolutions!
+Unfortunately, most monitors that can display 640x480
+at 31Khz cannot display the ‘television’ resolution at 50/60Hz, so
+you would need two monitors, one to see one resolution and one to see
+the other. This is something to watch out for! If you want to buy a multisync/multiscan monitor
+, first make sure that it also correctly displays
+the 320x256 PAL of video games/demos, as does the C= 1950, for example.
+
+Programming the various 800x600 or similar video modes is complicated and not compatible
+with all monitors, so we will only look at how to do 640x480, which is supported
+even by the worst VGA monitors on MSDOS PCs.
+
+Let's take a look at some new registers for synchronisation:
+
+VSSTRT        - Vertical line position for VSYNC start.
+VSSTOP        - Vertical line position for VSYNC stop.
+HSSTRT        - Horizontal line position for HSYNC start.
+HSSTOP        - Horizontal line position for HSYNC stop.
+HCENTER        - Horizontal position for VSYNC in interlace.
+
+And others for programmable blanking:
+
+HBSTRT        - Horizontal line position for HBLANK start.
+HBSTOP        - Horizontal line position for HBLANK stop.
+VBSTRT        - Vertical line position for VBLANK start.
+VBSTOP        - Vertical line position for VBLANK stop.
+
+The data we have for our video mode is:
+
+VGA (525 lines, 114.0 colour clocks per scan line) 31Khz
+
+We must therefore put the number of lines-1 (524) in VTOTAL and the
+number of colour clocks per scan line-1 (113) in HTOTAL, plus other settings.
+
+To change the horizontal frequency from 15Khz (TV, 1084 monitor) to 31Khz
+for VGA/Multiscan/Multisync monitors, you need to adjust quite a few
+registers, not just BEAMCON0 (which is used to enable other registers):
+
+
+LEA    $DFF000,A5
+
+;5432109876543210
+MOVE.W    #%0001101110001000,$1DC(A5) ; BEACON0 - list of set bits:
+
+; 3 - BLANKEN - COMPOSITE BLANK OUT TO CSY PIN
+; 7 - VARBEAMEN - VARIABLE BEAM COUNTER COMP. ENABLED
+; Enables the variable beam comparators to
+; operate in the main horizontal counter,
+; and disables the hardware stop of the display in
+; horizontal and vertical.
+; 8 - VARHSYEN - VARIABLE HORIZONTAL SYNC ENABLED
+; Activates the HSSTRT/HSSTOP registers (var. HSY)
+; 9 - VARVSYEN - VARIABLE VERTICAL SYNC ENABLED
+; Activates the VSSTRT/VSSTOP registers (var. VSY)
+; 11- LOLDIS - DISABLE LONGLINE/SHORTLINE TOGGLE
+; Disables the exchange between long/short lines.
+; 12- VARVBEN - VARIABLE VERTICAL BLANK ENABLED
+; Enables the VBSTRT/VBSTOP registers and disables the
+; hardware ‘end’ of the video window.
+
+MOVE.W    #113,$1C0(a5)    ; HTOTAL - HIGHEST NUMBER COUNT, HORIZ LINE
+; Maximum colour clock per horizontal line:
+; VGA has 114 colour clocks per scan line!
+; The value ranges from 0 to 255: 113 is fine!
+
+MOVE.W    #%1000,$1C4(a5)	; HBSTRT - HORIZONTAL LINE POS FOR HBLANK START
+; Bits 0-7 contain the start
+and stop positions of the horizontal blanking
+in increments of 280ns. Bits 8-10 are used for
+a 35ns (1/4 pixel) positioning.
+In this case, we have set 2240ns.
+
+MOVE.W    #14,$1DE(a5)    ; HORIZONTAL SYNC START - Number of colour
+; clocks for Sync-start.
+
+MOVE.W    #28,$1C2(a5)    ; HORIZONTAL LINE POSITION FOR HSYNC STOP
+; Number of colour clocks for Sync-stop.
+
+MOVE.W    #30,$1C6(a5)    ; HORIZONTAL LINE POSITION FOR HBLANK STOP
+; Horizontal stop line Horiz BLANK
+
+MOVE.W    #70,$1E2(a5)    ; HCENTER - HORIZ. POS. of VSYNCH in interlace
+; in the case of variable beam counters.
+
+MOVE.W    #524,$1C8(a5)    ; VTOTAL - HIGHEST NUMBERED VERTICAL LINE
+; Maximum numbered vertical line, i.e.
+; the line to which the vertical position counter should be reset
+.
+We know that VGA mode has 525 lines.
+
+MOVE.W    #0,$1CC(a5)    ; VBSTRT - VERTICAL LINE FOR VBLANK START
+MOVE.W    #3,$1E0(a5)    ; VERTICAL SYNC START
+
+MOVE.W    #5,$1CA(a5)    ; VERTICAL LINE POSITION FOR VSYNC STOP
+MOVE.W    #29,$1CE(a5)    ; VBSTOP - VERTICAL LINE FOR VBLANK STOP
+
+MOVE.W    #%0000110000100001,$106(a5)    ; 0 - external blank enable
+; 5 - BORDER BLANK
+; 10-11 AGA dual playfield fix
+
+Now just point our copperlist to $dff080, remembering that bit 0
+of BPLCON0 ($dff100) must be set, and that if you want more than 1
+bitplane, you need to enable 32/64-bit burst with FMODE ($dff1fc).
+
+For example:
+
+COPPERLIST:
+dc.w    $8E,$1c45    ; diwstrt
+dc.w    $90,$ffe5    ; diwstop
+dc.w    $92,$0018    ; ddfstrt
+dc.w    $94,$0068    ; ddfstop
+dc.w    $1e4,$100
+dc.w    $108,0        ; module (not -8??)
+dc.w    $10A,0
+
+; Point to a 640x480 image.
+
+BPLPOINTERS:
+dc.w $e0,0,$e2,0    ; first     bitplane
+dc.w $e4,0,$e6,0    ; second     ‘
+dc.w $e8,0,$ea,0    ; third         ’
+dc.w $ec,0,$ee,0    ; fourth	 
+‘
+dc.w $f0,0,$f2,0    ; fifth     ’
+dc.w $f4,0,$f6,0    ; sixth         ‘
+dc.w $f8,0,$fA,0    ; seventh     ’
+dc.w $fC,0,$fE,0    ; eighth     "
+
+dc.w $100,$1241 ; bplcon0 (do not set hires bits, only the
+; number of planes and bits 0-9 and SHRES (6))
+
+; here is the palette
+
+dc.w $180,$000
+
+dc.w $1fc,$8003 ; sprite scan doubling???
+dc.w    $FFFF,$FFFE    ; End Coplist
+
+
+Let's see a practical example in Lesson15i.s (If you don't have a monitor capable of
+displaying 31Khz, you will only see ‘streaks’).
+
+A note: no one has ever made a demo or game at 31Khz, because there are few
+Amiga users with a VGA+ monitor. If you decide to add the option to
+display graphics in this mode, you should first display
+a window asking whether to use the normal frequency or 31Khz!
+
+**************************************************************************
+*                COLLISIONS                 *
+**************************************************************************
+
+Since bitplanes 7 and 8 have been added, a CLXCON2 was needed to
+record collisions with these two planes.
+
+CLXCON2     $dff10e    - Extended collision control - checks (if
+bitplanes 7 and 8 are included in the detect!)
+This register is reset when writing
+to the old CLXCON - The function of the bits is
+analogous to those of CLXCON
+
+BIT    NAME    DESCRIPTION
+
+15-08        Not used
+07    ENBP8    Enable bit plane 8 control
+06    ENBP7    Enable bit plane 8 control
+05-02        Not used
+01    MVBP8    Match value for bitplane 8 collision
+00    MVBP7 Match value for bitplane 8 collision
+
+Note: disabling bitplanes does not prevent collisions: if all planes
+are disabled, collisions are ‘continuous’.
+
+****************************************************************************
+*                ECS+ BLITTER
+****************************************************************************
+
+The blitter has already been enhanced with the ECS, but for compatibility
+it is always best to blitter in OCS mode. However, if AGA is detected, you can always
+be sure that you can blitter ECS+, provided that this is useful.
+
+In practice, BLTSIZV ($dff05c) and BLTSIZH ($dff05E) have been added,
+which are, in practice, two registers in which to put the VERTICAL
+and HORIZONTAL size of the blitter, instead of in the classic BLTSIZE ($dff058).
+First you have to write in BLTSIZV, then in BLTSIZH, and the blitting starts.
+In BLTSIZV, you have to enter the height in lines, which can range from 0 to 32767.
+If you do several blits in a row with the same height, you don't need to
+rewrite in BLTSIZV ($dff05c), the last value entered remains.
+The blitting starts when you write in BLTSIZH ($dff05e), where you need to
+write the horizontal size of the blitting in words (from 0 to 2047, i.e.
+up to 32768 pixels). Putting zero in these 2 registers is equivalent to the maximum,
+like the “old” BLTSIZE.
+The maximum bleed has therefore been increased to 32768*32768, compared to the
+old maximum bleed of 1024x1024.
+
+There are also a couple of less important things:
+
+1) The byte $dff05b (BLTCON0L) is a ‘facsimile’ of the LF byte of the minterms,
+i.e. the low byte of BLTCON0 ($dff040). It seems to make some blits
+slightly faster, especially if the high byte of bltcon0 is
+always the same and you change the low one by writing here...
+However, I haven't noticed any particular speed increases.
+
+2) Bit 7 of BPLCON1 ($dff042), called ‘DOFF’, when set, disables
+the blitter output in channel D. However, this allows input to
+channels A, B and C or any address changes without this
+being ‘written’ to channel D.
+
+
+I hope I have been clear enough and have said everything you
+need to know to program the AGA. Now you have no excuse! You MUST do something for
+the AGA chipset.
+
+However, if you have AGA, you also have a 68020+, so you may find it
+useful to read the next lesson, which deals with just that!

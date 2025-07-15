@@ -1,0 +1,336 @@
+
+MATEMATİK Dersi Antonello Mincone
+
+
+DOOM, ELITE gibi oyunlar ya da poligonların kullanıldığı herhangi bir oyun yapmak isteyenler için
+ya da DEMOS'larda artık standart hale gelen efektlerden biri olan
+texture-mapping'i yapmak isteyenler için
+bazı temel matematik formüllerini, özellikle analitik geometri ve trigonometri ile ilgili olanları
+bilmek çok önemlidir.
+Okulda bu konuları hiç anlamadıysanız veya hiç
+uğraşmadıysanız ve her zaman inanılmaz
+karmaşık bir şey olarak duyduysanız, bunun kesinlikle doğru olmadığını garanti edebilirim.
+Asıl zorluk, konuyu dikkatle takip etmekte, ama özellikle de anlamaktır.
+Pratikte size tavsiyem, (sahip olduğunuz bilgilere göre)
+ bu dersle ve genel olarak kursla, azar azar ilerlemenizdir,
+çünkü gerçekte bu dünyadaki tüm bilgisayar ve matematik kitaplarına sahip olabilirsiniz,
+ ancak bunlar sadece temel bilgileri (ama yeterli değil)
+: iyi olmak, özellikle deneyimle,
+rutinleri denemeyi, değiştirmeyi, kısacası deneyimler yaparak gelir.
+Buna göre
+Bu nedenle, bu makaleyi size belirli bir 3D tekniği öğretmek için değil
+(çünkü bunun için özel bir ders var),
+kendi başınıza formülleri bulabilmenizi ve ihtiyaçlarınıza uygun önceden hesaplanmış tabloyu oluşturabilmenizi sağlayacak temel bilgileri vermek için yazmaya karar verdim.
+Bu nedenle, sıfırdan başlayacağım (aslında tam olarak sıfırdan değil, çünkü dört temel işlemi bildiğinizi umuyorum, aksi takdirde bu kursu değil, temel dersleri almanız gerekir), bu nedenle, bu konuda bilgi sahibi olanlar şaşırmasın.
+Bu nedenle sıfırdan başlayacağım (tamamen sıfırdan değil, çünkü dört temel işlemi bildiğinizi umuyorum,
+ aksi takdirde bu kursu değil, ilkokulu bitirmeniz gerekir),
+ bu nedenle konuyu zaten bilen ve belki de sunum tarzımla ilgili itirazları olanlar şaşırmasınlar.
+Öncelikle, bu konunun uzmanları tarafından
+“ORTOGONAL KARTESİYEN REFERANS SİSTEMİ” olarak adlandırılan şeyden bahsedelim. Aslında bu adın altında çok basit bir şey yatıyor: iki ortak doğru (doğruya RETTA denir) 
+“KARTESİYEN ORTOGONAL REFERANS SİSTEMİ” olarak adlandırdıkları şeyden bahsedelim. Aslında bu isim altında
+çok basit bir şey gizleniyor: iki ortak doğru (başlangıcı ve sonu olmayan bir çizgiye DÜZ ÇİZGİ denir,
+ başlangıcı olan ama sonu olmayan bir çizgiye YARIM DÜZ ÇİZGİ denir, başlangıcı ve sonu olan bir çizgiye SEGMENT denir)
+, birbirleriyle kesişerek 90 derecelik dört açı oluşturacak şekilde düzenlenmiş,
+geleneksel olarak X ve Y olarak adlandırılan. Pratikte şu şekilde düzenlenmiştir:
+
+
+^
+Y |
+|
+|
+|
+|
+|
+|
+-------------+-------------------->
+O| X
+|
+|
+|
+|
+|
+|
+
+
+
+
+O noktası eksenlerin kesiştiği noktaya karşılık gelir ve ODAK noktası olarak adlandırılır.
+X ve Y eksenleri sırasıyla x ekseni ve y ekseni olarak adlandırılır
+ve her noktaya referans vermek için kullanılır. Bu referanslar, 
+X eksenine ve Y eksenine paralel çizgiler çizerek elde edilir ve pratikte
+noktaların X eksenine göre yüksekliğini ve Y eksenine göre uzaklığını gösterir. Bu uzaklıkları
+bir ölçü birimi seçerek ve bu birimin ölçüye kaç kez girdiğini görerek ifade ederiz
+: yani, belirli bir noktanın nerede olduğunu belirtmek istediğimizde,
+ o noktanın X eksenine ve Y eksenine olan uzaklığını (daha
+doğrusu, ordinatını ve abscisini) tanımlamalıyız. Örneğin, bir 
+P noktası olduğunu düşünelim:
+
+
+
+^
+Y |
+|
+| x1
+|-----.P
+| |
+| |y1
+| |
+--------------+------------------>
+O| X
+|
+|
+|
+|
+|
+|
+|
+
+
+
+
+x1 ile işaretli segment onun x koordinatını, y1 ile işaretli segment ise y koordinatını gösterir.
+AMIGA'da piksel kullanacağınız için ölçü birimini göz ardı edeceğiz.
+Dikkat edin, nokta Y ekseninin sağında bulunuyorsa x koordinatı pozitif (yani 0'dan büyük), solunda bulunuyorsa negatif (yani 0'dan küçük) olur;
+Nokta Y ekseninin sağında olduğunda, x koordinatı pozitif
+(yani 0'dan büyük) olurken, solunda olduğunda negatif
+(yani 0'dan küçük) olur; sınır durumda, Y ekseninde olduğunda, x koordinatı
+0'a eşittir.Aynı şekilde X ekseni için de geçerlidir: nokta eksenin üzerinde
+bulunduğunda ordinat pozitif, altında negatif, eksenin üzerinde ise 0'dır.
+Ancak, bunu gerçeğe uyguladığımızda, iki boyutun yeterli olmadığını
+fark ederiz, çünkü tüm nesneler genişlik ve
+uzunluğun yanı sıra derinlik de sahiptir.
+Bu nedenle, tek bir noktayı uzaya da ilişkilendirmemizi sağlayan üçüncü bir boyuta, yani derinliğe ihtiyacımız vardır .
+ Dolayısıyla, uzayda bir nesnenin tam bir resmini vermek isteyen bir grafik şu şekilde olacaktır:
+^
+
+
+Y    |
+|
+|
+|
+| /
+| P / z1
+x1 ___|_____./
+| |
+| |
+| |y1
+| |
+O+-----+---------------------->
+/ |             X
+/     |
+/     |
+/
+/
+/
+/
+Z
+
+
+Yeni eksen Z, yeni boyutu gösterir. Uzayda, X ekseni ile Z ekseni arasındaki açı ile Y ekseni ile Z ekseni arasındaki açının dik, yani 90 derece olduğunu unutmamak gerekir.
+Ne yazık ki bu açılar, izometrik projeksiyonda (tüm grafiklerin temsil edildiği projeksiyon) deforme olur
+.
+ 
+Şimdiye kadar sadece noktalardan bahsettik, ancak bizi çevreleyen uzay
+çok daha karmaşık nesnelerden oluşur ve bunlar genellikle bunları birleştiren çizgilerden oluşur-
+onları belirleyen kenarları birleştiren çizgilerden oluşur. Çoğu zaman, basit daireler veya daha karmaşık eğriler gibi eğri nesneleri temsil etmek gerekir.
+Bu nesneler, karmaşık trigonometrik formüllerle belirlenir: bu durumlarda AMIGA ile
+eğriyi bir poligona, hatta 20 kenarlı bir poligona indirgemeyi tercih ederim, ancak bu kesinlikle çizmek ve döndürme veya öteleme (dönme hareketleri) hesaplamak için daha hızlıdır.
+ 
+, eğriyi bir poligona indirgemek, hatta 20 kenarlı bir poligona indirgemek daha iyidir, ancak
+bu, çizmek ve rotasyonlarda veya translasyonlarda (sadece yer değiştirmeyi içeren hareketler) hesaplamak için kesinlikle daha hızlıdır.
+Her halükarda, dersin sonunda en önemli eğrilerin formüllerini bulacaksınız.
+Poligonların noktalarını birleştirmek için genellikle blitterin LI- NE işlevini kullanabilirsiniz, ancak bu her zaman en hızlı yöntem değildir ve bu işi işlemciye bırakmak gerekebilir: bu nedenle, dersin sonunda en önemli eğrilerin formüllerini bulacaksınız.
+Poligonların noktalarını birleştirmek için genellikle blitter'ın LI-
+NE işlevini kullanabilirsiniz, ancak bu her zaman en hızlı yöntem değildir ve
+bu işi işlemciye bırakmak gerekebilir: bu nedenle, 
+doğru çizgilerin izlenmesiyle ilgili temel formülleri bilmek yararlıdır.
+Her düz çizginin kartesyen eksenlerde şu formülle tanımlandığını söyleyerek başlayalım
+:
+Y = m*X + q
+
+Bu formül, düz çizginin tüm noktalarının ordinatlarını, eksenine göre verir.
+ Yani, x'i herhangi bir değerle değiştirerek
+düz çizginin karşılık gelen y değerini elde etmek yeterlidir.
+formülünde geçen m ve q terimleri sabitlerdir: ilki m açısal katsayı olarak adlandırılır ve
+doğrusanın X ekseniyle oluşturduğu açıyı belirler (daha kesin olarak, o açının teğetidir,
+ ancak bu konuyu daha sonra ele alacağız), m ne kadar büyükse
+, oluşturulan açı da o kadar büyük olur; q ise
+doğrusunun y ekseniyle kesiştiği noktayı, yani doğrusunun koordinatları
+(0,q) olan noktayı belirler. Buradan, q=0 olduğunda doğrunun eksenlerin başlangıç noktasından
+geçtiği kolayca anlaşılabilir.
+Ayrıca, bence 3D programlama için çok önemli olan bir formül daha vardır.
+ (P1x,P1y) koordinatlarına sahip bir P1 noktası ve 
+(P2x,P2y) koordinatlarına sahip bir P2 noktası verildiğinde, bu iki noktadan geçen doğruyu şu formülle bulabiliriz
+:
+
+Y-P1y = (P2y-P1y)/(P2x-P1x)*(X-P1x)
+
+Bu formülden şu sonucu elde ederiz:
+
+Y = (P2y-P1y)/(P2x-P1x)*X + (-P1x*(P2y-P1y)/(P2x-P1x))+P1y
+
+Bu, dikkate alınan noktalarından geçen doğrunun formülüdür.
+ X'in önündeki terim m'ye karşılık gelirken, 
+ardından gelen tüm formül q'ya karşılık gelir, ancak bu hesaplama 
+her doğru için yalnızca bir kez yapılır.Aynı formülün uygulamaları 
+örneğin, ekrandan çıkan bir çizgi için kullanılabilir: bunun uçlarını bildiğimizde
+,
+ onu belirleyen formülü bulabiliriz ve ardından
+X'in yerine ekranın kenarlarının absislerini koyarak, görünür segmentin uç noktalarının koordinatlarını bulabiliriz
+.
+
+İki noktanın koordinatlarını bildiğimizde sıkça yararlı olan diğer formüller
+P1 (P1x,P1y) ve P2 (P2x,P2y) şunlardır:
+
+1)Aralarındaki mesafeyi bulmak için (bu, pratikte 
+Pitagoras teoreminin bir uygulamasıdır ve daha ileride bulacaksınız):
+
+mesafe = sqr((P2x-P1x)^2+(P2y-P1y)^2)
+
+(sqr, çoğu yüksek düzey dilde
+kare kökü belirtmek için kullanılan komuttur, ^ sembolü ise e- 
+yükseltmek anlamına gelir: bu durumda, mesafe, karesine yükseltilmiş eksen farkının
+kareye yükseltilmiş ordinat farkının toplamına eşittir, sembollerle ifade edersek:
+_________________________________________ / / (P2x-P1x)*(P2x-P1x)+(P2y-P1y)*(P2y-P1y) \ / \/
+
+_________________________________________
+/
+/ (P2x-P1x)*(P2x-P1x)+(P2y-P1y)*(P2y-P1y)
+\ /
+\/
+
+Sqr ve ^'yi iyi anlayın, çünkü daha sonra sık sık kullanacağız) 
+
+
+Bu formül, örneğin iki kenarı bilinen herhangi bir çokgenin bir kenarının uzunluğunu bulmak için kullanışlıdır
+.
+
+
+
+2) Yalnızca iki nokta P1(Px1,Py1) ve P2(Px2,Py2) biliniyorsa, 
+orta nokta M(XM,YM) koordinatlarını şu formülle bulabiliriz:
+
+XM = (Px1 + Px2)/2
+
+YM = (Py1 + Py2)/2
+
+******************************************************************************
+Bu noktada, perspektif dersine de geçebilirsiniz, çünkü
+artık uzayda herhangi bir nesneyi temsil edebiliyorsunuz (aslında
+kenarları çizip Blitter ile birleştirerek düz bir şekil
+veya bir katı cisim oluşturmanız yeterlidir).
+Ancak, bu bilgilerle nesneleri döndüremezsiniz, sadece yakınlaştırabilirsiniz (bunu yapmak için her noktanın Z değerini artırmanız veya azaltmanız yeterlidir
+).
+Bir noktayı döndürmek için trigonometriye girip kosinüs
+ve sinüs kavramlarını tanıtmamız gerekir.Bu ikisi,
+merkezinde orijin bulunan bir daire üzerinde bulunan bir noktanın
+
+^
+Y |
+|
+|
+|
+___|___
+/ | \.P
+|     | |
+---------+----+----+-------->
+|     O| | X
+\___|___/
+|
+|
+|
+|
+
+Çizdiğim şey düzensiz bir sekizgen olsa da (ama ASCII karakterleriyle
+daha iyisini yapamadım), biraz hayal gücüyle
+ne demek istediğimi anlayabilirsiniz.Kısacası, kosinüs ve
+P noktasının Y eksenine olan uzaklığı, sinüs ise P noktasının 
+X eksenine olan uzaklığıdır. Geleneksel olarak (ama sadece bu nedenle değil) dairenin yarıçapı
+1 olarak kabul edilir. Bu şekilde, hem sinüs hem de kosinüs her zaman
+1 ile -1 arasında (temelde ondalık sayılar) değerler arasında değişecektir.
+ 
+Ayrıca, P noktası da daire üzerinde bir açı belirler,
+yani X ekseni ile P noktasından geçen doğru ve eksenlerin başlangıç noktası arasında oluşan açı.
+Örneğin, 30 derecenin sinüsü 0,5 ise, bu, O (eksenlerin başlangıç noktası) ile P noktası arasında X ekseniyle bir açı oluşturan P noktasının, X ekseniyle
+Örneğin, 30 derecenin sinüsünün 0,5 olduğunu varsayarsak, bu, O (eksenlerin başlangıç noktası) ile birleşerek X ekseniyle 30 derecelik bir açı oluşturan P noktasının
+X ekseninden 0,5 uzaklıkta olduğu anlamına gelir.
+Dikkate alınan açının kosinüsünü de bulmak için, P'nin konumu ve açının başlangıç noktası hakkında basit bir gözlemde bulunabiliriz (Coder değil, Pisagor teoremine dayanarak).
+Söz konusu açının kosinüsünü bulmak için, Pisagor teoremine (Coder değil) dayanarak basit bir 
+gözlem yapabiliriz.
+Bu, geometrinin temel teoremlerinden biri olan bu teorem hakkında bilgisi olmayanlar için
+burada kısa bir açıklama bulunmaktadır:
+Bir dik üçgen (yani 90 derecelik bir açıya sahip) verildiğinde,
+iki kenarın uzunlukları (en kısa kenarlar) biliniyorsa,
+hipotenüs (en uzun kenar) bulunabilir, çünkü bunun iki kenarın karelerinin toplamının kareköküne eşit olduğu bilinmektedir
+.
+ 
+
+
+|\
+| \
+| \
+| \ c
+a | \
+| \
+| \
+| \
+|________\
+
+b
+
+
+Bu durumda a ve b katetlerdir, c'yi bulmak için a*a+b*b'nin karekökünü hesaplamamız gerekir (bunu a^2+b^2 olarak da yazabiliriz).
+Genel olarak: c^2 = a^2 + b^2
+Genel olarak:
+
+c^2 = a^2 + b^2
+
+Düşündüğümüz çemberine geri dönersek, burada da
+P noktasının x ve y koordinatlarını katetler, OP segmentini hipotenüs olarak alan bir dik üçgenin
+varlığını fark ederiz. OP segmenti pratikte yarıçapa eşittir ve
+dolayısıyla 1'e eşittir.
+Önceki örnekte, 30 derecelik sinüs değerini bildiğimizden, karşılık gelen kosinüs değerini (pratikte x ekseni) bulabiliriz:
+
+^
+Y |
+|
+|
+|
+|
+___|___
+/ |___\.P
+| | b |a
+-------------+----+----+-------------->
+| O| | X
+\___|___/
+|
+|
+|
+|
+|
+|
+
+
+Bu durumda a=0,5 ve OP (grafiksel nedenlerden dolayı çizmedim)
+1'e eşittir. Dolayısıyla a ve b arasındaki açı 90 derecedir ve
+önceki denklemdeki bilinen terimleri yerine koyarsak şunu elde ederiz:
+
+1^2 = 0,5^2 + b^2
+
+0,5 yerine kesirli formu 1/2'yi yerine koyarsak şunu yazabiliriz:
+
+1 = 1/2^2 + b^2
+
+Buradan:
+
+1 = 1/4 + b^2
+
+Dolayısıyla:
+
+b^2= 1 - 1/4
+
+b^2= 3/4
+
+Sonuç olarak b = sqr(3)/2 (sqr, 
+çoğu yüksek seviye dilinde karekökü belirtmek için kullanılan bir komuttur,
+ bizim durumumuzda b'nin 3'ün karekökü bölü 2'ye eşit olduğunu okursunuz)

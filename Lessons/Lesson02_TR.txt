@@ -1,0 +1,695 @@
+
+ASEMBLER KURSU - DERS 2
+
+LEZIONE1a.s kaynak kodunun nasıl çalıştığını tam olarak anladınız mı?
+Eğer anlamadıysanız, o zaman beyin hastasısınız ve kursu bırakmalısınız.
+
+Şimdi 68000 dilini daha derinlemesine inceleyeceğiz. İlk kaynak kodda, işlemcinin genel olarak
+her şeyi organize etmek için kullanıldığını, ancak tek başına
+belleğinde değerleri değiştirmekten başka bir şey yapmadığını
+ belirli değerleri belleğin belirli alanlarına
+(örneğin $dffxxx veya $bfexxx) yerleştirerek grafik,
+ses ve port çiplerinin pinlerine akım verilir ve sonuç olarak, önceki örnekte olduğu gibi
+ekranın rengini değiştirebilir veya bu konumları okuyarak
+elektronik fırçanın hangi satıra geldiğini veya fare düğmesinin
+basılı olup olmadığını öğrenebiliriz. Bir oyun veya demo yapmak için çok sayıda
+bu adresleri, yani KAYITLAR'ı kullanmak gerekir ve bu nedenle bunları
+en az 68000 dili (MOVE, JSR, ADD, SUB vb.) kadar bilmek gerekir.
+Bu tür programlama için, daha önce de belirttiğim gibi, ROM kickstart 1.2/1.3/2.0/3.0'daki KÜTÜPHANELER
+(yani, bir workbench penceresi açmaya veya bir dosyayı okumaya izin veren rutinler veya alt programlar)
+ kullanılmaz yani çok az kullanılır: örneğin,
+workbench'in guru'ya girmesini önlemek veya çoklu görev özelliğini devre dışı bırakmak için.
+Bu nedenle, bu 2. derste,
+68000'in rolünü anladıktan sonra, onun kullanımını daha derinlemesine incelemek gerektiğini düşünüyorum.
+
+Öğrenilmesi gereken en önemli şey, komutların kendisinden çok
+işlemcinin adresleme yöntemleridir, çünkü bunu öğrendikten sonra
+her komut adresleme için aynı sözdizimini kullanır ve komutun ne yaptığını bilmek yeterlidir.
+ İşlemcinin, birim ölçüsü bayt olan ve adreslere veya konumlara bölünmüş
+bellek üzerinde çalıştığını ve belleğin konumlara veya adreslere bölündüğünü, ölçü biriminin
+bayt olduğunu ve adresin genellikle onaltılık formatta, yani
+onluk sistemden farklı bir sayı formatında, 16 tabanlı olduğunu belirtmiştik.
+Bu kesinlikle bir sorun değildir: onluk sayılarda
+örneğin 30 sayı dizisi şöyle olur: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 etc,
+in esadecimale fa 1,2,3,4,5,6,7,8,9,a,b,c,d,e,f,10,11,12,13,14,15,16,17,18,
+19,1a,1b,1c,1d,1e vb. Yani onaltılık sayılarda alfabenin ilk
+6 harfi de bulunur, sanki a 10, b 11 vb. gibi;
+onaltılık sayıyı ondalık sayıya veya tersini dönüştürmek için asm komutunun “?”
+komutunu kullanmanız yeterlidir: örneğin “?10000” yazdığınızda, karşılık gelen
+onaltılık değer olan $2710 elde edersiniz (onaltılık sayılar $ ile başlar, ondalık sayılar
+önünde hiçbir şey yoktur ve ikili sayılar ise % ile başlar). Onaltılık sayılar
+, bilgisayarın düşünme şekline daha yakın oldukları için kullanılırlar
+,
+ çünkü bilgisayarlar elbette BİNERdir, yani sadece 0 ve 1'lerden oluşurlar.
+68000'in çeşitli adresleme yöntemlerini anlamaya başlamak için,
+ belirtilen bellek konumunu sıfırlayan CLR komutunu kullanacağız:
+
+CLR.B    $40000        ; .B, .W ve .L arasındaki farkı hatırlıyor musunuz?
+
+Bu komut, $40000 numaralı baytı, yani
+$40000 adresini sıfırlar. Bu en basit durumdur ve MUTLAK olarak adlandırılır; yani
+CLR'nin hangi adrese uygulanacağını doğrudan belirtir; assembler'da
+programın bir noktasını tanımlamak için LABEL kullanılır,
+burada örneğin belirtilecek bir bayt olabilir: bu durumda
+adresin yerine LABEL'in adı yazılır; assembler
+söz konusu baytın gerçek adresini yazar: örneğin,
+ilk listemizi şu şekilde değiştirirsek:
+
+Waitmouse:
+move.w    $dff006,$dff180	; $dff106 değerini $dff180'e koy
+; yani VHPOSR'yi COLOR0'a
+btst    #6,$bfe001    ; farenin sol tuşu basılı mı?
+bne.s    Waitmouse    ; değilse waitmouse'a dön ve tekrarla
+; (.s, bu durumda .b'ye eşdeğerdir
+; komut türü: bne.s = bne.b)
+clr.b    dato1        ; DATO1'i SIFIRLA
+rts            ; çık
+
+dato1:
+dc.b    $30    ; dc.b, AŞAĞIDAKİ BYTE'Yİ HAFIZAYA KAYDET anlamına gelir
+; bu durumda dato1'in altına $30 yazılır:
+
+RTS ile çıkmadan önce, etiket
+dato1: ile işaretlenen bayt sıfırlanır, bu bayt derleme (veya kompilasyon) aşamasında
+belirli bir mutlak adrese atanır, örneğin program
+ASMONE tarafından $50000'den başlayarak derlenmişse, derleme
+derleme işleminden sonra bir CLR.B $5001c, yani dato1: 'nin gerçek adresi bulunur,
+kesinlikle CLR.B DATO1 değil, çünkü dato1: programcı tarafından dc.b $30'u işaretlemek için verilen bir isimdir
+; Buradan etiketlerin yararı da anlaşılmaktadır,
+çünkü listeyi her seferinde sayısal adresi
+belirterek yazmak zorunda kalırsanız, programın ortasına bir rutin eklendiğinde
+tüm adresleri yeniden yazmanız gerekir. Etiketlerin hangi
+adrese derlendiğini görmek için ASMONE'nin D komutunu kullanmanız yeterlidir:
+Örneğin, LEZIONE1a.s derledikten sonra “D waitmouse” komutunu verdiğinizde
+waitmouse'dan başlayarak belleğin derlenmesi
+listede etiketler değil, gerçek adresler görünecektir.
+
+Kursun örnek kaynaklarında, $dffxxx veya $bfexxx gibi özel adresler dışında, sayısal adreslerin
+hiçbir zaman belirtilmediğini, sadece LABEL'lerin belirtildiğini göreceksiniz.
+Son örnekte, tanımlanmış baytları eklemek için kullanılan bir assembler komutu olan dc.b kullandım
+; Örneğin,
+programın belirli bir noktasına $12345678 girmek için DC komutunu kullanmam gerekir ve bunu
+.B (BYTE), .W (WORD) ve .L (LONGWORD) olmak üzere 3 şekilde kullanabilirim:
+
+dc.b	$12,$34,$56,$78    ; bayt cinsinden
+
+dc.w    $1234,$5678    ; kelime cinsinden
+
+dc.l    $12345678    ; uzun kelime cinsinden
+
+Bu komut, cümleleri belleğe kaydetmek için de kullanılır, örneğin
+PRINT rutini tarafından ekrana yazdırılması gereken metni listeye eklemek için
+TESTO etiketinde yazanları yazdırmak için:
+
+TESTO:
+dc.b    “selamlar”
+
+veya
+dc.b    'tanti salutì
+
+Genellikle metin sıfır ile sonlandırılır:
+
+dc.b    “tanti saluti”,0
+
+Metni tırnak işaretleri içine almayı ve dc.b kullanmayı unutmayın,
+dc.w veya dc.l kullanmamayı unutmayın! Karakterlerin her biri bir bayt uzunluğundadır ve
+belirli bir bayta karşılık gelir: örneğin ?“a” yazmayı deneyin,
+bunun $61'e karşılık geldiğini göreceksiniz, dolayısıyla dc.b “a” yazmak
+dc.b $61 yazmakla eşdeğerdir. Büyük harflerin farklı değerlere sahip olduğuna dikkat edin!
+Örneğin “A” $41'dir. dc.b'nin en yaygın kullanımı,
+verilerin tutulacağı bayt, kelime veya daha büyük alanları tanımlamaktır. Örneğin
+belirli bir tuşa basma sayısını kaydeden bir program yapmak istiyorsanız,
+ örneğin sıfırlanmış bir baytın ardından gelen bir etiket tanımlamanız gerekir
+sıfırlanmış bir bayt ve her seferinde ADD komutuyla o etikete,
+yani etiketin altındaki bayta 1 eklenir ve çıkışta baytın değerini okumak yeterlidir
+:
+
+; tuş basılıysa ADDQ.B #1,NUMPREMUTO, yani
+; numpremuto etiketinin altındaki bayta bir ekle.
+
+NUMPREMUTO:
+dc.b    0
+
+Programın çıkışında, baştaki 0, tuşa basılan sayı kadar değiştirilecektir.
+ Benzer bir örnek, LEZIONE2a.s dosyasında bulunur ve
+ayrıntılı bir açıklama da içerir. Bu dosyayı başka bir
+metin tamponuna yüklemenizi öneririm: 10 taneden birini seçmek için F1'den F10'a kadar
+tuşlarından birine basmanız yeterlidir. Örneğin, F1 tamponunda LEZIONE2.TXT varsa,
+F2 tuşuna basın ve “R” komutuyla LEZIONE2a.s dosyasını yükleyin.
+ Daha sonra,
+LEZIONE2b.s ve sonraki dosyaları F3, F4... tamponuna yükleyebilirsiniz, böylece
+tek bir tuşa basarak her zaman kullanabilirsiniz; ancak
+LEZIONE.TXT'yi takip etmeniz daha iyidir ve örnek kaynak gösterildiğinde,
+başka bir tampona yüklemeye devam edin, çalıştırın ve kontrol edin,
+ardından LEZIONE'yu kaldığınız yerden okumaya devam edin: bence
+bu, öğrenmek için en iyi yöntemdir, çünkü biraz teori öğrenip
+hemen kontrol edebilirsiniz.
+
+LEZIONE2a.S'deki yorumları okudunuz mu?
+
+Byte, word ve longword'ün önemini görmüşsünüzdür:
+ikili sistemde, bitleri saymak için sağdan başlanır ve
+sola doğru, yani “ters” yönde ilerlenir ve 1'den değil 0'dan başlanır, yani
+bir bayt (8 bit içerir) 0'dan başlar ve 7'ye kadar gider. Örneğin bu sayı:
+
+%000100010000
+
+4 ve 8 bitleri “açık” durumdadır. Bunları numaralandırmak için şöyle yapabilirsiniz:
+
+	    ;5432109876543210    - ;
+move.w #%0011000000100100,$dffxxx
+
+Bu durumda WORD'ün 2,5,12 ve 13 bitleri “açık” durumdadır.
+Bir baytın 8 bit, bir kelimenin 16 bit (0'dan 15'e), bir uzun kelimenin
+32 bit (0'dan 31'e) olduğunu hatırlayın.
+BTST #6,$bfe001
+
+komutunda
+
+$bfe001 baytının 6. bitinin sıfırlanıp sıfırlanmadığı kontrol edilir: eğer sıfırlanmışsa:
+
+;76543210
+%01000000
+
+6. bit 1'dir, bu nedenle fare basılı değildir!!!
+
+Özetlemek gerekirse, bir BYTE 8 bitten oluşur: bunları belirtmek için, sağdaki ilk bit
+bit 0'dır ve EN AZ ÖNEMLİ BIT olarak da adlandırılır. Numaralandırma
+sağdan sola doğru 7'ye kadar devam eder (yani 8'e kadar, çünkü 1'den değil
+0'dan başlanır: 01234567, yani 8 bit); 
+bit 7, EN ÖNEMLİ BIT olarak adlandırılır.
+Daha önemlidir çünkü, yüz binlik banknotta en sağdaki sıfırlardan daha fazla sayıldığı gibi
+, daha fazla sayılır.
+Bir bayt en fazla 255, yani %11111111 değerinde olabilir.
+
+Bir WORD ise 16 bitten, yani iki bayttan oluşur, aynı şekilde
+sağdan en az anlamlı olan bit 0 ile başlar ve soldaki en anlamlı bit 15 ile
+biter. En fazla 65535 değerini alabilir.
+
+Bir LongWord 32 bitten oluşur, 0'dan 31'e kadar, yani 4 bayt veya 2 word veya
+tercih ederseniz bir word ve 2 bayt, yani her zaman birbirine bağlı 32 bit
+ve en fazla 4294967299 (4 milyar!! piyango gibi!) içerebilir.
+
+Şimdi farklı yönlendirme yöntemlerine geçelim: örneğin
+CLR.W $100 yaparsak, $100 ve $101 konumlarını sıfırlayacağız,
+yani $100'den başlayan bir kelimeyi (bir kelime 2 bayt olduğundan ve konumlar
+baytlara bölündüğünden, 2 baytı temizleyeceğiz!!). Aynı şekilde bir MOVE.B $100,$200
+, $100'ün içeriğini $200'e kopyalar. Bu, adresi belirtmek yerine
+LABEL ile de gösterilebilir, örneğin MOVE.B LABEL1,LABEL2,
+yani LABEL1'in baytını LABEL2'ye kopyalar. Ancak, adresleme için farklı yöntemler de vardır
+. Örneğin, MOVE.L #$50000,LABEL2 komutuyla
+LABEL2'ye SABİT bir değer atayabilirim. Örneğin, LABEL2'nin adresi $60000 ise,
+M $60000 komutuyla $00050000 değerini $60000'e, yani baytları taşırız:
+00 05 00 00. Aslında, bir sayı veya etiketin önünde
+hash işareti (#) varsa, bu, belirlenen bir değerin taşındığı anlamına gelir
+ve bu değerin, o değerle belirtilen adreste bulunan değer değildir,
+sayı veya LABEL'in önünde hash işareti yoksa olduğu gibi.
+Örneğin, şu 2 durumu inceleyelim:
+
+1)    MOVE.L    $50000,$60000   ; adreslerdeki değerler
+								; $50000,$50001,$50002,$50003
+								; $60000'a kopyalanır,
+								; $60001,$60002,$60003, yani bir longword
+								; 4 baytlık bir uzunlukta bir adres
+								; adresine kopyalanır.
+
+2)    MOVE.L    #$50000,$60000  ; Bu sefer $60000'e
+								; hash işaretinden sonra belirtilen sayı,
+								; yani $50000 yerleştirilir. Bu sefer
+								; $50000 adresinin okunmadığı
+								; ve bununla hiçbir ilgisi olmadığı,
+								; sadece $60000'in kullanıldığı
+								; Etiket kullanılırsa, herhangi bir değişiklik olmaz:
+
+1)    MOVE.L    KÖPEK,KEDİ  ; KÖPEK uzun kelimesinin içeriği, yani
+							; $00123456, KEDİ uzun kelimesine kopyalanır
+							; (aslında $123456, KÖPEK etiketinin altında
+							; ilk gelen şeydir)
+
+komutundan önce:
+
+KÖPEK:
+	dc.l    $123456
+
+KEDİ:
+	dc.l    0
+
+komutundan sonra:
+
+KÖPEK:
+	dc.l    $123456
+
+KEDİ:
+	dc.l    $123456
+
+2)    MOVE.L    #KÖPEK,KEDİ     ; Bu sefer etiket
+								; KÖPEK'in ADRESİ KEDİ etiketine kopyalanır
+
+komutundan önce:    ; ETİKET KÖPEK'in konumunun
+					; $34500 konumunda olduğunu varsayalım, yani bir M KÖPEK komutu verdikten sonra
+					; şunlar görünür:
+					; 00034500 00 12 34 56 00 00 00 00 .....
+					; (köpek) (kedi)
+
+KÖPEK:
+	dc.l    $123456
+
+KEDİ:
+	dc.l    0
+
+komutundan sonra:
+
+KÖPEK:
+	dc.l    $123456
+
+KEDİ:
+	dc.l    $34500    ; yani KÖPEK ETİKETİNİN HAFIZADAKİ YERİ.
+
+MOVE.W #KÖPEK,KEDİ veya MOVE.B #KÖPEK,KEDİ
+komutunu vermiş olsaydınız, bir ADRES bir LONGWORD uzunluğunda olduğu için
+derleyici bir hata verirdi. Bellekte bir MOVE.L #LABEL,LABEL komutu,
+MOVE.L #$12345,$12345 türünde bir komuta dönüşür, yani derleyici etiketlerin yerine gerçek adresleri yazar
+etiketlerin yerine gerçek adresi yazar. Bunu DERS 2b.s ile kontrol edebilirsiniz.
+
+Şimdi kayıtlarla diğer adreslemeleri ele alacağız (bunlar daha
+zordur); daha önce de belirttiğim gibi, 8 veri kaydı ve 8 adres kaydı vardır
+: yani D0,D1,D2,D3,D4,D5,D6,D7 VERİ kayıtlarıdır,
+a0,a1,a2,a3,a4,a5,a6,a7 adres kayıtlarıdır. Öncelikle,
+A7 kaydı SP veya STACK POINTER olarak da bilinir ve daha sonra bahsedeceğimiz özel bir kayıttır,
+ bu nedenle adres kayıtlarını sadece
+a6'ya kadar kullanmayı düşünün. Bu adreslerin her biri bir uzun kelime uzunluğundadır ve pratikte 
+68000 içindeki küçük bir bellek gibidir, bu nedenle çok hızlıdır.
+Kayıtlar aracılığıyla çeşitli şeyler yapılabilir, aslında kayıtlar için özel bir sözdizimi vardır
+. Öncelikle, ADRES kayıtlarıyla bayt bazında çalışamazsınız
+: örneğin, bir move.b LABEL,a0 hata mesajı verir.
+ Adres kayıtları a0,a1, vb. ile
+longword veya word bazında çalışabilirsiniz. D0, D1 vb. veri kayıtları ile ise
+hem .b hem .w hem .l kullanılabilir. Adres kayıtları adresleri içermek için ayrılmıştır ve
+LEA (LOAD ENTIRE ADDRESS, tüm adresi kayda yükle) gibi özel komutlara sahiptir
+(bu komut lea.b, lea.w veya lea.l olamaz, çünkü L her zaman .L'dir).
+Örneğin, adres kayıtlarına bir değer girmek için
+2 yöntem kullanılabilir:
+
+1)    MOVE.L    #$50000,A0    (veya MOVE.L #LABEL,a0)
+
+2)    LEA    $50000,a0    (veya LEA LABEL,A0)
+
+İlk yöntem hem adreslerle hem de kayıtlarla kullanılabilir
+(örneğin: move.l #$50000,d0 - move.l #$50000,LABEL - MOVE.L #$LABEL,LABEL...)
+
+P.S: move.l #$50000,d0 veya MOVE.L #$50000,D0 yazmak aynıdır,
+MoVe.L #$50000,d0 da yazılabilir, program düzeyinde sonuç
+aynıdır, sadece estetik olarak hoş
+veya çirkin durumlar yaratabilirsiniz. LABEL için farklı bir açıklama yapılmalıdır:
+etiketler, listede bir noktada
+küçük harfle yazılmış olsa bile, başka bir noktada büyük harfle yazılmış olsa bile tanımlanabilir, ancak bu
+TRASH'M-ONE tercihlerinde bu seçeneğin ayarlanmış olması nedeniyle,
+ “Assembler/Assemble..” menüsünde UCase=LCase, yani
+“Büyük Harf=Küçük Harf, yani büyük harfler=küçük harfler” anlamına gelir.
+Bu seçeneği kaldırırsanız, etiketlerin tanınmasında
+büyük/küçük harfler de dikkate alınacaktır, bu nedenle Cane:
+CANE: veya cAne: veya caNe vb.
+
+LEA ile ikinci yöntem sadece adres kayıtlarında kullanılabilir,
+bu nedenle bu yöntemin daha hızlı olduğu anlaşılmaktadır: bu nedenle
+a0,a1... kayıtlarına bir adres girmek istiyorsanız,
+LEA komutunu, ADRESİ HİÇBİR ŞEKİLDE SİLMEDEN ve ilgili kayıt ile birlikte kullanmanız gerektiğini unutmayın.
+Aşağıdaki 2 örneğe dikkat edin:
+
+1)    MOVE.L	$50000,a0   ; a0'a 
+							; konumundaki $50000 (+$50001,$50002 ve $50003
+							; değerini koyun; çünkü 1 konum 1 bayt uzunluğundadır ve
+							; move.l 4 bayt = 4 konumu kopyalar
+							; bu durumda $50000'den başlayarak
+
+2)    LEA    $50000,a0    ; $50000 sayısını a0'a koy
+
+Bu nedenle, MOVE komutlarını ve LEA komutlarını, silme işareti ile veya silme işareti olmadan kullanırken dikkatli olun
+çünkü başlangıçta hata yapıp adresi yerine
+o adresin değerini kayda yazmak veya tersini yapmak kolaydır. Bu farkla ilgili
+, örnek program LEZIONE2c.s'ye bakın.
+
+Adres kayıtlarıyla çeşitli adresleme türleri mümkündür:
+Başlangıç olarak şu 2 komutu inceleyelim:
+
+move.l    a0,d0    ; a0'da bulunan sayıyı d0 kaydına koyun
+move.l    (a0),d0  ; a0 adresinde bulunan uzun kelimeyi
+				   ; d0 kayıt defterine yazın.
+
+Parantez içindeki adresleme DOLAYLI olarak adlandırılır, çünkü
+DIREKT olarak kopyalanmak yerine a0 değerindeki değer kopyalanır. 
+Pratik bir örnek LEZIONE2d.s
+
+Dolaylı adresleme kullanılarak adresler ÜZERİNE dolaylı olarak etki edilebilir,
+örneğin fare tuşunun adresini ve renk 1'i kayıtlara koyarak
+ders 1'in listesini yeniden yazabilirsiniz. Bunu DERS2e.s'de yaptım.
+
+Dolaylı adreslemeyle ilgili olası şüpheleri gidermek için son örnekleri yapalım:
+
+move.l a0,d0        ; A0'ın değerini d0 kaydına kopyalar
+move.b (a0),d0      ; a0'da bulunan baytı d0 kaydına kopyalar
+move.w (a0),(a1)    ; a0'da bulunan kelimeyi a1'de bulunan adrese kopyalar
+					; (ve sonraki, bir kelime 2 bayt
+					; yani 2 adres olduğundan!)
+clr.w    (a3)       ; a3 adresindeki kelimeyi (2 bayt) temizler (sıfırlar)
+					; Daha kesin olarak,
+					; a3 adresindeki bayt ve
+					; sonraki adres sıfırlanır.
+clr.l    (a3)       ; Yukarıdaki gibi, ancak 4 adres sıfırlanır
+					; (bir long = 4 bayt = 4 adres)
+move.l    d0,(a5)   ; d0 değerinin a5 adresine kopyalanır
+					; (daha kesin olarak, a5 adresine ve sonraki 3 adrese
+					; kopyalanır, çünkü bir long 4 adres kaplar)
+move.l    d0,a5     ; d0'ın değeri a5'e kopyalanır
+
+Unutmayın! Şimdiye kadar öğrendiğiniz adresleme konusunda tüm şüphelerinizi giderin,
+LEZIONE2e.s'ye kadar kaynakları da inceleyin, çünkü şimdi anlatacağım adresleme
+normal dolaylı adreslemeyi temel almaktadır.
+
+Bu, ders 2'nin en soyut kısmı olduğunu belirtmek isterim, çünkü
+işlemcinin son adreslemelerini öğrenmeniz gerekiyor, ancak sizi temin ederim ki
+ders 3'ten itibaren her şeyi pratikte uygulayabilecek ve
+copper ile video efektleri görebileceksiniz! Bu kısmı geçtikten sonra kursun geri kalanının
+daha PRATİK olacağını unutmayın: her açıklamaya yeni bir
+özel efekt veya ultra canlı renk karşılık gelecektir, bu yüzden sıkılmamaya
+ve şimdi pes etmemeye çalışın, çünkü ben de yaklaşık olarak
+ASM ile programlamayı öğrenmeye çalıştığımda,
+komutların ve açılı ve kapalı parantezlerin karmaşasından cesaretim kırıldığı için
+ve sonra takip edemediğim için pes ettim. Ancak, komutları okumayı öğrendikten sonra
+bir ok gibi fırlayıp,
+burada ve orada listeleri okuyarak, giderek daha büyük adımlar atarak öğrenebileceğinizi garanti ederim: 
+Bu, bir sporun kurallarını öğrenmek gibidir: 68000'in komut setini
+bilmeyen biri, örneğin futbolun kurallarını bilmeyen birine benzer
+: maçları (listeleri) izlerken, o saha içinde bir topa tekme atan o çılgınların ne yaptığını
+hiç anlamaz
+ve çok sıkılır, ancak kuralları (adresleme) anladığında, maçın aşamalarını
+yorumlayabilir ve oyun tekniklerini
+(programlama hileleri ve grafik kayıtları) giderek daha iyi öğrenebilir.
+
+Diğer 2 adresleme yöntemine bakalım:
+
+move.l    (a0)+,d0    ; Post-artırmalı dolaylı
+move.l    -(a0),d0    ; Ön artırmalı dolaylı
+
+Bu durumu varsayarak ilk yönlendirmeyi inceleyelim:
+
+lea    NONNO,a0    ; a0'a NONNO'nun adresini koyalım:
+MOVE.L    (a0)+,d0    ; d0'a a0 adresinde bulunan .L değerini koyalım
+; yani $3231020
+; (normal bir MOVE.L (a0),d0 gibi)
+; ardından a0'daki DEĞERE 4 EKLEYELİM
+; yani a0'daki adresle
+; aşağıdaki long'a POKEYELİM; eğer
+; move.w (a0)+,d0 a0'a SONRA (POST-INCREMENT)
+; 2 (bir kelime=2) eklenmiş olurdu,
+; MOVE.B (a0)+,d0 durumunda ise
+; 1 (bir bayt) eklenmiş olurdu,
+; yani bir sonraki adresi işaret ederdi.
+
+MOVE.L    (a0)+,d1    ; aynı şey: a0 adresindeki .L
+; değerini d1'e kopyalar, bu adres şimdi
+; NONNO+bir uzun kelime adresini içerir,
+; yani NONNO+4, yani $13478.
+rts            ; ÇIK!
+
+NONNO:
+dc.l    $3231020,$13478
+
+END
+
+Bu tür adreslemeyi 2 komutla çevirebiliriz:
+
+1)	MOVE.L    (a0)+,LABEL
+
+şuna eşdeğerdir:
+
+1b)    MOVE.L    (A0),LABEL    ; a0 adresindeki bir long'u
+; etikete kopyalar
+ADDQ.W    #4,a0        ; a0'a 4 ekler (.L=4)
+; NOT: eğer 9'dan küçük bir sayı eklenirse, ADD
+komutu yerine ADDQ komutu kullanılır
+; çünkü bu komut bu tür sayılar için ayrılmıştır ve daha hızlıdır.
+Ayrıca, ADRES kayıtlarında, eklediğimiz veya çıkardığımız sayı
+; $FFFF'den, yani bir kelimeden küçükse, .L yerine .W
+kullanılabilir ve yine de
+; adresin tüm uzun kelimesi üzerinde işlem yapılır.
+Aynı şekilde:
+
+2)    MOVE.W    (a0)+,LABEL
+
+şuna eşdeğerdir:
+
+2b)    MOVE.W    (A0),LABEL    ; a0 adresindeki bir kelimeyi
+; etikete kopyalar
+ADDQ.W    #2,a0		; a0'a 2 ekler (.W=2)
+
+Aynı şekilde:
+
+3)    MOVE.B    (a0)+,LABEL
+
+şuna eşdeğerdir:
+
+3b)    MOVE.B    (A0),LABEL    ; adres
+; a0'daki etikete kopyalar
+ADDQ.W    #1,a0        ; a0'a 1 ekle (.B=1)
+
+Özetle, post
+artırmalı dolaylı adresleme, bir montaj hattındaki işçiye benzetilebilir.
+ İşçi, ÖNCE konveyör bandındaki parçaya MOVE veya komutunu uygular
+ve parçadaki işini her tamamladığında
+konveyör bandını (a0 adresindeki) bir pedal ( + ) ile İLERİ hareket ettirir.
+Bir döngü örneği daha açık olabilir:
+
+Başlangıç:
+lea    $60000,a0    ; temizleme başlangıcı
+lea    $62000,a1    ; temizleme sonu
+CLELOOP:
+clr.l    (a0)+	; A0 adresindeki bir long'u sıfırla ve a0'ı
+; bir long, yani 4 adres artır, başka
+; bir deyişle bir long'u temizle ve bir sonrakine geç
+cmp.l    a0,a1    ; A0 $62000'e ulaştı mı? Yani, a0 a1'e eşit mi?
+bne.s    CLELOOP ; henüz değilse, başka bir döngü ile devam et CLELOOP
+rts
+
+Görüldüğü gibi, bu küçük program $60000 adresinden
+$62000 adresine kadar belleği temizler, clr (a0)+ komutunu istenen adrese ulaşana kadar tekrarlar
+. Benzer bir örneği Ders2f.s'de bulabilirsiniz.
+
+Şimdi, önceden azaltma ile dolaylı adreslemeyi öğreneceğiz, yani
+az önce açıklananın tersi bir adresleme. Aslında, işlemi gerçekleştirdikten sonra
+rel kaydında bulunan adresi artırmak yerine,
+örneğin bir clr.l -(a0) ile önce a0 azaltılır, ardından
+komut yeni adrese (bu durumda a0-4) uygulanır. Örnek:
+
+lea    NONNO,a0    ; a0'a NONNO adresini koyalım:
+MOVE.L    -(a0),d0    ; a0 azaltılır, bu durumda
+rts            ; bir .L komutu olduğu için
+; 4 azaltılır, ardından d0'a kopyalanır
+; adresin içerdiği .L değeri
+; a0'da, yani $12345678, yani NONNO-4
+; (kayıt defterinde başlangıç değeri-4 kalır)
+dc.l    $12345678    ; eğer bir
+NONNO olsaydı:				; move.w -(a0),d0 a0'a ÖNCE (ÖN ARTIRMA)
+dc.l    $ffff0f0f    ; 2 (bir kelime=2) çıkarılırdı,
+; MOVE.B -(a0),d0
+END            ; durumunda ise 1 (bir bayt) çıkarılırdı,
+; yani önceki adresi işaret ederdi
+.
+
+Bu tür adreslemeyi 2 komutla çevirebiliriz:
+
+1)    MOVE.L    -(a0),LABEL
+
+şuna eşdeğerdir:
+
+1b)    SUBQ.W    #4,a0        ; a0'dan 4 çıkar (.L=4)
+; NOT: 9'dan küçük bir sayı çıkarılırsa
+; SUB yerine SUBQ komutu kullanılır
+; çünkü bu komut bu sayılar için özel ve hızlıdır.
+
+MOVE.L    (A0),LABEL    ; a0 adresindeki uzun bir değeri
+; etikete kopyalar
+Aynı şekilde:
+
+2)    MOVE.W    -(a0),LABEL
+
+şuna eşdeğerdir:
+
+2b)    SUBQ.W    #2,a0        ; a0'dan 2 çıkar (.W=2)
+MOVE.W    (A0),LABEL    ; a0 adresindeki bir kelimeyi
+; etikete
+
+Aynı şekilde:
+
+3)    MOVE.B    -(a0),LABEL
+
+şuna eşdeğerdir:
+
+3b)    SUBQ.W    #1,a0        ; a0'dan 1 çıkar (.B=1)
+MOVE.B    (A0),LABEL    ; adresindeki baytı
+; a0'daki etikete kopyalar
+
+İşçiyi önceki örnekle özetlersek, önceden azaltma ile dolaylı adresleme
+her zaman bir montaj hattındaki işçiye benzetilebilir.
+ İşçi ÖNCE konveyör bandını (a0 adresindeki) bir
+pedal (-), SONRA taşıyıcı bantta
+bulunan parça üzerinde MOVE veya komutunu gerçekleştirir. Bir döngü örneği:
+
+Başlangıç:
+lea    $62000,a0    ; temizleme başlangıcı
+lea    $60000,a1    ; temizleme sonu
+CLELOOP:
+clr.l    -(a0)    ; a0'ı bir uzunluk azalt ve o uzunluğu sıfırla
+; başka bir deyişle, önceki uzunluğa git ve onu temizle
+cmp.l    a0,a1    ; A0 $60000'a ulaştı mı? Yani, a0 a1'e eşit mi?
+bne.s	CLELOOP ; henüz değilse, başka bir döngüyle devam et CLELOOP
+rts
+
+Görüldüğü gibi, bu küçük program $62000 adresinden
+$60000 adresine kadar belleği temizler, clr -(a0) komutunu istenen adrese ulaşana kadar tekrarlar
+(ancak geriye doğru! (a0)+ ile
+$60000'den başlar ve 4'er 4'er $62000'e ulaşır, bu durumda $62000'den başlar
+ve 4'er 4'er geriye giderek $60000'e ulaşır).
+Son 2 adreslemeyi kontrol etmek için Ders2g.s ve Ders2h.s'ye bakın.
+
+Şimdi adresleme mesafesini nasıl kullanacağımızı öğreneceğiz:
+bir MOVE.L $100(a0),d0, a0+$100 adresinde bulunan long'u d0'a kopyalar,
+yani: örneğin A0'da $60200 adresi varsa, d0'a
+$60300 adresinde bulunan longword gider.
+Aynı şekilde bir MOVE.L -$100
+(a0),d0, d0'a $60100 adresinden başlayan long'u kopyalar. A0'ın değeri değişmez: işlemci her seferinde hangi adrese işlem yapacağını hesaplar ve
+parantez önündeki değer ile parantez içindeki adresin toplamını alır.
+En büyük adresleme mesafesi -32768 ile 32767 arasındadır
+(-$7FFF, $8000) (-$7FFF, $8000)
+Bu tür adreslemeyle ilgili bir örnek, Ders2i.s'de verilmiştir
+
+Son adresleme türü şudur:
+
+MOVE.L    50(a0,d0),label
+
+Bu komut hem ADRESLEME MESAFESİ (50) hem de İNDEKS (d0) içerir:
+adresleme mesafesi ve d0'nın içeriği, kopyalanacak içeriğin adresini
+belirlemek için toplama işlemine tabi tutulur. Pratikte, bu
+adresleme mesafesine benzer, ancak adresleme mesafesine
+diğer kaydın içeriği de eklenir ve bu durumda
+ancak minimum -128 ile maksimum +128 arasında değişir.
+Bu adreslemeyle ilgili başka örneklerle sizi sıkmak istemiyorum,
+önümüzdeki listelerde gördüğünüzde kendiniz kontrol edebilirsiniz.
+
+DERS 2'yi bitirmek için, eğer iyi takip ettiyseniz, ASM'de herhangi bir programın işlemlerini takip edebilirsiniz.
+Çok sık kullanılan DBRA döngüsünü açıklamak çok önemlidir: bir veri kaydı kullanarak
+çeşitli komutları birkaç kez çalıştırabilirsiniz, bunun için
+veri kaydına
+ (d0, d1...) kayıt defterine sayı-1'i yazmanız yeterlidir.
+Örneğin, CLR.l (a0)+ ile yapılan belleği temizleyen rutin,
+temizlemeyi istenen sayıda gerçekleştirecek bir DBRA döngüsü ile değiştirilebilir
+:
+
+Başlangıç:
+	lea    $60000,a0    ; Başlangıç
+	move.l    #($2000/4)-1,d0   ; d0'a $2000 baytı silmek için gerekli döngü sayısını girin
+								; yani $2000/4 (yani 4'e BÖLÜN, çünkü her
+								; clr.l 4 baytı temizler), hepsi -1,
+								; çünkü döngü bir kez
+								; daha fazla çalıştırılır.
+CLEARLOOP:
+	CLR.L   (a0)+
+	DBRA    d0,CLEARLOOP
+	rts
+
+Bu rutin, önceki örnekte olduğu gibi $60000 ile $62000 arasında temizler.
+CMP komutuyla a0 ile a1 karşılaştırılır, yani a1'de bulunan
+a1'de bulunan $62000'e ulaşıp ulaşmadığımızı kontrol eder. Bu durumda ise CLR 2047 kez çalıştırılır,
+ASMONE'den ?($2000/4)-1 komutunu deneyin. DBRA şu şekilde çalışır:
+örneğin, d0'a ilk kez 2047 girilirse, CLR çalıştırılır,
+sonra DBRA d0'a ulaşıldığında 1 azaltılır ve işlemci tekrar
+CLR'ye atlar, bunu d0 tükenene kadar tekrarlar.
+Döngülerin sayısı, ilk seferinde döngü d0'u azaltmadan
+çalıştığı için bir eksik yazılmalıdır.
+
+Son örnek olarak, BSR ve DBRA döngüsü ile çağrılan alt rutinler içeren Ders 2l.s'yi inceleyin.
+Bu, karmaşık bir programın yapısını anlamak için yararlıdır.
+
+Son olarak, BSR ve BEQ/BNE arasındaki farkı belirtmek isterim:
+BSR etiketi durumunda, işlemci RTS'yi bulana kadar
+etiketin altındaki rutini yürütmeye atlar, bu da onu BSR etiketinin altındaki komutu yürütmeye geri döndürür,
+ bu nedenle bir ALT RUTİN yürüttüğü söylenebilir, yani
+başka bir rutinin ortasında yürütülen bir rutin:
+
+ana:
+move.l    roba1,d0
+
+move.l    roba2,d1
+
+bsr.s    altta yer alan
+
+move.l    roba3,d2
+
+move.l    roba4,d3
+
+rts    ; ANA RUTİNİN SONU, ASMONE'YE GERİ DÖN
+
+
+altta:
+move.l    robaccia,d4
+
+move.l    robaccia2,d5
+
+rts    ; ALT RUTİNİN SONU, “move.l roba3,d0”YA GERİ DÖN, yani
+; bsr.s altında alt
+
+
+Bir beq/bne DALLANMA durumunda ise, ya bir yol ya da diğer yol seçilir:
+
+
+ana:
+move.l    roba1,d0
+
+move.l    roba2,a0
+
+cmp.b    d0,a0
+bne.s    strada2
+
+move.l    roba3,d1
+
+cmp.b    d1,a0
+beq.s    yol3
+
+move.l    roba4,d0
+
+rts    ; ANA ROUTİNİN SONU, ASMONE'YE GERİ DÖN
+
+
+yol2:
+move.l    robaccia,d5
+
+move.l    robaccia2,d6
+
+rts    ; ROUTINE SONU, ASMONE'YE DÖN, bne altında değil!!!
+; burada bu yolu seçtik ve bir RTS nasıl bulunur
+; ASMONE'YE DÖN!!!
+
+
+yol3:
+move.l    çöp3,d1
+
+move.l    çöp4,d2
+
+rts    ; RUTİN SON, ASMONE'YE GERİ DÖN, beq'in altına girme!!!
+; burada bu yolu seçtik ve bir RTS nasıl bulunur
+; ASMONE'YE geri dön!!!
+
+Aynı şey BRA etiketi için de geçerlidir, bu SALTA A etiketi anlamına gelir, JMP ile eşdeğerdir,
+ yani rayda bir makas bulan tren gibidir, ray bittiğinde makasa geri dönmez
+! Rayın sonuna gelir ve
+biter, Star Trek'teki gibi geriye ışınlanma yoktur.
+
+Adres kayıtları hakkında son bir açıklama için, Ders 2m'ye bakın.
+
+DERS3.TXT dosyasını yüklemek için iki yol vardır: ya “R” yazıp
+satır başı yapın, fare ile
+hangi metni yükleyeceğinizi seçebileceğiniz istek penceresini açın (bu durumda df0:SORGENTI/LEZIONE3.TXT), ya da
+“V df0:LEZIONI” komutuyla doğru dizinde olduğunuzdan emin olun
+ve ardından basit bir “R LEZIONE3.TXT” komutuyla yükleyin.
+
++

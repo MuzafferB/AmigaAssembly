@@ -1,0 +1,2181 @@
+
+‘’'
+(o o)
++---------------------------oOOO--(_)-------------------------------------+
+|                                     |
+|         ASSEMBLER KURSU - DERS 9             |
+|                                     |
++--------------------------------------oOOO-------------------------------+
+|__|__|
+|| ||
+ooO Ooo
+
+Yazarlar: Luca Forlizzi, Alvise SpanЫ, Fabio Ciucci
+
+(Kaynak Dizini5) - ardından “V Assembler2:sorgenti5” yazın
+
+иОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОи
+BLITTER
+иОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОииОXОи
+
+Bu derste blitter hakkında konuşmaya başlayacağız. Amiga sahibi olan herkes,
+ bilgisayarının içinde bulunan ve diğer bilgisayarlarla karşılaştırıldığında en büyük
+güç noktalarından biri olan bu özel devre hakkında
+mutlaka duymuştur. Ancak herkes
+blitter'ın gerçekte ne olduğunu ve neden
+bu kadar yararlı olduğunu bilmiyor. Aslında,
+demolarda görebileceğiniz özel efektlerin çoğu (örneğin sinüzoidal kayan metinler
+veya vektör topları) blitter kullanır. Öyleyse,
+blitter olmayan PC'lerde bu efektler nasıl gerçekleştirilebilir?
+ Bunun nedeni, blitterin yapabileceği her şeyin aslında
+yapabileceği her şey mikroişlemci ile yapılabilir ve PC'ler de
+bu şekilde çalışır. Ancak blitter, görevlerini çok daha hızlı, bazı durumlarda 10 kat
+daha hızlı
+gerçekleştirebilir. Blitter sayesinde, bir PC'de
+sadece hızlı bir 386 veya
+hatta bir 486 varsa gerçekleştirilebilen özel efektler, Amiga 500
+için sıradan bir işlemdir. Amiga 500'ün işlemcisi (bildiğiniz gibi 7 MHz'de 68000)
+386 ve 486'dan çok daha yavaştır. Bu nedenle, Amiga'da demo veya oyunlar
+programlamak isteyenler için blitter bilgisinin vazgeçilmez olduğunu anlayabilirsiniz. Blitter'ın yeteneklerini
+incelemeye en basitlerinden başlayacağız.
+İlk bakışta yetersiz görünebilirler, ancak zamanla
+en muhteşem oyunların ve demoların yaratılmasını sağlayan gücü
+gizlediklerini keşfedeceğiz. 68020+ için yazılan programların
+genellikle blitter yerine CPU'yu kullanma eğiliminde olduğunu çünkü
+blitter hızı artırmaz.
+
+.,
+ , , .. ______________.
+ .. и .. / , г\ ____
+. и:: .. и:. .:,_/ »»»»» -----‘ \ `----’
+и::: ..: ::`________ ________\ ____________________
+.и :и и :::. . . и: )( г(X ) ) О)» ) \ _/
+, :::и. ..:. , »»»»»» (»»»»»» /_____________ ___ T
+и: . . и '»\_ _ »\ _ _/ `-----||( АА:::!|.
+ :и . / / (,_) \ \ xCz ll !|:::||
+., _______\ / ________ \ /_______ »»T |:::||
+/ппппппппп\ /_T_T_T_T\ /ппппппппп\ | !ддд!|
+/ппппппппппп\__» » » » »»__/ппппппппппп\ l______!
+/пппппппппппппп`----------‘пппппппппппппп\ `----’
+иппппппппппппппппппппппппппппппппппппппппппи
+
+
+*******************************************************************************
+*            BLITTER'IN İŞLEVLERİ                 *
+*******************************************************************************
+
+“Blitter” kelimesi, “BLock Image TransferER”
+yani “görüntü blok kopyalayıcı”. Blitter,
+görüntülerin “parçalarını” taşımamızı sağlayan bir araçtır. Aslında
+,
+ daha sonra göreceğiniz gibi, bu blitter'ın
+daha karmaşık işlemleri de gerçekleştirebilen yeteneklerinden sadece biridir.
+Bildiğiniz gibi, Amiga'daki bir görüntü
+her bir pikselin rengini tanımlayan verileri içeren bir bellek alanından oluşur.
+ Görüntülerin nasıl oluştuğunu iyi hatırlamıyorsanız,
+ devam etmeden önce 4. ve 5. dersleri tekrar gözden geçirmeniz
+iyi olacaktır. Blitter bir görüntü “parçası” üzerinde bir işlem gerçekleştirdiğinde
+, aslında söz konusu görüntü “parçasını” oluşturan bellek alanı üzerinde çalışır “parça”
+görüntünün oluşturduğu bellek alanını üzerinde çalışır. Aslında blitter,
+grafik görüntüsü, ses veya program kodu içermelerine bakılmaksızın, sadece bellek alanları üzerinde çalışır
+.
+Bu, blitter'ın grafikle ilgili olmayan görevlerde de kullanılabileceği anlamına gelir
+.
+Ancak, blitter'ın, ses devreleri ve Amiga'nın diğer tüm “özel” yongalarının
+ve Amiga'nın diğer tüm “özel” yongaları gibi,
+kullanılabilir tüm bellek üzerinde çalışamaz, sadece
+“çip ram” adı verilen bir kısmı üzerinde çalışabilir.
+
+Belleğe erişmek için blitter, ders 8'de genel olarak bahsedilen DMA kanallarını kullanır.
+ Şüphe durumunda ders 8'e bakabilirsiniz.
+Blitter, 4 DMA kanalına sahiptir, bunlardan 3'ü (A, B ve C olarak adlandırılır)
+RAM'den veri OKUMAK için kullanılır (bu nedenle
+“kaynak” kanalları olarak adlandırılır), dördüncüsü (D kanalı) ise belleğe YAZMAK için kullanılır
+(bu nedenle “hedef” kanalları olarak adlandırılır). Tüm DMA kanalları gibi, blitter kanalları da
+her seferinde bir veri kelimesi aktarır.
+
+Bir blitter işleminin (BLITTATA olarak adlandırılır) genel şeması çok
+basittir: blitter, A, B ve C kanalları aracılığıyla bellekten veri okur,
+bu veriler üzerinde işlemler gerçekleştirir ve sonuçları D kanalı aracılığıyla belleğe yazar.
+ Bir blittata gerçekleştirmek için aşağıdaki bilgileri belirtmek gerekir
+:
+
+1) bu işlem için hangi kanalların kullanılacağı
+2) okunan veriler üzerinde hangi işlemin gerçekleştirileceği
+3) kullanılan her kanal için, okuma ve yazmaya başlanacak adres
+4) okunacak veya yazılacak veri miktarı
+
+Bir işlem sırasında okunan (veya yazılan) veri miktarının
+dört kanal için de aynı olduğunu unutmayın: bir işlemde A, B ve D kanallarını kullanırsam,
+ A kanalı üzerinden okunan kelime sayısı, B kanalı üzerinden okunan kelime sayısı
+ve D kanalı üzerinden yazılan kelime sayısı ile aynıdır.
+Bu bilgiler bazı donanım kayıtları aracılığıyla belirtilir.
+
+Bu bilgiler bazı donanım kayıtları aracılığıyla belirtilir.
+Blitter'ı kontrol eden kayıtlar, tüm donanım kayıtları gibi
+16 bit'tir. Ancak, ardışık adreslere sahip birçok kayıt vardır.
+Bu, “move.l” kullanarak çiftler halinde erişilmesini mümkün kılar
+kullanarak çiftler halinde erişilebilir, benzer şekilde
+BPLxPT ($dff0e0...) ve COPxLC ($dff080...) kayıt çiftlerinde gördüğümüz gibi.
+
+Kayıtlara yazmaya başlamadan önce, blitterin durduğundan, yani başka bir işlem yapmadığından emin olmanız gerekir.
+Son “blitter” işlemi bitmeden bir sonraki blitter işlemini başlatmak, 100 metre içinde patlamalara ve çökmelere neden olabilir.
+Son “blitter” işlemi bitmeden bir sonraki işlemi yapmamak
+gerekir, aksi takdirde 100 metre çapında patlamalar ve çökmeler meydana gelebilir,
+ bu da hava bombardımanına benzeyen gerçek bir felaket olur.
+
+Blitterin durup durmadığını veya “blitter” işlemi yapıp yapmadığını öğrenmek için DMACONR ($dff002) kaydının bir bitinin (bit 6) durumunu kontrol etmek yeterlidir.
+Bu bit 1 ise blitter çalışıyor demektir, 0 ise
+blitter işlemi tamamlanmış demektir.
+Pratikte, basit bir assembler komutu yeterlidir:
+
+
+AspettaBlit:
+btst    #6,$dff002    ; dmaconr - blitter bitti mi?
+bne.s    AspettaBlit    ; Bitene kadar devam etme
+
+
+Ne yazık ki, işleri karmaşıklaştıran, Agnus çipinin (blitter'ı içeren çip) ilk sürümlerinde bulunan çok can sıkıcı bir donanım hatası vardır.
+ Bu hata nedeniyle, söz konusu bit ilk kez okunduğunda
+yanlış bir sonuç alınır: bitin durumunu tam olarak öğrenebilmek için önce boş bir okuma yapmak gerekir.
+ Blitter'ın durduğundan emin olduktan sonra, blitter'a gerekli olan ve yukarıda listelediğimiz bilgileri kayıtlara yazabiliriz.
+bitin durumunu tam olarak öğrenmek için bir boş okuma yapmak gerekir. 
+
+Blitterin durduğundan emin olduktan sonra,
+blitterleme için gerekli olan ve
+yukarıda listelediğimiz bilgileri kayıtlara yazabiliriz.
+
+Şimdi nasıl devam edeceğimizi ayrıntılı olarak görelim.
+
+1) Her blitter işlemi için,
+DMA kanallarını bağımsız olarak etkinleştirebilir veya devre dışı bırakabiliriz, böylece sadece ilgilendiğimiz kanalları kullanabiliriz.
+Bunu, 1 olarak ayarlandığında kanalı etkinleştiren etkinleştirme bitleri ile yapabiliriz.
+Bunun yerine sıfırlanırsa, kanalı devre dışı bırakır. Etkinleştirme bitleri
+BLTCON0 kontrol kaydında ($dff040) bulunur:
+
+kanal        etkinleştirme bit adı    BLTCON0'daki bit konumu
+
+A            SRCA                8
+B            SRCB                9
+C            SRCC				10
+D            DEST                11
+
+2) Hangi işlemin gerçekleştirileceğini belirtmek için
+BLTCON0 kontrol kaydındaki 0 ila 7 arasındaki bitler, yani MINTERMS kullanılır. Bu bitlerin aldığı değer
+blitter tarafından gerçekleştirilen işlemi belirler. MINTERMS'in
+işleyişi oldukça karmaşıktır ve daha sonra ayrıntılı olarak açıklayacağız.
+
+3) Şimdi kanalların başlangıç adreslerini nasıl belirleyeceğimize bakalım.
+Her kanala, bir işlemin başlangıç adresini depolamak için kullanılan bir RAM yongasına bir işaretçi bağlıdır.
+İşlem sırasında
+işaretçide bulunan değer otomatik olarak değişir ve
+blitterin okuduğu veya yazdığı kelimenin adresini gösterir.
+Bir işaretçi (sprite ve planların DMA kanallarında olduğu gibi)
+16 bitlik bir çift kayıttan oluşur; biri 16 bitlik en
+önemli (yani en düşük) bitleri içerir, diğeri ise kalan (yüksek) bitleri içerir.
+Bu tabloda işaretçilerin adları ve adresleri özetlenmiştir:
+
+kanal        yüksek kayıt            düşük kayıt
+
+ad     adres        ad     adres
+
+A        BLTAPTH     $DFF050        BLTAPTL     $DFF052
+B        BLTBPTH     $DFF04C        BLTBPTL     $DFF04E
+C        BLTCPTH     $DFF048        BLTCPTL     $DFF04A
+D        BLTDPTH     $DFF054        BLTDPTL     $DFF056
+
+Açıkça, bu kayıt çiftleri tekli
+32 bit kayıtlar olarak ele alınabilir - CopperList ve Plane işaretçileri gibi - ve 
+bu nedenle, tek bir “move.l” komutuyla BLTxPTH adresine yazılabilir
+adresine tek bir “move.l” komutuyla yazılabilir. Bu nedenle, bundan sonra bunları tek tek 32 bitlik kayıtlar olarak ele alacağız
+ve BLTxPT adlarını kullanarak $dff050,
+$dff04c, $dff048 ve $dff054 adreslerine atıfta bulunarak tek tek 32 bitlik kayıtlar olarak ele alacağız (
+uygun şekilde belirtilecek istisnalar hariç).
+
+İşaretçi kayıtları bayt adresiyle yazılmalıdır, ancak
+blitter sadece WORDS üzerinde çalıştığı için, adresimizin en az anlamlı biti
+yoksayılır, bu nedenle adreslerin ÇİFT olması, yani WORDS ile hizalanması gerektiğini
+unutmamak gerekir.
+Bu nedenle, hem kaynak hem de hedef için yalnızca ÇİP belleğinin ÇİFT adreslerinin yazılabileceğini unutmayın.
+
+NOT: Kullanılmayan bitleri sıfıra atayın, özellikle ECS'de bile hiçbir işlevi olmayanları, çünkü gelecekteki sürümlerde
+ne amaçla kullanılacağı belli değildir ve sonuçlar öngörülemez olabilir.
+
+4) Yapılması gereken son işlem, okunacak veya yazılacak veri miktarını belirtmektir.
+Bu, BLTSIZE ($dff058) kaydı ile yapılır.
+Bu kayıt, blitter'ın okuduğu ve yazdığı verileri basit bir kelime dizisi olarak değil, kelimelerden oluşan bir tür
+iki boyutlu dikdörtgen olarak değerlendirmesini sağlar.
+ Örneğin, blitter
+8 kelimelik bir dizisini, 8 kelime genişliğinde ve
+1 satır yüksekliğinde bir dikdörtgen olarak görür:
+
+Genişlik=8 KELİME
+_______________|_______________
+/ \
+
+bir kelime
+_|_
+/ \
+ 
+/ +---+---+---+---+---+---+---+---+
+Yükseklik=1 SATIR - | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+\ +---+---+---+---+---+---+---+---+
+
+şek. 1    8*1 kelimelik dikdörtgen
+
+Başka bir örnek verelim: 50 kelimelik bir dizi
+10 kelime X 5 satırlık bir dikdörtgen olarak düşünülebilir:
+
+
+Genişlik=10 WORD
+_______________|_______________
+/ \
+
+bir kelime
+_|_
+/ \
+/ +---+---+---+---+---+---+---+---+---+---+
+| | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+| +---+---+---+---+---+---+---+---+---+---+
+| | | | | | | | | | | |
+| +---+---+---+---+---+---+---+---+---+---+
+Yükseklik=5 ÇİZGİ -| | | | | | | | | | | |
+| +---+---+---+---+---+---+---+---+---+---+
+| | | | | | | | | | | |
+| +---+---+---+---+---+---+---+---+---+---+
+| | | | | | | | | | | |
+\ +---+---+---+---+---+---+---+---+---+---+
+
+şek. 2    10*5 kelimelik dikdörtgen
+
+İlk bakışta gereksiz bir karmaşıklık gibi görünen bu durum,
+aslında blitter'ı bu kadar güçlü kılan özelliklerden biridir.
+Bunun nedenini birazdan göreceğiz. Ama önce BLTSIZE'ın nasıl çalıştığını görelim.
+Blitter işleminde yer alan veri miktarını belirtmek için, verilerin oluşturduğu kelime dikdörtgeninin boyutları BLTSIZE'a yazılır.
+Alt 6 bit, yatay boyutu, yani her yatay çizgiyi oluşturan KELİME SAYISINI ifade eder;
+ 10 bitlik üst kısımda ise
+dikdörtgeni oluşturan yatay SATIR SAYISI belirtilir: yani
+alt 6 bit'te dikdörtgenin X genişliği, üst 10 bit'te
+yukarıda belirtilen dikdörtgenin Y yüksekliği belirtilir.
+У 10 bit'in değeri (yükseklik) У 0 ise, blitter
+blitterЯ 1024 satır blitter ve 6 bit'in değeri (word genişliği) У 0 ise,
+blblitter blitterЯ 64 kelime: en büyük blitter, bu nedenle,
+“move.w #$0000,$dff058” yazarak elde edilir.
+Bu, 64 kelime X 1024 satır (=64*2*1024=128 Kb) olacaktır.
+BLTSIZE kaydı ayrıca çok önemli bir işleve sahiptir: BUNU YAZARAK
+BLITTER'I ETKİNLEŞTİRİRSİNİZ ve belirtilen işlemi başlatırsınız.
+Bu nedenle, BLITTER'IN DİĞER TÜM KAYITLARINA YAZDIKTAN SONRA HER ZAMAN BLTSIZE KAYDINA YAZILMALIDIR,
+ aksi takdirde blitter işlemi tüm kayıtları doğru şekilde ayarlamadan önce başlayacak ve istenen sonuçlardan farklı sonuçlar ortaya çıkacaktır.
+._________________
+| _________ |
+| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
+| (_________) |
+|_________________|
+|:и и|
+_|______ ______|_
+|______. .______|
+_/ |^| \_
+__\\_______|_|_______//__
+/__/ __(_____)__ \__\
+//\/ / \ \/\\
+\_/ /_____________\ \_/
+/ /» _____ »\ \
+\ _ / _ / ___________
+.____________\_______( )_______/__/ \
+| ___/ \_____/ / _ _ _ \
+| | \_________________________________/ \| | | \
+| | g«m| _________ / \ | | \
+__| |__ | »» /|\ »» /______\___|___|___/
+/ \ _____|___________ | ______//______\\ )
+(__|_| |_// \_|_/ \ /____/
+|_| /___________________\ /_____ __\______/____\
+
+
+Bu noktada, şimdiye kadar öğrendiklerinizi
+bazı örnekler üzerinden uygulamaya koymak iyi olacaktır. Bu örneklerde,
+BLTDMOD ve BLTCON1 gibi henüz bahsetmediğimiz kayıtlar da kullanılmaktadır.
+Şimdilik bunları göz ardı edin, daha sonra açıklayacağız.
+
+Ders 9a1.s'de blitter kullanarak bir bellek alanını nasıl sileceğinizi göreceksiniz.
+Silme işlemi yapmak için sadece
+D kanalını kullanmak gerekir, çünkü tek yapmamız gereken belleğe sıfırlanmış kelimeler yazmaktır.
+ Kaynak kanalı devre dışı bırakıldığında, hedefte
+$00 değeri yazılacaktır.
+Ayrıca, bir silme işlemi tanımlamak için
+$00 değerini MINTERMS'e, yani BLTCON0 kaydının 0-7 bitlerine
+ (düşük bayt) yazmak gerekir.
+
+lezione9a2.s dersinde ise blitter'ı bir bellek alanından
+başka bir bellek alanına veri kopyalamak için kullanacağız. Bu işlem için A ve D kanallarını kullanacağız.
+Veriler, kanal A aracılığıyla bellekten okunacak ve
+kanal D aracılığıyla yazılacaktır. Kanal A'dan kanal D'ye bir kopyalama işlemi tanımlamak için
+MINTERMS'e $F0 değerini yazmak gerekir.
+
+__________
+\ AMIGA! / lllll
+\ !!!! / __/ \__
+\____/ \/ (o!o) \/
+|| / \_____/ \
+|| /___________\\\\\
+|| _| |_ \ \
+||__________/ \_____\_ \
+()(________/ \________)
+|| /_________\
+|| (_____░_____)
+|| \ Y /
+|| __\___|___/__
+__||____ __\_____!_____/_____
+
+*******************************************************************************
+*        BLITTER'IN İLK UYGULAMALARI                 *
+*******************************************************************************
+
+Şimdi blitter'ı grafik uygulamalarında kullanmaya başlayacağız. 
+Bir görüntünün bellekteki veri kelimelerinden oluştuğunu biliyoruz.
+Blitter ile bellek üzerinde işlemler yapabiliriz, bir görüntüyü oluşturan verileri değiştirerek
+görüntünün kendisini değiştirebiliriz.
+Öyleyse, görüntülerin temsilini kısaca gözden geçirelim,
+şimdilik tek bir bit düzlemi ile sınırlı kalalım.
+
+Bir bit düzlemi, her biri bir pikselin durumunu temsil eden bir dizi kelimeden oluşur
+: bir kelime, yatay olarak düzenlenmiş 16 pikseli temsil eder.
+Bit düzleminin ilk kelimesi, görüntünün ilk satırının en solundaki 16 pikseli temsil eder
+.
+Sonraki kelimeler, ilk satırdaki tüm pikselleri sırayla temsil eder.
+İlk satırdaki pikseller bittiğinde, aynı şekilde ikinci satırdaki piksellerle başlanır
+ikinci satırın pikselleriyle aynı şekilde devam edilir.
+Örneğin, bir satırda 320 piksel varsa, tümünü temsil etmek için 320/16=20 kelime
+gerekir; bu nedenle, bit düzleminin ilk 20 kelimesi
+görüntünün ilk satırını, 21'den 39'a kadar olan kelimeler
+ikinci satırı temsil eder, vb.
+
+____ ____ ____ ____ _ _ _ _ _ _ ____
+| | | | |        | |
+| 0 | 1 | 2 | 3 |     | 19 |
+|____|____|____|____|        |____|
+| | | | |		| |
+| 20 | 21 | 22 | 23 |        | 39 |
+|____|____|____|____|        |____|
+| | | | |        | |
+| 40 | 41 | 42 | 43 |        | 59 |
+|____|____|____|____|        |____|
+|                 |
+|                 |
+
+
+|____ ____ ____ ____         ____|
+| | | | |        | |
+| | | | |        | |
+|____|____|____|____|_ _ _ _ _ _|____|
+
+Şekil 3 Bir görüntünün bellekteki temsili:
+her kare bir kelimedir
+
+Blitter ile verileri belleğin bir noktasından başka bir noktasına kopyalayabileceğimizi gördük.
+ Bir bit düzlemi içindeki verileri kopyalarsak, kopyaladığımız değerler
+ekranda görüntüyü oluşturmak için kullanılır. Blitter,
+daha önce de belirttiğimiz gibi WORD boyutundaki (16 bit) veriler üzerinde çalıştığı için
+,
+ görüntüyü WORD grupları, yani 16 piksel grupları halinde değiştirmemizi sağlar.
+Örneğin, blitter ile şekilde gösterilen bit düzleminin 21. kelimesinin üzerine yazarsak,
+ görüntünün ikinci satırının en solundaki 16 pikseli değiştirmiş oluruz
+. Şimdi, tek satır yüksekliğinde ve
+belirli bir L piksel genişliğinde bir görüntü olduğunu varsayalım. Bit düzlemi
+16 piksel içeren kelimelere bölündüğü için, görüntünün piksel genişliğinin
+, yani L, 16'nın katları olması uygun olur, böylece
+görüntü tam olarak L/16 kelimeye sığar. Bu,
+aşağıdaki örnekte gösterildiği gibi, görüntünün sonuna 0 değerinde pikseller ekleyerek elde edilebilir
+:
+
+Bu, 20 piksel genişliğinde ve tek satır yüksekliğinde bir görüntüdür.
+
+11001101010100011001
+\__________________/
+|
+20 piksel
+
+20, 16'nın katı olmadığı için yönetimi kolay değildir. O halde
+sonuna 0 değerinde pikseller ekleyerek genişliği
+32 piksele, yani 16'nın katına eşit hale getirelim.
+
+11001101010100011001000000000000
+\______________________________/
+|
+32 piksel
+
+Görüntümüz programımızdaki veriler arasında saklanıyor.
+Ekrana getirmek için, görüntüyü bit düzlemine ayrılmış bellek alanına kopyalamamız gerekiyor.
+Görüntü, ekrana kopyaladığımız bit düzleminin kelimelerine karşılık gelen bir konumda görünecek.
+Ekrana görüntüyü, ilk pikseli, yani en soldaki pikseli
+en soldaki pikselin X ve Y koordinatlarını almasını istediğimizi varsayalım (ekran koordinat sisteminin
+orijini, yani X=0 ve Y=0 koordinat noktası
+sol üst köşede olduğunu, X koordinatları sağa doğru artarken
+Y koordinatları aşağı doğru arttığını hatırlayın).
+Bu piksel, bit düzleminin bir kelimesinde yer almaktadır.
+Şu an için X'in de 16'nın katı olduğunu varsayalım.
+Bu, pikselimizin ait olduğu kelimenin ilk (yani
+en soldaki) piksel olmasını sağlar. Bu şekilde,
+bu kelimenin adresini hesapladıktan sonra, görüntünün ilk
+kelimesini (blitter ile) kopyalayabiliriz. Görüntümüzü oluşturan diğer kelimeler
+bit düzleminin sonraki kelimelerine doğal olarak kopyalanacaktır.
+Blitter kelime dizilerini kopyalayabildiğinden, tüm bu işlem
+görüntünün ilk kelimesini kaynak adres olarak ve
+X ve Y koordinatlarına ait pikselin ait olduğu bit düzleminin kelimesinin adresini hedef adres olarak alan tek bir blitter ile yapılabilir.
+Bu adresi nasıl hesaplayacağımızı görelim.
+Bit düzleminin kelimelerini şekilde gösterildiği gibi 0'dan başlayarak numaralandıralım ve ilgilendiğimiz kelimenin numarasını hesaplayalım: bu numaradan gerçek adrese geri döneceğiz.
+Bit düzleminin kelimelerini şekilde gösterildiği gibi 0'dan başlayarak numaralandıralım ve
+ilgilendiğimiz kelimenin numarasını hesaplayalım: bu numaradan
+gerçek adrese ulaşacağız.
+Y satırındaki ilk kelimenin numarasını hesaplayarak başlayalım,
+her satırın 20 kelimeden oluştuğunu ve satırların
+0'dan başlayarak numaralandırıldığını unutmayın. Şekilden,
+0. satırın (ilk satır) ilk kelimesinin numarasının 0, 1. satırın (ikinci
+satır) ilk kelimesinin numarasının 20, 2. satırın ilk kelimesinin numarasının 40 3. satırın ilk kelimesi
+60 numara ve bu şekilde devam eder.
+Genel olarak, Y satırının ilk kelimesi Y*20 numara alır.
+Satırın diğer kelimelerinin numaraları ilk kelimenin numarasının ardından gelir:
+satırın ikinci kelimesi Y*20+1 numara, satırın üçüncü kelimesi
+Y*20+2 numara ve bu şekilde devam eder.
+R'nin ait olduğu satırın ilk kelimesinden belirli bir kelime R'nin belirli bir kelimenin R'nin ait olduğu satırın ilk kelimesinden
+mesafesi, satırın ilk
+kelimesinin numarasına eklenmesi gereken miktardır: pratikte,
+satırın ikinci kelimesinin numarası Y*20+1 olduğundan, bunun satırın ilk kelimesinden “mesafesi” 1
+olduğunu söyleyebiliriz; aynı şekilde, satırın üçüncü kelimesi,
+Y*20+2 numarasına sahip olduğundan, satırın ilk kelimesinden uzaklığı 2'dir ve bu şekilde devam eder.
+Ayrıca, satırın ilk kelimesinin kendisinden uzaklığı 0'dır diyebiliriz.
+X koordinatındaki pikseli içeren kelime ile satırın ilk kelimesi arasındaki uzaklığı hesaplamak çok basittir,
+ bunu aşağıdaki şekil yardımıyla göreceğiz
+:
+
+________ ________ ________ ________ _ _ _
+| | | | |
+satır Y        | Y*20+0 | Y*20+1 | Y*20+2 | Y*20+3 |
+|________|________|________|________|_ _ _
+
+İlk
+kelimeden
+mesafe        | 0     | 1     | 2 | 3 | - -
+
+Piksel
+içeriği:    | 0-15 | 16-31 | 32-47 | 48-63 | - -
+
+şek. 4    kelime satırı
+
+Pikselimizin X koordinatı, kendisi ile
+satırın ilk pikseli arasındaki mesafeyi (piksel cinsinden) temsil eder. Her kelime 16 piksel içerdiğinden, ilk kelime
+satırın ilk 16 pikselini içerir, yani X koordinatı (= kenardan uzaklık) 0 ile 15 arasında olan pikselleri içerir.
+İkinci kelime ise X koordinatı 16 ile 31 arasında değişen pikselleri içerir,
+üçüncü kelime ise X koordinatı 32 ile 47 arasında değişen pikselleri içerir ve bu şekilde devam eder: her 16 pikselde
+bir kelime vardır.
+Böylece kelimeler arasındaki mesafeyi hesaplamak için piksel mesafesini (yani X değerini) 16'ya bölmek yeterlidir. X'in 16'nın katları olduğunu seçtiğimiz için sonuç 16 olacaktır.
+Bu nedenle, kelimeler arasındaki mesafeyi hesaplamak için, mesafeyi
+piksel cinsinden (yani X değeri) 16'ya bölmek yeterlidir. X'i 16'nın katları olarak seçtiğimiz için
+sonuç bir tam sayı olacaktır. Örneğin, X=32 ise, kelime cinsinden mesafe
+32/16=2'dir. Aslında, şekilde gördüğünüz gibi, Y satırındaki 32. piksel
+satırın ikinci kelimesinin ilk pikselidir ve numarası Y*20+1'dir.
+Aynı hesaplamayla, X=64 olan pikselin
+64/16=4 uzaklıktaki kelimede yer aldığını ve bu kelimenin numarasının Y*20+3 olduğunu görürüz. Bu hesaplama
+X=0 olduğunda da geçerlidir: aslında mesafe 0/16=0, yani Y*20+0 numaralı kelime
+tam da satırın ilk kelimesidir.
+
+Toplamda, X,Y pikselini içeren kelime, aşağıdaki formülle verilen N numaralı kelimedir
+:
+
+N=(Y*20)+(X/16)
+
+Bu formül, bir satırın 20 kelimeden oluştuğu bit düzlemleri için geçerlidir.
+ Genel olarak formül şöyledir:
+
+N=(Y*BİR_SATIŞI_OLUŞTURAN_KELİME_SAYISI)+(X/16)
+
+Kelime sayısından karşılık gelen adrese ulaşabiliriz:
+bit düzleminin ilk kelimesinin adresini bilmek ve buna
+kelime sayısını 2 ile çarpmak yeterlidir (çarpma işlemi gereklidir çünkü
+adres bayt cinsinden ifade edilir ve 1 kelime = 2 bayt):
+
+Kelime adresi=(Bit düzlemi adresi)+N*2 .
+
+Örnek Lezione9b1.s'de, bahsettiğimiz her şeyin uygulamasını bulabilirsiniz.
+ Örnek Lezione9b2.s'de, ekranın farklı konumlarında bir dizi blittate göreceksiniz
+.
+
+Şimdi, yüksekliği bir satırdan daha fazla olan görüntülerle ilgilenmeye başlayalım.
+BLTSIZE kayıt defterinden bahsederken, blitter'ın
+işlem yapacağı verileri “kelime dikdörtgenleri” olarak gördüğünü görmüştük. Bu
+özellik, dikdörtgen görüntülerle kolayca çalışabilmesi açısından çok kullanışlıdır.
+ Örneğin, bir bit düzlemine 32 piksel genişliğinde ve 2 satır yüksekliğinde bir görüntüyü kopyalamak istediğimizi varsayalım. Bu küçük
+görüntü, bit düzleminin küçük bir bölümünü kaplayacaktır.
+Şekilde eğik çizgilerle gösterilmiştir.
+
+____ ____ ____ ____ _ _ _ _ _ _ ____
+| | | | |        | |
+| 0 | 1 | 2 | 3 |     | 19 |
+|____|____|____|____|        |____|
+| |\\\\|\\\\| |        | |
+| 20 |\21\|\22\| 23 |        | 39 |
+|____|\\\\|\\\\|____|        |____|
+| |\\\\|\\\\| |        | |
+| 40 |\41\|\42\| 43 |        | 59 |
+|____|\\\\|\\\\|____|        |____|
+|                 |
+|                 |
+
+
+|____ ____ ____ ____         ____|
+| | | | |        | |
+| | | | |        | |
+|____|____|____|____|_ _ _ _ _ _|____|
+
+Şekil 5 Blitterleme yapacağımız kısmı vurgulayan bir bit düzlemi
+.
+
+Bu, 2 kelime genişliğinde (yani 32 piksel) ve 2 satır yüksekliğinde küçük bir dikdörtgendir
+satır uzunluğunda küçük bir dikdörtgendir. Kopyalama işlemini gerçekleştirmek için
+BLTSIZE'da dikdörtgenin boyutlarını belirtmek gerektiğini hemen anlayacaksınız. Ancak bu
+yeterli değildir. Bunu anlamak için bir anlığına blitterin yerine kendimizi koyalım
+ve kopyalama işlemini kendimiz yapmaya çalışalım, şimdilik sadece yazma aşamasına
+odaklanalım.
+BLTDPT'de yazdığı için, dikdörtgenin sol üst köşesindeki kelimenin adresini biliyoruz
+(şekildeki 21 kelimesi). Ayrıca, kopyalanacak dikdörtgenin boyutlarını da biliyoruz (BLTSIZE'de yazıyor).
+ Çok iyi.
+İlk kelimeyi okuyalım ve 21 kelimesinin adresine kopyalayalım.
+Şimdi ilk satırın ikinci kelimesini kopyalamamız gerekiyor. Bu kelimenin
+ilk kelimenin devamı olduğunu biliyoruz, bu nedenle ilk kelimenin adresine 2 ekliyoruz
+(BLTDPT'de yazıyor) ve yazılacak ikinci kelimenin adresini biliyoruz
+. Bunu yazıyoruz ve ilk satırı bitirmiş oluyoruz. Çok memnun olarak
+ikinci satırı yazmaya hazırlanıyoruz. Ve burada küçük bir
+sorun fark ediyoruz: ikinci satırın ilk kelimesi, ilk satırın son kelimesinin ardında DEĞİL
+! Aslında, şekilde görebileceğiniz gibi,
+ilk satırın son kelimesi 22'dir, ikinci satırın ilk kelimesi ise 41'dir.
+İkinci satırın ilk kelimesinin adresini nasıl hesaplayabiliriz?
+Şekilde 20 kelime genişliğinde bir bit düzlemi gösterilmiştir, ancak bu sadece bir örnektir.
+Zavallı blitter, bit düzleminin kaç kelime genişliğinde olduğunu nasıl bilebilir? Aslında
+görünür ekrandan daha geniş bir bit düzlemiyle karşı karşıya olabiliriz!
+Aslında, iyi düşünün, blitter'a onu ekranda bir dikdörtgen kopyalamak için kullandığımızı kim söyledi?
+Ya da sadece bir copperlist'e
+verileri kopyalıyorsak? 
+Blitter'ın tek başına bu durumdan kurtulamayacağı açıktır
+. Ama sorun yok, biz ona yardım edeceğiz. Blitter'ın
+bilmesi gereken tek şey, önceki satırın son kelimesinin adresini bilerek bir satırın ilk kelimesinin adresini nasıl hesaplayacağıdır.
+Şekle bir bakarsanız, blitter'ın sadece
+"
+23'ten 40'a kadar olan kelimeleri “atlaması” gerektiği. Bu, 
+kelimenin adresine (yani blitterin zaten bildiği ilk
+satırın son kelimesinin adresi)
+ 42. kelimeye (yani yeni satırın ilk kelimesi) göre fark olan bayt sayısını ekleyerek yapılabilir.
+MODÜL olarak adlandırılan bu bayt sayısı, “atlanacak” kelime sayısının
+2 ile çarpımına eşittir (çünkü bir kelime 2 bayt kaplar).
+
+
+kelime        0 X X+L H
+satır y         |------------|*************|--------------|
+riga y+1	|------------|*************|--------------|
+\____________/\____________/\_____________/
+|		 |		 |
+kelime figürden    kelime
+atlamak    geniş L        atlamak
+kelime
+
+Şekil 6    Modül
+
+Genel olarak, H kelime genişliğinde bir bitmap içinde L kelime genişliğinde bir dikdörtgen kopyalamamız gerekiyorsa,
+ MODÜL bayt cinsinden aşağıdaki formülle elde edilir
+:
+
+MODÜL = (H-L)*2
+
+H-L hesaplaması bize modülü kelime cinsinden verir, 2 ile çarpma
+bunu bayt cinsinden ifade etmek için kullanılır. Örneğimizde MODÜL (20-2)*2 değerindedir.
+Hatırlayacağınız gibi, modül kavramını bit düzlemleri ile ilgili olarak daha önce görmüştük.
+ Blitter modülü de tam olarak aynı şekilde çalışır.
+Her DMA kanalı için farklı bir modül atanabilir. Bu şekilde
+veriler farklı genişlikteki bit düzlemleri arasında kopyalanabilir ve taşınabilir.
+Modülün değeri, her kanal için bir tane olmak üzere 4 özel kayıt defterine yazılır
+: BLTAMOD kanal A için ($dff064), BLTBMOD kanal B için ($dff062),
+BLTCMOD kanal C için ($dff060), BLTDMOD kanal D için ($dff066). Modül değerleri
+bayt cinsindendir, kelime cinsinden değildir. Blitter sadece kelimeler üzerinde çalışabildiğinden, en
+önemsiz bit yok sayılır, bu da modül değerinin
+çift olması gerektiği anlamına gelir.
+Değer, pozitif veya negatif, blitter bir satırı kopyalamayı her bitirdiğinde
+adreslere (BLTxPT) işaret eden kayıtlara otomatik olarak eklenir,
+ böylece bir sonraki satırın ilk kelimesinin adresi hesaplanır
+.
+Modülün negatif değerleri birçok durumda yararlı olabilir, örneğin
+modülü bit düzleminin genişliği olarak negatif olarak ayarlayarak bir satırı tekrarlamak için.
+ Ders 5'te, modülü bakır BPL1MOD/BPL2MOD -40 veya -SatırUzunluğu olarak ayarlayarak bir satırı nasıl kopyalayacağımızı görmüştük.
+.
+
+._________
+| _ ____/
+___|______|___
+_/ \_
+\________________/
+\_ Oo _/
+/\_(»»»»)_/\
+/ \ / \
+./ /\ \/ /\ \.))
+| | \__ __/ | |
+| | | | | |
+| \ | | / |
+(( \ \__|____|__/ /
+\/ _/ \_ \/
+\||______||/
+/|_| | |_|\
+/ || | || \
+( (» | ») )
+| | | | |
+| | | | |
+_|_| | |_|_
+\ | |______| /)
+ | g| (
+___/ | «| \___
+/______| m|______\
+
+Bu noktada, bir bitmap içinde bir dikdörtgeni nasıl kopyalayacağımızı biliyoruz.
+Gerekli tüm hesaplamaları bir örnekle özetleyelim:
+
+320x200 boyutlarında bir bitmap üzerinde çalışmak istediğimizi varsayalım.
+13. satır, 6. kelimeden başlıyor (her ikisi de sıfırdan numaralandırılmıştır) genişliğinde 5
+kelime. Öncelikle, dikdörtgenin ilk kelimesinin adresini hesaplamalı
+ve ardından ilgilendiğimiz kanalın BLTxPT kaydına yazmalıyız.
+Hesaplama şu şekilde yapılır: bit düzleminin ilk kelimesinin adresini alırız,
+ 13*20*2 bayt ekleyerek 13. satırın ilk baytının adresini hesaplarız
+(çünkü her satır 20 kelime=40 bayt kaplar) ve son olarak
+12 bayt (=6 kelime) ekleyerek doğru yatay konuma ulaşırız.
+Genişlik 5 kelime (10 bayt)dır. Her satırın sonunda, bir sonraki satırın başına gelmek için
+30 bayt atlamamız gerekir, bu nedenle
+30 modülünü kullanırız. Genel olarak, genişlik (word cinsinden) iki katına eklenir ve modül değeri (
+byte cinsinden)
+görüntüyü içeren bit düzleminin tam genişliğine (byte cinsinden) eşit olmalıdır.
+
+Bu hesaplamalar, BLTxMOD ve BLTxPTR (BLTxPTH ve BLTxPTL) blitter kayıtlarında kullanılan gerekli değerleri gösteren şekilde gösterilmiştir.
+<Mem_Addr> = Adres (0,0) \ \ \
+
+
+<Mem_Addr> = Adres (0,0)
+\
+\
+\         BYTE SAYISI (SUTUN)
+\
+\ 0     10     20    30     39
+\|     |     |     |     |
++----------------------------------------+ - -
+0|иииииииииииииииииииииииииииииииииииииии|	|
+1|иииииииииииииииииииииииииииииииииииииии|
+2|иииииииииииииииииииииииииииииииииииииии|    |
+3|ииииииииииииииииииииииииииииииииииииииии|
+4|ииииииииииииииииииииииииииииииииииииииии|    |
+5|иииииииииииииииииииииииииииииииииииииии|
+6|иииииииииииииииииииииииииииииииииииииииии|    |
+7|иииииииииииииииииииииииииииииииииииииии|
+8|иииииииииииииииииииииииииииииииииииииии|    |
+9|иииииииииииииииииииииииииииииииииииииии|
+NUMERO	10|иииииииииииииииииииииииииииииииииииииии|    |
+satır    11|ииииииииииииииииииииииииииииииииииииии|
+12|иииииииииииииииииииииииииииииииииииииии|    |- - pencere
+13|ииииииииииии##########иииииииииииииииии|     bitmap
+14|ииииииииииии##########иииииииииииииииии|    |
+15|иsol ##########иии sağ.иии|
+16|<---------->##########<---------------->|    |
+17| = 12 bayt ##########иии = 18 bayt иии|
+18|ииииииииииии##########ииииииииииииииииии|    |
+19|иииииииииииииииии\ииииииииииииииииииииии|
+20|ииииииииииииииииии\иииииииииииииииииииии|    |
+-|иииииииииииииииииии\иииииииииииииииииии|
+-|ииииииииииииииииииии\ииииииииииииииииии| |
+-|иииииииииииииииииииии\ииииииииииииииии|
+-|ииииииииииииииииииииии\иииииииииииииииии|	|
++-----------------------\------------\---+ - -
+\        \
+\         \
+işlenecek görüntü     \
+\
+bir bayt
+
+BLTxPTR = <Mem_Addr> + (40*13) + 12
+= <Mem_Addr> + 532
+
+BLTxMOD = 12 + 18
+= 30 bayt
+
+Şekil 7 BLTxPTR ve BLTxMOD için hesaplamalar
+
+Bu noktada bir ara verip birkaç örneğe bakalım.
+
+Ders 9c1.s ve ders 9c2.s'de basit dikdörtgen alanların kopyalanmasına ilişkin örnekler bulabilirsiniz
+. Bunları dikkatlice inceleyin ve adreslerin ve blitterlerde kullanılan modüllerin hesaplanmasına odaklanın.
+Ders 9c3.s'de negatif modüllü bir blitter işlemi yapılan bir örnek bulunmaktadır.
+
+Ders 9d1.s ve ders 9d2.s'de blitter ile animasyonun ilk örneklerini göreceksiniz.
+Fikir çok basit, hareket fikrini vermek için her seferinde figürümüzü farklı bir pozisyonda çizmek yeterlidir, spritelerde olduğu gibi.
+
+Ancak o zamanlardan farklı olarak, burada her pozisyonda figürün bir kopyasını çizmek yerine, figürün bir kopyasını blitter ile bir konumdan başka bir konuma taşıyacağız.
+
+Fikir çok basit, hareket hissi vermek için her seferinde figürümüzü farklı bir pozisyonda çizmek yeterlidir, tıpkı
+sprite'larda olduğu gibi.
+Ancak o zamankinden farklı olarak, figürü yeni pozisyona çizmeden önce
+eski pozisyondan silmeliyiz, aksi takdirde
+"
+Bu 2 örnekte, şekli her seferinde bir satır aşağı taşıyoruz ve
+her seferinde BLTxPT adresine 40 bayt ekliyoruz.
+
+Ders 9d3.s'de aynı tekniği şekli yatay olarak taşımak için uyguluyoruz.
+ Ancak, adresi değiştirmek,
+dikdörtgeni bir veya daha fazla kelime sağa (veya sola) taşımakla eşdeğerdir. Bir kelime
+16 piksele karşılık geldiğinden, bu şekilde şekli yatay olarak
+sadece 16 piksel atlamalarla hareket ettirebiliriz, bu da örnekte görebileceğiniz gibi
+hareketin akıcı olmamasına ve çok hızlı olmasına neden olur..
+
+ :
+и
+д:.:.:.:д
+l______ |
+(░X░ ) »)
+|C_»»__ T___
+________ l_____г l _ \
+(_____ \________T____/ ) \
+(__ ______________/ \
+(____/ /\░ \
+/ /\░ \
+/ / \░ \
+.и. / / \░_________\
+.и и. _/ \ »\ _.. г\ xCz
+.и (_ _) \/и: \____
+.и `-`-' /и: \. \__
+ииии. .иииии /и: \:. \ \
+: : \и:. \::.\ \
+....:.. .:........... \и::. \___\ \
+__\___________\ `-\_)
+(_____________)
+
+Şimdiye kadar, en soldaki pikselin
+16'nın katları olan konumlarda olduğu şekiller çizmekle sınırlıydık. Ancak, akıcı bir hareket elde etmek için
+şekli ekranın herhangi bir konumuna çizebilmemiz gerekir.
+Örneğin, ekran üzerinde hareket ettirmek istediğimiz bir araba resmi olduğunu varsayalım
+.
+İçinde bulunduğu dikdörtgenin adresini uygun şekilde hesaplayarak,
+ekranı oluşturan herhangi bir kelimeden başlayarak arabamızı “blit”leyebiliriz.
+Örneğin, araba resmimizin kapısı en solundan 5 piksel uzakta ise, arabayı, ekranın herhangi bir kelimesinin başlangıcından 5 piksel uzağa, araba ile birlikte taşıyabiliriz.
+piksel uzaklıkta ise, arabayı birlikte
+ekranın herhangi bir kelimesinin başlangıcından 5 piksel uzağa taşıyabiliriz. Arabayı
+sağa taşımak istiyorsak, bir sonraki kelimeden “blit” yapabiliriz.
+Sonuç, her seferinde 16 piksel “hareket” olacaktır. Ancak,
+aracı bir pikseler sağa veya sola kaydırmak veya
+16'nın katı olmayan bir yatay konuma bliçlemek istiyorsak,
+nasıl yapabiliriz?
+
+Görüntüyü oluşturan piksellerin
+ilk kelimenin ilk bitinden değil, o kelimenin içindeki rastgele bir bitten
+kopyalanmasını sağlamalıyız, aşağıdaki şekilde gösterildiği gibi.
+
+16'nın katları ile kopyala
+
+ilk kelime
+kaynak		1 0 0 1 1 0 1 0 1
+
+| | | | | | | | |
+| | | | | | | | |
+v v v v v v v v v
+ilk kelime         _ _ _ _ _ _ _ _ _ _
+hedef     |_|_|_|_|_|_|_|_|_
+
+bit            0 1 2 3 4 5 6 7 8 ..
+
+
+X ile kopyala
+
+ilk kelime
+kaynak          1 0 0 1 1 0 1 0 1
+
+| | | | | | | | |
+| | | | | | | | |
+v v v v v v v v v
+ilk kelime         _ _ _ _ _ _ _ _ _ _
+hedef     |_|_|_|_|_|_|_|_|_
+
+bit            0 1 2 3 4 5 6 7 8 ..
+
+Şekil 8 Kaydırma
+
+
+Pratikte, şekli oluşturan bitleri sağdan sola kaydırmamız gerekir
+.
+Blitter, A ve B kanalları için donanım kaydırıcılarına sahiptir ve bunlar
+A ve B kanallarından okunan kelimelerin tüm bitlerini sağa kaydırır.
+Bitler, 0 ile 15 arasında değişen sayıda konum kaydırılır.
+0 konum kaydırmak, hiç kaydırmamakla eşdeğerdir: şimdiye kadar gördüğümüz (ve yaptığımız) tüm bliçlemeler 
+0 pozisyon kaydırma ile bliçlenmişti.
+A kanalı için kaydırma değeri, BLTCON0 ($dff040) kaydının 15 ila 12 bitleriyle atanır
+; B kanalı için kaydırma değeri, BLTCON1 ($dff042) kaydının 15 ila 12 bitleriyle atanır
+. Hatırlayacağınız gibi, şimdiye kadar bu bitleri her zaman 0 değerinde
+bırakmıştık, bu da 0 pozisyonluk bir kayma anlamına geliyordu.
+C kanalı ise bir proleter, kaydırıcıya sahip değildir.
+(Unutanlar için, bitleri kaydırmak, bitleri
+sağa veya sola kaydırmak anlamına gelir....)
+Kaydırma işlemi normal
+kopyalama ile aynı anda gerçekleştirilir ve blitterin hızını etkilemez: 
+shift değerinin ne olduğu önemli değildir, blitter işlemi için gereken süre her zaman aynıdır.
+
+Shift sayesinde, en soldaki pikseli
+ X ekseninde rastgele bir konuma yerleştirilmiş bir şekil çizebiliriz. Aslında, her zamanki gibi
+hedef adresini hesaplayarak, şekli
+X'in 16 katı bir konuma çizebiliriz. Kaydırıcıyı aynı anda etkinleştirerek, şekli
+sağa doğru daha da kaydırarak istenen konuma getirebiliriz.
+Örneğin, X konumunun 38 piksel olmasını istediğimizi varsayalım.
+Adresi hesaplayarak, şekli kenarın sağından 32 piksel
+(32, 16'nın katıdır) sağa kaydırabiliriz ve 6 bit daha sağa
+(38-32=6) kaydırmak için 6'lık bir kaydırma ayarlayabiliriz.
+Genel olarak, X 16'nın katı değilse, X/16
+tam bir sonuç elde ederiz (bunu hedef adresi hesaplamak için kullanırız)
+ ve kaydırmanın ne kadar olması gerektiğini bize söyleyen bir kalan elde ederiz.
+(Tam bölme, sonucun ondalık basamaklarının hesaplanmadığı
+ve ilkokul birinci sınıfta yapıldığı gibi bir kalan elde edilen bölmedir
+; örneğin 7/3=2, kalan 1).
+Yatay konumda X=100 olduğunda, 100/16=6 ve kalan
+4 olur (çünkü 16*6=96 ve 100-96=4); dolayısıyla ilk hedef kelime ile satırın ilk kelimesi arasındaki mesafe
+6 kelime, yani 12 bayttır ve
+kaydırma değeri 4 bittir.
+
+Shift'i kullanmaya başlamadan önce, nasıl çalıştığını iyi anlamamız gerekir.
+Başlangıç olarak, bazı bitler doğal olarak ait oldukları kelimelerin dışına sağa kaydırılır.
+ Soldan, çıkan bitlerin yerine geçmek için bir şey kaydırılmalıdır.
+ Ne özellikle? İlk kelime için,
+ sıfırlar kaydırılır; aynı kelimenin sonraki her kelimesi için,
+ bir kelimeye kaydırılan bitler, önceki kelimeden kaydırılan bitlerdir
+. Kısacası, bir taraftan (sağdan) çıkan
+, diğer taraftan (soldan!) bir sonraki kelimeye girer.
+Daha iyi anlamak için bir örnek verelim.
+3 kelime kopyaladığımızı varsayalım (bir satır yüksekliğinde ve
+3 kelime genişliğinde bir dikdörtgen oluşturabilirler veya 3 satır yüksekliğinde ve 1 kelime genişliğinde olabilirler, kaydırma açısından fark yoktur),
+ kaydırma değeri 3 olarak uygulanır.
+Ne olduğunu görelim:
+
+KAYNAK
+kelime 1             kelime 2             kelime 3
+1000110001010101    0001001001000110    1010101010101010
+
+HEDEF
+word 1             word 2             word 3
+0001000110001010    1010001001001000    1101010101010101
+^^^			^^^            ^^^
+bu 3 bit şunlardır    bu 3 bit şunlardır    bu 3 bit şunlardır
+sıfırlar kaydırılmış    kaydırılmış    kaydırılmış
+ilk kelimeye        ilk kelimeye ve geri girmiş    kelime 2 ve geri girmiş
+ikinci kelimeye    kelime 3'e
+
+Şekil 9 kaydırma
+
+
+Kaynak kelimenin 3. kelimesinin son 3 bitinin HİÇBİR YERDEN kopyalanmadığını
+dikkat edin!
+
+Örneğin, üç kelime genişliğinde ve iki kelime yüksekliğinde, 4 bitlik bir
+kayma olan bir blittayı ele alalım. Basitlik için, bunun A'dan D'ye normal bir kopya olduğunu varsayalım.
+D'ye yazılacak ilk kelime, A'dan alınan ilk kelimedir sağa dört bit kaydırılır ve soldan kaydırılan 4 bit sıfırlanır.
+İkinci kelime, A'dan alınan ikinci kelime olacaktır, sağa kaydırılmış,
+ilk kelimenin en az anlamlı dört biti (sağda) içeri kaydırılmış.
+Ardından, A'dan alınan ikinci satırın ilk kelimesini, dört
+bit kaydırılmış, ilk satırın son kelimesinin en az anlamlı dört biti
+içeri kaydırılmış olarak yazacaktır. Bu, bliçat bitene kadar devam edecektir.
+
+Ders 9e1.s'de, bir şeklin bir piksel sağa doğru hareket etmesini sağlayan shift kullanımının bir örneğini görebilirsiniz.
+Ancak sonuç
+çok iyi değildir, çünkü bir kelimeden dışarı kaydırılan bitler
+bir satır aşağıda bulunan bir sonraki kelimeye kaydırılır.
+ Bu nedenle, sağa çıkan bitler soldan
+bir sonraki satıra geri girer! Durum, 4 bitlik bir kaydırma varsayıldığında aşağıdaki şekilde gösterilmiştir:
+
+KAYNAK
+word 1        1000001111100000
+“ 2        1100111111111000
+” 3        1111111111101100
+" 4        1111111111111110
+" 5        1100111111111000
+word 6        1000001111100000
+
+
+HEDEF
+kelime 1        0000100000111110
+“ 2        0000110011111111
+” 3        1000111111111110
+" 4        1100111111111111
+" 5        111011001111111
+kelime 6        1000100000111110
+^^^^
+Bu 4 bit sütunu, soldan gelen bitlerden oluşur
+: Gördüğünüz gibi (ilk satır hariç), her
+satıra bir önceki satırdan çıkan bitler girer.
+
+Şekil 10 Dikdörtgenin kaydırılması
+
+Neyse ki bu sorun çok basit bir şekilde çözülebilir.
+İyi düşünürseniz, bizim istediğimiz şey, bir kelimeden sağa çıkan bitlerin
+sol taraftan bir sonraki satıra değil,
+EN SAĞDAKİ KELİMEDE girmesi! Bu nedenle, kaydırmada
+en sağdaki kelimeleri de “dahil etmeliyiz”. Bunu, şeklin genişliğini
+sağa bir “sütun” ekleyerek ve bu sütuna DEĞERİ SIFIR olan kelimeler ekleyerek
+yapabilirsiniz. Bu şekilde, fazladan sütun görünmez olur ve ayrıca
+kelimeleri oluşturan bit kaydırmaları tümü sıfır olur ve bu nedenle
+bir sonraki satırdaki kelimelere girerken sorun yaratmaz.
+Daha net anlaşılması için ne olduğunu açıklayalım:
+
+KAYNAK
+kelime 1        kelime 2
+satır 1        10000011111000000000000000000000
+" 2        1100111111111000000000000000000
+“ 3        11111111111011000000000000000000
+” 4        11111111111111100000000000000000
+“ 5        11001111111110000000000000000000
+” 6        10000011111000000000000000000000
+^^^^^^^^^^^^^^^^
+Bu, eklenen kelime sütunudur
+
+HEDEF
+kelime 1        kelime 2
+satır 1        00001000001111100000000000000000
+“ 2        00001100111111111000000000000000
+” 3		00001111111111101100000000000000
+" 4		00001111111111111110000000000000
+“ 5        00001100111111111000000000000000
+” 6        00001000001111100000000000000000
+^^^^        ^^^^
+|        Bu 4 bit, kelime 1'den çıktı
+|        ve kelime 2'ye girdi
+|
+Bu 4 bit, önceki satırın kelime 2'sinden çıktı ve
+kelime 1'e girdi (satır 1'in kelime 1'ine girenler hariç,
+ bunlar otomatik olarak sıfırlanır)
+
+Şekil 11 Bir dikdörtgenin kaydırılması
+
+Ders9e2.s örneğinde, bu tekniğin uygulandığını göreceksiniz. Bu teknik,
+bir şekli 1 ile 15 arasında bir piksel sayısı kadar sağa kaydırmanıza
+(aslında olası kaydırma değerleri 0 ile 15 arasındadır)
+ 
+Ders9e3.s örneğinde, figürümüzün
+sağa rastgele sayıda piksel kaydırıldığını görüyoruz. Pratikte, ders9d3.s ve ders9e2.s
+örnekleri birleştirilmiştir.
+
+__---__
+_- _--______
+__--( / \ )XXXXXXXXXXXXX_
+--XXX( O O )XXXXXXXXXXXXXXX-
+/XXX( U ) XXXXXXX\
+/XXXXX( )--_ XXXXXXXXXXX\
+/XXXXX/ ( O ) XXXXXX \XXXXX\
+XXXXX/ / XXXXXX \__ \XXXXX----
+XXXXXX__/ XXXXXX \__-----
+---___ XXX__/ XXXXXX \__ ---
+-- --__/ ___/\ XXXXXX / ___---=
+-_ ___/ XXXXXX '--- XXXXXX
+--\/XXX\ XXXXXX /XXXXX
+\XXXXXXXXX /XXXXX/
+\XXXXXX _/XXXXX/
+\XXXXX--__/ __-- XXXX/
+--XXXXXXX---------------- XXXXX--
+\XXXXXXXXXXXXXXXXXXXXXXXX-
+--XXXXXXXXXXXXXXXXXX-
+
+*******************************************************************************
+*		BLITTATE “A COLORI”					 *
+********************************************************
+***********************
+
+Şu ana kadar, tek bir
+bit düzleminden, yani sadece 2 renkten oluşan görüntüleri ele aldık. Normalde,
+çok renkli görüntülerle çalışırken, bit düzlemleri bellekte ardışık olarak düzenlenir,
+böylece bir bit düzleminin son kelimesinin hemen ardından bir sonraki bit düzleminin ilk kelimesi gelir.
+Görüntü şu şekilde yapılandırılır:
+
+____ ____ ____ ____ _ _ _ _ _ _ ____
+bit düzlemi 1    | | | | |        | |
+| 0 | 1 | 2 | 3 |     | 19 |    satır 0 bit düzlemi 1
+|____|____|____|____|        |____|
+| | | | |        | |
+| 20 | 21 | 22 | 23 |        | 39 |    satır 1 bit düzlemi 1
+|____|____|____|____|        |____|
+|                 |
+|                 |
+
+
+|____ ____ ____ ____         ____|
+| | | | |        | |
+| | | | |        | |    son satır bit düzlemi 1
+|____|____|____|____|_ _ _ _ _ _|____|
+bit düzlemi 2    | | | | |        | |
+| 0 | 1 | 2 | 3 |     | 19 |	satır 0 bit düzlemi 2
+|____|____|____|____|        |____|
+|                 |
+|                 |
+
+
+|____ ____ ____ ____         ____|
+| | | | |        | |
+| | | | |        | |    son satır bit düzlemi 2
+|____|____|____|____|_ _ _ _ _ _|____|
+bit düzlemi 3    | | | | |        | |
+| | | | |        | |    satır 0 bit düzlemi 3
+|____|____|____|____|_ _ _ _ _ _|____|
+|                 |
+
+
+|____ ____ ____ ____         ____|
+| | | | |        | |    son satır
+| | | | |        | |    son bit düzlemi
+|____|____|____|____|_ _ _ _ _ _|____|
+
+Şekil 12 Bir görüntünün bellekteki temsili
+birden fazla bit düzlemi (her kare bir kelimedir)
+
+
+Bildiğiniz gibi, H kelime genişliğinde ve V satır yüksekliğinde bir bit düzlemi, H*V
+kelime, yani 2*H*V bayt yer kaplar (normalde H=20 ve V=256, dolayısıyla bir bit düzlemi
+40*256 bayt yer kaplar). Bu, bit düzlemlerinin
+bellekte birbirinin ardından dizili olduğu için, bit düzlemi 1
+PLANE1 adresinde başlıyorsa, bit düzlemi 2 PLANE2=PLANE1+2*H*V adresinde başlayacağı anlamına gelir.
+Benzer şekilde, bit düzlemi 3 PLANE3=PLANE2+2*H*V adresinde başlar ve bu şekilde devam eder
+devam eder. Aynı formül,
+ikinci bit düzleminin bir kelimesinin adresini,
+birinci bit düzleminin karşılık gelen kelimesinin adresini bilerek belirlemek için de geçerlidir: örneğin, birinci bit düzleminin yedinci kelimesinin
+adresi ADRES1 = PLANE1+2*7 iken, ikinci bit düzleminin yedinci kelimesinin
+adresi ADRES2 = PLANE2+2*7 = PLANE1+2*H*V+2*7 adresine sahiptir. Ancak
+PLANE1+2*7 = ADRES1 olduğundan, aşağıdaki formülü elde ederiz:
+
+ADRES2 = ADRES1+2*H*V.
+
+Bu formül birazdan çok işimize yarayacak. N bit düzleminden oluşan bir ekranda bulunan dikdörtgen bir görüntü,
+ N dikdörtgenden oluşacaktır,
+her bit düzlemi için bir tane. Dolayısıyla, blitter ile bu görüntüyü işlemek için, her bit düzlemi için bir
+blitter işlemi yeterlidir. Aşağıdaki şekilde, 3 bit düzlemli bir
+ekran ve 3 satır yüksekliğinde bir görüntü görebilirsiniz.
+Bellekte, her bit düzleminin satırları farklı bir kelime dikdörtgeni oluşturur
+(görüntünün her satırında, ait olduğu bit düzlemini
+belirtmişizdir). Gördüğünüz gibi, her bit düzleminin satırları birbirine yakındır ve
+diğer düzlemlerin satırlarından uzaktır, bu nedenle
+farklı bliçlemelerle işlenmelidir.
+
++----------------------------------------+
+|иииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииии|
+|ииииииииииии#####1####ииииииииииииииииии|
+|ииииииииииии#####1####иииииииииииииииии|
+|ииииииииииии#####1####иииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+
+|ииииииииииииииииииииииииииииииииииииииии|
++----------------------------------------+
+|иииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|ииииииииииииииииииииииииииииииииииииии|
+|ииииииииииии#####2####иииииииииииииииии|
+|ииииииииииии#####2####иииииииииииииииии|
+|ииииииииииии#####2####ииииииииииииииииии|
+|ииииииииииииииииииииииииииииииииииииииии|
+
+|ииииииииииииииииииииииииииииииииииииииии|
++----------------------------------------+
+|иииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|ииииииииииииииииииииииииииииииииииииии|
+|ииииииииииии#####3####ииииииииииииииииии|
+|ииииииииииии#####3####иииииииииииииииии|
+|ииииииииииии#####3####иииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+
+|иииииииииииииииииииииииииииииииииииииии|
++----------------------------------------+ 
+
+Şekil 13     Bir görüntünün vurgulandığı ekran.
+
+Örneğin, ekrana çizilecek bir şekil varsa, önce şeklin ilk düzlemini ekranın ilk düzlemine, ardından şeklin ikinci düzlemini ekranın ikinci düzlemine blitter,
+ ardından üçüncü düzlemi ve diğerlerini aynı şekilde yaparız. Genellikle
+blitter
+işlemi aşağıdaki gibi bir döngü halinde yapılır:
+
+move.w
+	#NUMEROPLANES-1,d1    ; döngü sayacı
+LOOP:
+waitblit:            ; blitterin bitmesini bekler
+btst    #6,2(a5)    ; önceki bleaching
+bne.s    waitblit
+
+move.l    #$09f00000,$40(a5)    ; bltcon0 ve BLTCON1 - A'dan D'ye kopyala
+
+;    diğer blitter kayıtlarını yükle
+
+;    blit işlemini başlat
+
+dbra    d1,LOOP        ; döngüyü yap
+
+Blitter kayıtlarına yüklenecek değerler her blitter işleminde aynıdır,
+ tabii ki BLTxPT kayıtları hariç,
+çünkü çeşitli bit düzlemlerinin adresleri farklıdır. Bu noktada
+daha önce gördüğümüz formül devreye girer. Bu formül
+sayesinde, ilk
+blitterleme için BLTxPT kayıtlarına yazılacak adresleri bilerek (yani ilk bit düzlemine ilişkin blitterleme için),
+sonraki blitterlemeler için BLTxPT kayıtlarına yazılacak adresleri
+hesaplayabiliriz (yani sonraki bit düzlemlerine ilişkin). İlk bit düzlemine ait adresi bir değişkene koymak
+ve
+her döngüde bu adrese 2*H*V eklemek yeterlidir.
+
+Ders9f1.s örneğinde bu tekniğin uygulandığını görebilirsiniz. Ancak
+her zaman bu tür döngüler kullanılmaz.
+
+Ders 9f2.s ve ders 9f3.s örneklerinde “renkli”
+bleatlama örnekleri bulunmaktadır.
+
+Ancak, bit düzlemlerini bellekte düzenlemenin başka bir yolu daha vardır. Bu yol,
+bir görüntünün tüm bit düzlemlerini tek seferde bleatlamamızı sağlar ve
+“INTERLEAVED BITMAP” veya “bitmap” interlacciata (entrelacé bitmap) olarak adlandırılır. Adından da anlaşılacağı gibi,
+bu teknik, çeşitli düzlemlerin satırlarını birbiriyle “karıştırmak”tan ibarettir.
+Önce birinci düzlemin tüm satırlarını, sonra ikinci düzlemin satırlarını
+ve böylece devam etmek yerine, önce birinci bit düzleminin 0. satırını (ilk satırı), sonra
+ikinci bit düzleminin 0. satırını ve ardından diğer düzlemlerin 0. satırlarını sırayla yerleştiririz;
+tüm planların 0 satırlarından sonra, birinci planın 1 satırını, ardından
+ikinci planın 1 satırını ve ardından diğer planların tüm 1 satırlarını yerleştiririz; ardından
+diğer satırlarla aynı şekilde devam ederiz. Bunu daha iyi anlamak için aşağıdaki şekle bakın ve
+bit planlarının normal düzeninin gösterildiği şekil 12 ile karşılaştırın
+.
+
+
+____ ____ ____ ____ _ _ _ _ _ _ ____
+| | | | |        | |
+| 0 | 1 | 2 | 3 |     | 19 |    satır 0 bit düzlemi 1
+|____|____|____|____|        |____|
+| | | | |        | |
+| 20 | 21 | 22 | 23 |        | 39 |    satır 0 bit düzlemi 2
+|____|____|____|____|        |____|
+|                 |
+|                 |
+
+
+|____ ____ ____ ____         ____|
+| | | | |        | |
+| | | | |        | |    satır 0 son bit düzlemi
+|____|____|____|____|_ _ _ _ _ _|____|
+| | | | |        | |
+| | | | |     | |    satır 1 bit düzlemi 1
+|____|____|____|____|        |____|
+| | | | |        | |
+| | | | |     | |    satır 1 bit düzlemi 2
+|____|____|____|____|        |____|
+|				 |
+|                 |
+
+
+|____ ____ ____ ____         ____|
+| | | | |        | |
+| | | | |        | |    satır 1 son bit düzlemi
+|____|____|____|____|_ _ _ _ _ _|____|
+|                 |
+|                 |
+
+
+|____ ____ ____ ____         ____|
+| | | | |        | |
+| | | | |        | |    son satır bit düzlemi 1
+|____|____|____|____|_ _ _ _ _ _|____|
+| | | | |        | |
+| | | | |     | |    son satır bit düzlemi 2
+|____|____|____|____|        |____|
+|                 |
+
+
+|____ ____ ____ ____         ____|
+| | | | |        | |    son satır
+| | | | |        | |    son bit düzlemi
+|____|____|____|____|_ _ _ _ _ _|____|
+
+Şekil 14 Bir görüntünün bellekteki gösterimi
+çoklu bit düzlemli (her kare bir kelimedir)
+INTERLEAVED (veya RAWBLIT) tekniği ile.
+
+Öncelikle, blitter'ı bir kenara bırakarak, bu formattaki görüntülerin nasıl görüntülenebileceğini görelim.
+ Satırları oluşturan kelime sayısı
+her zaman aynıdır. Değişen şey, satırların göreceli
+düzenidir. Bu, bizim için bit düzlemlerini görüntülemek için
+genellikle kullandığımız prosedürde 2 değişiklik anlamına gelir. İlki, BPLxPT kayıtlarına koyulacak adresleri
+hesaplama yöntemimizle ilgilidir.
+Normalde, bitplane'leri bakır listesinde işaretlemek için, ilk adresinden başlayarak, ilk bitplane'den sonraki bitplane'lerin adreslerini
+hesaplarız ve her seferinde bir satırın kapladığı bayt sayısını
+bitplane'i oluşturan satır sayısıyla çarparak
+bit düzlemini oluşturan satır sayısıyla çarpılır.
+Bunun nedeni, bir bit düzleminin ilk satırının bir önceki bit düzleminin son satırından sonra
+kaydedilmesi ve dolayısıyla bir önceki bit düzleminin ilk satırından
+bit düzleminin yüksekliği kadar satır sayısı kadar “uzakta” olmasıdır.
+Bunun yerine, interleaved düzeninde, bir bit düzleminin satırı
+önceki bit düzleminin 0 satırından hemen sonra saklanır.
+Bu, bit düzlemlerinin adreslerini hesaplayan döngüde,
+her seferinde bir bit düzleminin adresine, bir satırın kapladığı bayt sayısını
+ekleyerek bir sonraki bit düzleminin adresini elde etmemiz gerektiği anlamına gelir.
+Ayrıca, normal durumdan farklı olarak, bir bit düzlemini oluşturan satırların
+ardışık olarak düzenlenmediğini.
+Aslında, Y satırı ile Y+1 satırı arasında diğer bit düzlemlerinin satırları bulunmaktadır.
+Bu, bit düzlemine işaret eden işaretçinin, bir satırın sonuna her geldiğinde
+diğer bit düzlemlerinin satırlarını “atlayarak” bir sonraki satırın başını işaret etmesi gerektiği anlamına gelir
+.
+Tahmin ettiğiniz gibi, bunu yapmak için modül kullanmalıyız.
+Bit düzlemlerinin de kendi modülleri olduğunu hatırlatmak isterim.
+BPLxMOD (burada x=1 tek bitplane'ler için ve x=2 çift bitplane'ler için).
+Bitplane'lerin normal düzeninde, bir satırın hemen ardından
+bir sonraki satır başladığı için, modülü 0 (
+flood efekti yapmak istemediğimiz veya ekranımızdan daha büyük bir görüntüümüz olmadığı sürece).
+Şimdi, interleaved düzeninde kullanılacak değeri görelim.
+Kullandığımız bitplane sayısını N ile gösterelim.
+Bitplane 1'i ele alalım: Y satırının başında BPLPT1 kaydı
+bitplane 1'in Y satırının ilk kelimesini işaret eder.
+Y satırı monitörde görüntülenirken, BPLPT1 kaydırılır ve
+sonraki kelimeleri gösterir.
+Y satırının sonunda, BPLPT1 bit düzlemi 2'nin Y satırındaki ilk kelimeyi gösterir
+.
+Bu noktada modül eklenir.
+BPLPT1'in bit düzlemi 1'in Y+1 satırındaki ilk kelimeyi göstermesini istiyoruz
+.
+Bu nedenle, işaretçiyi 2, 3, vb. satırları atlayarak N'ye kadar ilerletmeliyiz.
+Toplamda N-1 satır vardır (örneğin, 4 bit düzlemi varsa,
+bit düzlemleri 2, 3 ve 4'ün Y satırını, yani 3 satırı atlamamız gerekir).
+Dolayısıyla, bir satır L kelime, yani 2*L bayt kaplıyorsa, modülün doğru değeri
+2*L*(N-1) olur.
+
+____ ____ ____ ____ _ _ _ _ _ _ ____
+| | | | |        | |
+| | | | |     | |    satır Y bit düzlemi 1
+|____|____|____|____|        |____|
+/    | | | | |        | |
+|    | | | | |        | |	
+Y satırı bit düzlemi 2
+|    |____|____|____|____|        |____|
+|    |                 |
+|    |                 |
+|
+|
+bu N-1 satırı atlamalıyız
+|
+|
+|    |____ ____ ____         ____|
+|    | | | |        | |
+|    | | | | |
+		| |    Y satırı bit düzlemi N
+\    |____|____|____|____|_ _ _ _ _ _|____|
+| | | | |        | |
+| | | | |     | |    Y+1 satırı bit düzlemi 1
+|____|____|____|____|        |____|
+
+Şekil 15 INTERLEAVED tekniği ile modül değeri.
+
+
+Elbette, ekranda görüntülemek istediğimiz tüm görüntüler 
+bit düzlemlerinin interleaved formatında düzenlenmiş olmalıdır. Bir görüntü
+kaynağımızda doğrudan tanımlanmışsa (DC.w ... aracılığıyla),
+satırları formatın gerektirdiği şekilde düzenlemeliyiz. Görüntüyü INCBIN yönergesi ile dahil edilecek
+harici bir dosyada tutmak istiyorsak, görüntüyü
+RAW formatına (normal format) değil, interleaved formatına dönüştürmeliyiz.
+Tüm dönüştürme programları bu formatı destekler, ancak çoğu
+farklı isimlerle adlandırır. Özellikle, dersimizde kullandığımız KEFRENS CONVERTER
+bu formatı “RAW-BLIT”olarak adlandırmaktadır. Diğer dönüştürücüler ise
+“RASTER MODULO” olarak adlandırmaktadır. Bu nedenle, görüntüyü doğru
+biçime dönüştürmeye dikkat edin, aksi takdirde hiçbir şey göremez ve saatlerce programınızda
+var olmayan bir BUG ararsınız!
+
+lezione9g1.s dosyasında, interleaved bir bitmap görüntüsünün bir örneğini görebilirsiniz.
+___
+_/ г\
+/ .г\
+/._/\\_\ \ \
+(( _/\__\\ \<
+/\/__. \_. \
+<__ \Э\\__Y\\ \
+____< »»___/// /
+/Э Y .// /
+// |_ э---|` ./
+/` /\__ ^/\ |
+/. . [_ \_/ \|
+.// _/ \_/ ~\
+|( | , \
+|? | ( . / ))
+|и | Э Y // _
+| _ | ? | / \ (%)
+| |_| | | ? ` /"XI_I_
+ 
+?_| |_? ? и\ ` [____г\
+/?? ??\ и \_ [____ ()
+ ( ._ _. \_[_____/
+\_____/ \_/ |эaXeэ|
+X_____X
+
+Şimdi bu formatın blitter kullanımında neden uygun olduğunu görelim.
+Aşağıdaki şekilde, içinde
+dikdörtgen bir alanın vurgulandığı bir interleaved ekran gösterilmektedir. Gördüğünüz gibi, 
+çeşitli bit düzlemlerini oluşturan satırlar birbiriyle “karışmış” ve
+bellekte tek bir dikdörtgen oluşturmaktadır (görüntünün her satırında, ait olduğu bit düzlemini
+belirtmiş bulunmaktayız). Bu şekli, “normal” bir ekranda benzer bir
+durumu gösteren şekil 13 ile karşılaştırınız. Normal durumda, görüntünün N
+bit düzlemlerinin satırları, her biri görüntünün satır sayısı kadar yüksek
+olarak N ayrı kelime dikdörtgeni oluşturur. Interleaved durumda ise,
+N bit düzlemlerinin satırları karışarak tek bir kelime dikdörtgeni oluşturur.
+Bu dikdörtgenin yüksekliğinin, görüntünün yüksekliğinin
+onu oluşturan bit düzlemlerinin sayısı ile çarpımına eşit olduğunu unutmayın. Şekilde,
+ 3 satır yüksekliğinde 3 bit düzleminden oluşan bir görüntü bulunmaktadır.
+Kelime dikdörtgeni 9 satırdan oluşmaktadır.
+
++----------------------------------------+
+|иииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|ииииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|ииииииииииииииииииииииииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+|ииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииии|
+|ииииииииииии#####1####иииииииииииииииии|
+|ииииииииииии#####2####иииииииииииииииии|
+|ииииииииииии#####3####иииииииииииииииии|
+|ииииииииииии#####1####иииииииииииииииии|
+|ииииииииииии#####2####ииииииииииииииииии|
+|ииииииииииии#####3####ииииииииииииииииии|
+|ииииииииииии#####1####иииииииииииииииии|
+|ииииииииииии#####2####иииииииииииииииии|
+|ииииииииииии#####3####ииииииииииииииииии|
+|иииииииииииииииииииииииииииииииииииииии|
+
+|иииииииииииииииииииииииииииииииииииииии|
+|ииииииииииииииииииииииииииииииииииииииии|
+|ииииииииииииииииииииииииииииииииииииииии|
++----------------------------------------+
+
+Şekil 16     Bir görüntünün vurgulandığı INTERLEAVED ekran.
+
+Interleaved formatında, bir görüntünün bit düzlemlerinin satırlarının
+bellekte tek bir dikdörtgen oluşturması çok önemlidir, çünkü bu sayede
+görüntü üzerinde tek bir blit ile işlem yapabiliriz. Tabii ki, bu
+blit normal durumda yaptığımız blitlerden farklıdır.
+Öncelikle, blit boyutları farklıdır.
+Normal durumda her blit, görüntünün yüksekliği kadar yüksektir,
+ oysa interleaved durumda, kelime dikdörtgeninin yüksekliği
+görüntünün yüksekliğinin, onu oluşturan bit düzlemlerinin sayısı ile çarpımına eşittir
+ve bu nedenle blit yüksekliğimiz de bu kadar olmalıdır
+blittata'nın yüksekliği de bu kadar olmalıdır.
+İkincisi, blittata adreslerini hesaplama şeklimiz farklıdır,
+ özellikle bir satırın ilk kelimesinin adresini hesaplama şeklini değiştirmeliyiz
+.
+Normal durumda, blittata yapılacak dikdörtgenin Y satırında başladığını gördük,
+ Y satırının ilk kelimesinin bitplane başlangıcından “mesafesi” (ofset)
+Y*(BİR SATIRIN KAPLADIĞI BYTE SAYISI) kadardır.
+Bu mantıklıdır, çünkü normal bir ekranda bir bit düzleminin satırları
+bellekte ardışık olarak bulunur.
+INTERLEAVED bir ekranda ise durum farklıdır, çünkü bir bit düzleminin satırları
+ardışık değildir.
+Aslında, bildiğiniz gibi, , ilk bit düzleminin Y satırından sonra, diğer bit düzlemlerinin Y satırları
+ve bunların ardından ilk bit düzleminin Y+1 satırı gelir.
+Dolayısıyla, ilk bit düzleminin Y satırındaki ilk kelime ile
+ilk bit düzleminin Y+1 satırındaki ilk kelime arasındaki mesafe, şekildeki tüm bit düzlemlerinin Y satırlarının kapladığı bayt sayısına eşittir
+.
+Aynı mantıkla, ilk bit düzleminin Y satırındaki ilk kelime ile ekranın başlangıcı arasındaki mesafenin
+şuna eşit olduğunu kolayca anlayabilirsiniz:
+
+Y*(BİR SATIRIN KAPLADIĞI BYTE SAYISI)*(DÜZLEM SAYISI)
+
+Sonuç olarak, bir dikdörtgeni
+X ve Y koordinatlarından başlayan bir INTERLEAVED ekran için adresini hesaplamak şu şekilde olur:
+
+Adres_word = (Bit düzlemi_adresi)+N*2
+
+burada:
+N=(Y*(BİR SATIRI OLUŞTURAN WORD SAYISI)*(DÜZLEM SAYISI))+(X/16).
+
+Birden fazla bliçleme yapmak yerine tek bir bliçleme yapmak, programı daha basit hale getirmenin yanı sıra
+daha hızlı da yapar.
+Blitterin harcadığı zamanın (aşağı yukarı) aynı olduğuna dikkat edin,
+çünkü tek bir bliçleme yapıyoruz, ancak bu bliçlemenin yüksekliği
+normal durumda blitter işlemlerinin toplam yüksekliğine eşittir ve bu nedenle
+aynı süreyi gerektirir, çünkü blitterin hızı esasen işlemesi gereken
+kelime sayısına, yani blitter işleminin boyutuna bağlıdır.
+Tek bir blitter işlemi yapmak
+Ancak, tek bir blitter işlemi yapmak işlemciye önemli avantajlar sağlar,
+aşağıdaki şemada, iki durumda gerçekleştirilecek işlemleri karşılaştırarak görebilirsiniz
+(ekran 3 bit düzleminden oluşur):
+
+NORMAL EKRAN                INTERLEAVED EKRAN
+
+1)    bekle sonunu                bekle sonunu
+(varsa) blitter işleminin        (varsa) blitter işleminin
+önceki                önceki
+
+2)    blitter kayıtlarını yükle            blitter kayıtlarını yükle
+ilk blitter işlemi için            ilk blitter işlemi için
+ve tek blitter işlemi için
+
+3)	
+ilk blitter işleminin
+
+4)    ikinci blitter işlemi için
+blitter kayıtlarını yükleyin
+blitter
+
+5)    ikinci blitter işleminin
+sonunu bekleyin
+
+6)	
+blitter kayıtlarını üçüncü
+blitter
+
+
+Gördüğünüz gibi, interleaved ekran durumunda, işlemci daha az
+işlem yapar ve özellikle blitterin bitmesini sadece bir kez beklemesi gerekir,
+ oysa normal ekran durumunda bit düzlemlerinin sayısına eşit sayıda beklemesi gerekir.
+ Bekleme sırasında işlemci yararlı bir şey yapmaz
+ve dinlenmeye ihtiyacı olmadığı için, bekleme sayısını azaltarak mümkün olduğunca
+çalıştırmak uygun olur.
+
+Ders9g2.s örneği, ders9f1.s örneğinin INTERLEAVED versiyonudur.
+İkisini birlikte inceleyin ve aralarındaki farkları not edin.
+
+Örnek lezione9g3.s ise, örnek
+lezione9f3.s'nin INTERLEAVED versiyonudur. Bunları da karşılaştırın.
+........
+.::::::::::::::.
+::::::::::::::::::
+::: :::::::::.
+::: ::::::::
+::(__ ___ ::::::::
+.::/_) /__, :/_\::::.
+.:::o/ o .: //::::::
+.::/ .::./::::::
+::(__ ) .:: ::::::
+.::/() .:: ::::::'
+_n_____________n__ (___ ::::
+|-----------\\\--__F \ ~ |
+|_____________ (O_.\________ __________\___. ./X\
+\(__D)__\ \\ ~~~~~~ \______/.xST\
+`-(___O)|_ || . XX|
+(___O) \_// : .: . О|
+(__O)///__________ //________.: : .|
+~~~ : : :
+. .
+
+*******************************************************************************
+*                MASKELER                 *
+*******************************************************************************
+
+Blitter, her satırın ilk ve son kelimesini maskeleme olanağına sahiptir
+satırın ilk ve son kelimesini maskeleme olanağına sahiptir. Maskelemek, bu kelimelerin sadece
+bazı bitlerini okumak ve diğerlerini yok saymak anlamına gelir. Bu işlem,
+ şimdiye kadar anlamını açıklamadan kullandığımız iki kayıt sayesinde gerçekleştirilir.
+ Bu iki kayıt, BLTAFWM ($dff046) ve BLTALWM
+($dff046) olarak adlandırılır ve sırasıyla kanal A üzerinden okunan her satırın ilk ve son kelimesini maskelemek için kullanılır. Her biri bir kelime içerir
+maske olarak adlandırılır.
+ Blitter, bir satırın ilk veya son kelimesini okuduğunda
+okunan kelime ile karşılık gelen maske
+arasında bir AND mantık işlemi gerçekleştirir. Kanal A'dan okunan kelimenin
+maskede 0 olarak ayarlanmış bir bit ile eşleşen bitleri silinir.
+Bazı örnekler görelim:
+
+word letta dal
+canale A	%1001101100010111
+
+maschera	%1111111100000000
+_________________________________
+
+risultato	%1001101100000000
+
+Bu şekilde, kelimenin en sağındaki 8 biti seçmiş olduk.
+
+kanal A'dan okunan kelime
+%1001101100010111
+
+maske    %1111110000111111
+_________________________________
+
+sonuç    %1001100000010111
+
+Bu şekilde maskenin ortasındaki 4 biti sıfırladık.
+Maskeyi tamamen sıfırlarsak, tüm kelimeyi sileriz:
+
+word letta dal
+canale A	%1001101100010111
+
+maschera	%0000000000000000
+_________________________________
+
+risultato	%0000000000000000
+
+Maskeyi $ffff=%1111111111111111=-1 değerine ayarlarsak, maske
+hiçbir şeyi silmez, yani tüm kelimeyi “geçirir”:
+
+kanal A'dan okunan kelime
+%1001101100010111
+
+maske    %1111111111111111
+_________________________________
+
+sonuç    %1001101100010111
+
+Şimdiye kadar gördüğümüz tüm örneklerde hiçbir şeyi maskelemeye gerek duymadık
+ve aslında her iki maskeyi de
+$ffff değerine başlattık.
+
+Her satırın ilk kelimesi (yani en soldaki kelime) У “AND” ile
+BLTAFWM ile ve son kelime (en sağdaki kelime) BLTALWM ile “AND” edilir.
+Bunu kolayca hatırlayabilirsiniz çünkü BLTAFWM adındaki F, “First”
+yani “ilk” anlamına gelir ve BLTALWM'deki L, ‘Last’
+yani “son” anlamına gelir. Elbette 2 maske birbirinden farklı olabilir
+(aksi takdirde 2 kayıt ne işe yarardı?). Satır genişliği tek bir
+kelime ise, her iki maske aynı anda aynı kelimeye uygulanır.
+ 2 kayıt BLTAFWM ve BLTALWM ardışık adreslere sahip olduğundan
+tek bir MOVE.L #maschera,$dff044 komutuyla başlatılabilir.
+Maskelerin, SHIFT komutu YÜRÜTÜLMEDEN ÖNCE verilere uygulandığına dikkat etmek önemlidir.
+ B ve C kanalleri ise okunan kelimeleri maskeleme olanağına sahip değildir
+.
+
+Ders 9h1.s örneğinde, basit
+kopyalama işlemleriyle maskelerin etkisini gösteriyoruz.
+
+Ders9h2.s'de maskelerin
+bir görüntüden sadece ilgilendiğimiz kısmı “çıkarmak” için ne kadar yararlı olduğunu gösteriyoruz.
+
+Ders9h3.s ve ders9h4.s'de maskelerin yardımıyla gerçekleştirilen 2 yeni efekt sunuyoruz
+.
+
+Örnekler lezione9h2r.s, lezione9h3r.s ve lezione9h4r.s, lezione9h1.s, lezione9h2.s ve lezione9h3.s dosyalarının
+rawblit (interleaved) formatındaki versiyonlarıdır.
+Karşılaştırma yaparken, tüm farklılıkları not edin
+(özellikle, interleaved versiyonundaki tüm rutinlerin her düzlemde blitter yapmak için
+döngüye gerek duymadığını ve bu nedenle
+çok daha basit bir yapıya sahip olduğunu) not edin.
+
+Yeni efektleri gördükten sonra, eski bir efektle, yani
+ekranda yüzen balıkla ilgilenelim ve blitter hakkındaki yeni
+bilgilerimizle önemli bir iyileştirme yapabileceğimizi keşfedelim.
+ 
+Aslında, bir şekli doğru şekilde kaydırmak için
+şeklin sağına sıfırlanmış bir “sütun” eklemek gerektiğini gördük. Bu durum,
+ şekilleri depolamak için gereğinden fazla bellek kullanmamıza neden oluyor.
+Ancak artık maskeler sayesinde bu israfı önleyebiliriz.
+Kaydırmak için, şeklin her satırındaki son kelimenin
+sıfırlanması gerekir.
+Sıfırlanmış bir kelimeyi doğrudan bellekten okumak yerine
+herhangi bir değere sahip bir kelimeyi okuyup maske ile sıfırlayabiliriz.
+Maskeleme kaydırmadan ÖNCE yapıldığından
+kaydırma devresine her satırın son kelimesi sıfırlanmış olarak ulaşır ve her şey
+sıfırlanmış kelime bellekten okunmuş gibi gerçekleşir.
+Satırın son kelimesinin değeri önemli olmadığı için
+herhangi bir değerdeki bir kelimeyi okuyabiliriz.
+
+Şimdi şu küçük oyunu deneyelim: görüntünün sağına hiçbir kelime eklemeyelim,
+ ancak blitter'a bunu söylemeyelim, yani
+blitter'ın genişliğini, resmin sağında bir kelime daha varmış gibi ayarlayalım.
+ 
+Böylece blitter, bir satırın son kelimesini okuduktan sonra,
+bir kelime daha okuması gerektiğini düşünecek ve bu nedenle satırın son kelimesinden sonraki kelimeyi okuyacaktır
+. Bu kelime nedir? Normal
+biçiminde bir görüntü kullanırsak, aynı bit düzleminin bir sonraki satırının ilk kelimesi olacaktır
+,
+ ancak görüntü interleaved biçimindeyse, başka bir bit düzleminin bir satırının ilk kelimesi olacaktır.
+ Her durumda, bu kelime boş olmayacaktır, ancak
+bizim için sorun değildir çünkü maske ile sıfırlayabiliriz.
+Bu noktada sadece küçük bir sorunumuz var: bir kelime fazla okuduğumuz için
+kaynak işaretçisi bir kelime ileriye kaydı,
+ bu nedenle bir sonraki satırı okumaya başladığında ilk kelimeden değil
+ikinci kelimeden başlayacak. İşaretçiyi geriye nasıl döndürebiliriz?
+Tabii ki eski negatif modül hilesiyle! Kaynağın modülünü
+-2 (modül bayt cinsinden ifade edilir) olarak ayarlayarak blitter,
+bir sonraki satırın ilk kelimesine yeniden konumlanır. Her şeyi özetleyelim ve
+shift'i açıklamak için kullandığımız balık örneğine geri dönelim. Elimizde
+1 kelime genişliğinde ve 6 satır yüksekliğinde tek bir bit düzlemi görüntüsü var. Daha önce de söylediğimiz gibi, sağ tarafa kelime sütununu EKLEMİYORUZ.
+
+KAYNAK
+kelime 1        
+satır 1        1000001111100000
+“ 2        1100111111111000
+” 3        1111111111101100
+" 4        1111111111111110
+“ 5        1100111111111000
+” 6        1000001111100000
+
+Şekil 17 Hiçbir kelime sütunu EKLEMEYİN
+
+Ancak, fazladan bir sütun olduğunu varsayalım ve
+2 kelime genişliğinde ve 6 satır yüksekliğinde bir dikdörtgen çizelim. Blitter, her satırdan 2 kelime
+okur ve ikinci kelime olarak bir sonraki satırın ilk kelimesini alır.
+Aşağıdaki şekil yardımıyla, ilk satırın okunması sırasında neler olduğunu daha ayrıntılı olarak görelim
+:
+
+KAYNAK
+kelime 1        
+satır 1        1000001111100000--------
+“ 2        1100111111111000--------+-----------------------
+” 3        1111111111101100    |            |
+“ 4        1111111111111110    |            |
+” 5		1100111111111000    |            |
+" 6        1000001111100000    |            |
+|            |
+V            V
+OKUNAN KELİMELER
+KANAĞA KADAR            1000001111100000	
+1100111111111000
+|            |
+|            |
+V            V
+SATIRIN SON WORD'U MASKELENİR        1000001111100000    0000000000000000
+|            |
+|            |
+V            V
+
+SHIFT (2 piksel)            0010000011111000    0000000000000000
+|            |
+|            |
+V            V
+
+D kanalına yazma    D kanalına yazma
+
+Şekil 18	 Son kelimeyi sıfırlayarak kaydırma.
+
+
+Gördüğünüz gibi, okunan ikinci kelime kaydırılmadan önce sıfırlanıyor.
+Kaydırma işleminden sonra, 2 kelime D kanalından yazılır.
+Bu sırada, A kanalındaki işaretçi 2 kelime ileriye kaymış
+ve üçüncü satırın ilk kelimesini işaret etmektedir. Biz ise
+işaretçiyi ikinci satırın ilk kelimesine yani bir kelime
+geriye gitmesini sağlamalıyız. Bu nedenle -2'ye eşit bir modül kullanıyoruz. İşaretçinin hareketleri
+aşağıdaki şekilde gösterilmiştir:
+
+KAYNAK        İŞARET EDİLEN KELİME    İŞARET EDİLEN KELİME    İŞARET EDİLEN KELİME
+BAŞLANGIÇ    İLK SONRA    EKLEYEREK
+|		SATIR        MODÜL
+1000001111100000    <----         |         |
+1100111111111000    <-------------------+--------------
+1111111111101100    <-------------------
+1111111111111110
+1100111111111000
+1000001111100000
+
+Şekil 19     Kaynağa işaretçinin hareketi.
+
+Balıklarımızın hareketini görmek için lezione9i1.s örneğine bakın.
+
+Artık blitter kullanarak ekran üzerinde şekilleri çok iyi hareket ettirebiliyoruz.
+Bu şekillere BOB denir, bu terim
+İngilizce “Blitter OBject” kelimesinin kısaltmasıdır, yani blitter tarafından oluşturulan nesneler anlamına gelir.
+BOB'larla, donanım sprite'larıyla yapabildiğimiz her şeyi yapabiliriz
+. BOB'lar spritelerden daha yavaştır, çünkü blitter
+verileri kopyalamak için belirli bir süreye ihtiyaç duyar. Bununla birlikte, BOB'lar
+spritelere göre boyut, renk ve maksimum sayı açısından sınırlamalara tabi değildir.
+Aslında bir BOB istediğimiz kadar büyük olabilir (ancak boyut
+büyüdükçe kullanılan bellek miktarı ve
+dolayısıyla blitter'ın onu taşımak için ihtiyaç duyduğu süre de artar) ve
+ekranla aynı sayıda renge sahip olabilir.
+Ayrıca, ekranda aynı anda görüntülenebilecek bob sayısında herhangi bir sınırlama yoktur
+(ancak, bob sayısı arttıkça, bunları çizmek için daha fazla
+zaman harcanır).
+“Ne güzel”, diyeceksiniz, “oyun yapmaya başlayabiliriz!”. Bir dakika,
+çok heyecanlanmayalım. BOB'larla sprite'larla yapabildiğimiz
+şeylerin aynısını yapabileceğimizden emin miyiz?
+
+lezione9i2.s ve onun “ikizi” olan interleaved formatındaki lezione9i2r.s dosyasına bakalım.
+
+Ekran üzerinde fare ile serbestçe hareket ettirebileceğimiz renkli bir BOB var.
+Ancak bir sorun var...BOB'u hareket ettirdiğimizde arka plan siliniyor!
+Bu, sprite'larda olmaz, çünkü sprite'lar arka plan bitplanes'lerinden ayrı küçük
+bitplanes'lerdir.
+BOB'lar ise arka plan görüntüsünün bitplanes'leri üzerine çizilir,
+bu nedenle kısmen üzerine yazılırlar.
+
+Bu soruna ilk çözümümüzü ders9i3.s ve
+ders9i3r.s örneklerinde sunuyoruz (ikincisi elbette birincisinin rawblit versiyonudur).
+
+Ancak göreceğiniz gibi, bu da henüz tatmin edici değildir.
+
+Ders9i4.s örneğinde başka bir çözüm deniyoruz, ancak bu da
+sorunlar içeriyor.
+
+Ders9i5.s örneğinde ise joystick ile hareket ettirilen ve
+ekranın bir kısmından çıkan bir BOB örneği görüyoruz.
+
+BOB'ları tanımaya başladık, ancak şimdilik
+tatmin edici bir sonuç elde edemedik, yani arka plan sorunu nedeniyle BOB'larla tipik
+video oyunları işlemlerini yapamıyoruz. Ne yazık ki, şu ana kadar bildiklerimizle
+daha iyisini yapamıyoruz.
+
+Ama endişelenmeyin: blitter hakkında öğrenecek daha çok şey var ve
+bunlardan biri bu sorunu çözmemize yardımcı olacak!
+Cesaret ve metanet, yolumuz daha uzun!
+.)
+ \\\..
+( __/ __ \)
+ (.__.) O
+( n_______n /(__, \
+|________ }__________/ ____, )__
+((O) \\. (__________/ \
+=(_O) | /( )\ \
+(_O)|_______ \_\ /_/ \ )
+\ \)(/ | /)
+ /. \ |/
+| / . \ |
+| (__.___) |
+|_|==()==|___|
+| _ |
+| | |
+| | |
+
+*******************************************************************************
+*        ÜST ÜSTE BİNEN HAFIZA ALANLARININ KOPYALANMASI             *
+*********************************
+**********************************************
+
+Şimdi, artık iyi bildiğimiz dikdörtgenleri kopyalama işleminden yola çıkarak blitter'ın başka bir özelliğini açıklayacağız.
+Blitter'ın kaynağı ve hedefi üst üste gelirse, yani
+2 kelime dikdörtgeninin ortak kısımları varsa ne olur?
+ Blitter
+, kaynağın ortak kısımları da dahil olmak üzere tüm hedefi değiştirecektir
+.
+Üst üste binen alanlar arasında kopyalama, kopyalamadan ÖNCE kaynağın içeriğini hedefe koymaktan ibarettir.
+Kopyalama işleminden sonra, kaynağın içeriği değişecektir.
+Kopyalama işleminden sonra, kaynağın içeriği değişecektir.
+Bu nedenle, kopyalama işleminden sonra, hedef kaynakla aynı olmayacaktır!
+Daha doğrusu, tekrar edelim, hedef, kopyalama işleminden ÖNCEKİ kaynakla aynı olacaktır!
+Kısacası, hedefin kaynağa çekilmiş bir fotoğraf olduğunu ve fotoğrafçının fotoğrafı basmak için harcadığı süre içinde
+fotoğrafın çok hızlı bir şekilde eskidiğini ve fotoğraftaki
+fotoğrafı basarken, kaynağın hızla yaşlanarak fotoğrafta göründüğünden çok farklı bir hale geldiğini
+düşünün.
+Bu koşullar altında her zaman bir kopya oluşturmalı mıyız?
+Bu sorunu iyice incelemeliyiz.
+2 satır yüksekliğinde ve 3 kelime genişliğinde bir dikdörtgenin kopyalanması örneğiyle ne olacağını görelim.
+Kaynak, aşağıdaki şekilde gösterildiği gibi hedefin altında
+bulunuyor olsun:
+
+____ ____ ____ ____ ____ ____
+| |\\\\|\\\\|\\\\| | |
+| |\\\\|\\\\|\\\\| | |
+|____|\\\\|\\\\|\\\\|____|____|        düz. KAYNAK=////
+| |\\\\|XXXX|XXXX|////| |
+| |\\\\|XXXX|XXXX|////| |        düz. HEDEF=\\\\
+|____|\\\\|XXXX|XXXX|////|____|
+| | |////|////|////| |        düz. ORTAK=XXXX
+| | |////|////|////| |
+|____|____|////|////|////|____|
+| | | | | | |
+| | | | | | |
+|____|____|____|____|____|____|
+
+
+Şekil 20     Üst üste binen dikdörtgenler arasında kesme
+
+Bir dizi şekil yardımıyla, işlemin sonraki aşamalarını
+analiz edelim. A, B, C, D, E, F harfleriyle kopyalamak istediğimiz 6
+kelimenin içeriğini, “?” sembolüyle ise
+ilgimizi çekmeyen ve bu nedenle silebileceğimiz kelimelerin içeriğini belirtelim.
+Kopyalamaya başlamadan önce durum şöyledir:
+
+____ ____ ____ ____ ____ ____
+| |\\\\|\\\\|\\\\| | |
+| | ? | ? | ? | | |
+|____|\\\\|\\\\|\\\\|____|____|        dik. KAYNAK=////
+| |\\\\|XXXX|XXXX|////| |
+| | ? | A | B | C | |        düzeltme. HEDEF=\\\\
+|____|\\\\|XXXX|XXXX|////|____|
+| | |////|////|////| |        düzeltme. ORTAK=XXXX
+| | | D | E | F | |
+|____|____|////|////|////|____|
+
+
+Şekil 21a Üst üste binen dikdörtgenler arasında blitter
+
+Bildiğimiz gibi, blitter kelimeleri tek tek kopyalar, en
+sol üstteki kelimeden başlayarak aşağıya ve sağa doğru ilerler. İlk satır
+okunur ve hedefteki ortak olmayan bir alana kopyalanır,
+böylece bu alanı rahatlıkla üzerine yazabiliriz. İlk satırın kopyalanmasından sonra durum şöyledir
+:
+
+____ ____ ____ ____ ____ ____
+| |\\\\|\\\\|\\\\| | |
+| | A | B | C | | |
+|____|\\\\|\\\\|\\\\|____|____|        düz. KAYNAK=////
+| |\\\\|XXXX|XXXX|////| |
+| | ? | A | B | C | |        düz. HEDEF=\\\\
+|____|\\\\|XXXX|XXXX|////|____|
+| | |////|////|////| |		rett. ORTAK=XXXX
+| | | D | E | F | |
+|____|____|////|////|////|____|
+
+
+Şekil 21b Üst üste binen dikdörtgenler arasında blittata
+
+Bu noktada ikinci satırı kopyalamamız gerekiyor. Hedefin ikinci satırı
+kaynağın ilk satırıyla üst üste geliyor. Bu, hedefe verileri yazdığımızda
+kaynağın bir kısmını üzerine yazacağımız ve içeriğini yok edeceğimiz anlamına geliyor. Ancak, üzerine yazılan verilerin kaynağın İLK satırına ait olduğunu ve bunları zaten
+kopyaladığımızı ve artık ihtiyacımız olmadığını unutmayın. Bu nedenle herhangi bir sorun yok. İkinci (ve son) satırı kopyaladıktan sonra durum şu şekilde: ____ ____ ____ ____ ____ ____ | |\\\\|\\\
+ve artık ihtiyacımız olmadığı için sorun yoktur.
+İkinci (ve son) satırı kopyaladıktan sonra durum şu şekildedir:
+
+____ ____ ____ ____ ____ ____
+| |\\\\|\\\\|\\\\| | |
+| | A | B | C | | |
+|____|\\\\|\\\\|\\\\|____|____|        düzeltme. KAYNAK=////
+| |\\\\|XXXX|XXXX|////| |
+| | D | E | F | C | |        düzeltme. HEDEF=\\\\
+|____|\\\\|XXXX|XXXX|////|____|
+| | |////|////|////| |        düz. ORTAK=XXXX
+| | | D | E | F | |
+|____|____|////|////|////|____|
+
+
+Şekil 21c Üst üste binen dikdörtgenler arasında blittata
+
+Tam olarak istediğimizi elde ettik, çünkü artık hedef dikdörtgen,
+ bliçleme işlemine başlamadan ÖNCE kaynak dikdörtgenin içeriğinin tam bir kopyasıdır.
+ Kaynağın içeriğinin değiştiğini fark edebilirsiniz,
+ ancak bu kaçınılmazdı.
+
+Bunu pratikte lezione9l1.s örneğinde görebilirsiniz.
+
+Bu durumda, kaynak ve hedef arasında üst üste binme
+sorun yaratmıyor gibi görünüyor. Ancak, hedefin kaynağın
+altında olduğu durumu inceleyelim:
+
+____ ____ ____ ____ ____ ____
+| |////|////|////| | |
+| |////|////|////| | |
+|____|////|////|////|____|____|        düzelt. KAYNAK=////
+| |////|XXXX|XXXX|\\\\| |
+| |////|XXXX|XXXX|\\\\| |        düzelt. HEDEF=\\\\
+|____|////|XXXX|XXXX|\\\\|____|
+| | |\\\\|\\\\|\\\\| |        ort. ORTAK=XXXX
+| | |\\\\|\\\\|\\\\| |
+|____|____|\\\\|\\\\|\\\\|____|
+| | | | | | |
+| | | | | | |
+|____|____|____|____|____|____|
+
+
+Şekil 22     Üst üste binen dikdörtgenler arasında blit
+
+Blit öncesinde durum şöyledir:
+
+____ ____ ____ ____ ____ ____
+| |////|////|////| | |
+| | A | B | C | | |
+|____|////|////|////|____|____|        düz. KAYNAK=////
+| |////|XXXX|XXXX|\\\\| |
+| | D | E | F | ? | |        düz. HEDEF=\\\\
+|____|////|XXXX|XXXX|\\\\|____|
+| | |\\\\|\\\\|\\\\| |        düz. ORTAK=XXXX
+| | | ? | ? | ? | |
+|____|____|\\\\|\\\\|\\\\|____|
+
+Şekil 23a Üst üste binen dikdörtgenler arasında blittata
+
+İlk satırı kopyalayarak başlayalım. Hedef satırın ilk satırı
+, henüz kopyalanmamış olan kaynağın ikinci satırıyla
+kısmen üst üste binmektedir. Sonuç şöyle olacaktır:
+
+____ ____ ____ ____ ____ ____
+| |////|////|////| | |
+| | A | B | C | | |
+|____|////|////|////|____|____|        kaynak=////
+| |////|XXXX|XXXX|\\\\| |
+| | D | A | B | C | |        hedef=\\\\
+|____|////|XXXX|XXXX|\\\\|____|
+| | |\\\\|\\\\|\\\\| |        düzeltme ORTAK=XXXX
+| | | ? | ? | ? | |
+|____|____|\\\\|\\\\|\\\\|____|
+
+Şekil 23b Üst üste binen dikdörtgenler arasında blittata
+
+Gördüğünüz gibi E ve F değerlerini kaybettik! Görünüşe göre bu sefer
+kopyalama işlemi başarısız olacak! Yine de ikinci satırı da kopyalayalım ve
+ne olacağını görelim.
+
+____ ____ ____ ____ ____ ____
+| |////|////|////| | |
+| | A | B | C | | |
+|____|////|////|////|____|____|        düz. KAYNAK=////
+| |////|XXXX|XXXX|\\\\| |
+| | D | A | B | C | |        düz. HEDEF=\\\\
+|____|////|XXXX|XXXX|\\\\|____|
+| | |\\\\|\\\\|\\\\| |		düzeltme. ORTAK=XXXX
+| | | D | A | B | |
+|____|____|\\\\|\\\\|\\\\|____|
+
+
+Şekil 23c Üst üste binen dikdörtgenler arasında blittata
+
+İşte bitti. Blittata bitti ama sonuç istediğimiz gibi değil.
+İnandınız mı?
+
+Hayır mı? Öyleyse, lezione9l2.s örneğine bakın ve ikna olun!
+
+Neden ilk seferinde işe yaradı da bu sefer yaramadı, anlamaya çalışalım.
+Sorun, hedef parçalarının kaynağıyla üst üste binen kısımlarına yazdığımızda ortaya çıkıyor,
+ çünkü böylece bazı verileri üzerine yazıyoruz
+bazı verileri üzerine yazıyoruz.
+İlk durumda sorun olmadı çünkü üzerine yazılan verileri
+zaten kopyalamıştık.
+Bu, kaynağın hedeften daha aşağıda (daha büyük adreslerde)
+bulunması ve üst üste binmenin kaynağın ilk
+satırı ile hedefin ikinci satırı arasında gerçekleşmesi nedeniyle oldu.
+Blitter ilk satırdan başlayarak kopyalama yaptığı için, kaynağın ilk satırındaki veriler
+hedefin ikinci satırı tarafından üzerine yazılmadan ÖNCE kopyalanır
+.
+İkinci durumda ise, kaynak hedeften daha yukarıda (daha düşük adreslerde) bulunur
+ve üst üste binme kaynağın ikinci satırı ile hedefin ilk satırı arasında gerçekleşir
+.
+Bu nedenle, kaynağın ikinci satırındaki veriler
+ilk satırın kopyalanması sırasında, yani kendileri kopyalanmadan ÖNCE
+üzerine yazılır ve bu nedenle kaybolur.
+Bu sorunu çözmek için, önce ikinci satırı ve
+ardından ilk satırı kopyalamak gerekir.
+Bu, blitterin DÜŞEN MODU kullanılarak yapılabilir.
+Bu mod kullanıldığında, blitter kopyalama (veya başka herhangi bir
+işlem) işlemini normalde yaptığı ters yönde gerçekleştirir, yani
+dikdörtgenin sağ alt köşesinden başlayarak sola ve yukarı doğru
+yukarı doğru ilerler.
+Bu yolu izleyerek blitter'ın kopyaladığı kelimelerin adresleri giderek küçülür.
+Bu nedenle blitter'ın bellek boyunca AŞAĞIYA doğru ilerlediği söylenir, bu da
+çalışma modunun adının kaynağıdır (buna karşılık, normal mod AŞAĞIYA modu olarak da adlandırılır,
+ çünkü normalde adresleri giderek artan kelimeler blitter'lanır
+).
+Blitter'ın aşağı doğru modunda nasıl kullanıldığını ayrıntılı olarak incelemeden önce,
+ üst üste binen bölgelerin kopyalanması sorununa geri dönelim ve 
+aşağı doğru modun doğru çözüm olduğunu doğrulayalım.
+Başlangıç durumu şöyledir:
+
+____ ____ ____ ____ ____ ____
+| |////|////|////| | |
+| | A | B | C | | |
+|____|////|////|////|____|____|        rett. KAYNAK=////
+| |////|XXXX|XXXX|\\\\| |
+| | D | E | F | ? | |        rett. HEDEF=\\\\
+|____|////|XXXX|XXXX|\\\\|____|
+| | |\\\\|\\\\|\\\\| |        düzeltme ORTAK=XXXX
+| | | ? | ? | ? | |
+|____|____|\\\\|\\\\|\\\\|____|
+
+Şekil 24a Üst üste binen dikdörtgenler arasında blittata
+
+Bu sefer alçalan yöntemi kullanacağız, bu yüzden
+son satırdan kopyalamaya başlayacağız. Bu şekilde başlangıçta üst üste binen kısma yazmayacağız
+:
+
+____ ____ ____ ____ ____ ____
+| |////|////|////| | |
+| | A | B | C | | |
+|____|////|////|////|____|____|        düz. KAYNAK=////
+| |////|XXXX|XXXX|\\\\| |
+| | D | E | F | ? | |        düz. HEDEF=\\\\
+|____|////|XXXX|XXXX|\\\\|____|
+| | |\\\\|\\\\|\\\\| |        düzeltme. ORTAK=XXXX
+| | | D | E | F | |
+|____|____|\\\\|\\\\|\\\\|____|
+
+Şekil 24b Üst üste binen dikdörtgenler arasında blittata
+
+Şimdi ilk satırı kopyalayalım. Bunu yaparken
+kaynağın ikinci satırını üzerine yazıyoruz, ancak bunu zaten kopyaladığımız için sorun olmuyor:
+
+____ ____ ____ ____ ____ ____
+| |////|////|////| | |
+| | A | B | C | | |
+|____|////|////|////|____|____|        düzeltme. KAYNAK=////
+| |////|XXXX|XXXX|\\\\| |
+| | D | A | B | C | |        düzeltme. HEDEF=\\\\
+|____|////|XXXX|XXXX|\\\\|____|
+| | |\\\\|\\\\|\\\\| |		ortak=XXXX
+| | | D | E | F | |
+|____|____|\\\\|\\\\|\\\\|____|
+
+Şekil 24c Üst üste binen dikdörtgenler arasında blitt
+
+Tamam! Bu sefer oldu. Artık hedef, blitt işlemi yapılmadan önce kaynağın görünümüyle aynı.
+Sonuç olarak, kaynak ve hedef adresleri üst üste binen bir kopya oluşturduğumuzda, kaynak adresleri hedef adreslerinden daha büyükse, normal şekilde blitt işlemi yapılmalıdır (ASCII).
+Sonuç olarak, kaynak ve hedef üst üste geldiğinde bir kopya oluştururken
+kaynak, hedeften daha büyük bellek adreslerinde bulunuyorsa
+blit işlemini normal şekilde (YÜKSELEN) yapmalısınız,
+ kaynak ise daha küçük bellek adreslerinde bulunuyorsa
+DÜŞEN modunu kullanmalısınız.
+__________
+/ \
+|_________ _ |
+/ _______ \| |
+| / o_o \ | |
+\| ___ |/\_|
+_____|\/ = \/|_(_)__
+/ | | \
+/ | | \
+/ _. \_____/ __ _\_____
+___/__ | o | _\_ \____
+/ \_ \| o |/ __\__| /
+| |) |\_______________/|\(__/ \_/__/__
+O==o==O_/| ||__|| | / ____ \_
+| `-' | \____||__||_____/ / / _ ___ \
+| sk8 | \ / ( / (_)\/ \ |
+| .-. | |_____Y_____| \ / \/ /
+O==o==O __| | _|_ | ‘ )
+| | / `` | ’' \ ( /
+\___/ (_________|________) \_____________)
+
+Bu noktada, alçalan modun ayrıntılarına girebiliriz.
+Öncelikle, alçalan mod bir kontrol biti ile etkinleştirilmelidir.
+Bu, BLTCON1 kaydının 1. bitidir ve 1 olarak ayarlandığında aşağı modu etkinleştirir,
+ sıfırlandığında ise (şimdiye kadar yaptığımız gibi)
+yukarı modu etkinleştirir.
+Daha önce de belirttiğimiz gibi, aşağı modda blitter “geriye doğru” gider,
+ yani adresleri giderek küçülen bellek konumları arasında hareket eder.
+Bu nedenle, DMA kanallarının işaretçilerinin,
+blit işleminin başlangıcında, tüm adresler arasında en büyük adrese sahip blit kelimesine,
+yani blit edilecek ilk kelimeye işaret etmesi gerekir.
+Bildiğiniz gibi, bu, blit edilecek kelime dikdörtgeninin en altındaki ve en sağındaki kelimedir.
+Örneğin, 3 kelime genişliğinde ve 2 satır yüksekliğinde bir dikdörtgeni blit etmek istiyorsanız,
+Örneğin, 3 kelime genişliğinde ve
+2 satır yüksekliğinde bir dikdörtgeni bliçlemek istiyorsanız, işaretçileri dikdörtgenin ikinci satırındaki üçüncü kelimenin adresiyle başlatmanız gerekir.
+ Şekilde bu, iki
+yıldız işaretiyle (**)
+
+____ ____ ____ ____ _ _ _ _ _ _ ____
+| | | | |        | |
+| | | | |     | |
+|____|____|____|____|        |____|
+| |\\\\|\\\\|\\\\|        | |
+| |\\\\|\\\\|\\\\|        | |
+|____|\\\\|\\\\|\\\\|        |____|
+| |\\\\|\\\\|\\\\|        | |
+| |\\\\|\\\\| ** |        | |
+|____|\\\\|\\\\|\\\\|        |____|
+| | | | |        | |
+| | | | |     | |
+|____|____|____|____|        |____|
+|                 |
+|                 |
+
+Şekil 25, bit dizisinin başlangıcında işaretlenecek kelimenin vurgulandığı kelime dikdörtgeni
+.
+
+Bu kelimenin adresini hesaplamak için, yukarıda
+yukarı doğru durum için yapılan işlemle benzer bir işlem yapılır. Bu kelimenin bit düzleminin başlangıcından uzaklığını (ofset) hesaplamamız gerekir
+. Dikdörtgenin sol üst köşesindeki
+pikselin Xa ve Ya koordinatlarını ve dikdörtgenin genişliğini L
+ve yüksekliğini A bildiğimizi varsayalım. İlgilendiğimiz kelime, koordinatı Yb=Ya+A olan dikdörtgenin son
+satırına aittir. Bu satırın ilk kelimesinin ofseti
+aşağıdaki formülle verilir:
+
+OFFSET_Y = 2*(Yb*SATIR_BAY_SAYISI)            normal durumda ve
+
+OFFSET_Y = 2*(Yb*SATIR_BAY_SAYISI*PLAN_SAYISI)    interleaved durumda.
+
+Şimdi satırın ilk kelimesi ile dikdörtgenin son kelimesi arasındaki mesafeyi hesaplamalıyız.
+ Bildiğimiz gibi bu mesafe 2*(Xa/16) ile verilir.
+Öte yandan, dikdörtgenin ilk ve son kelimesi arasında L-1 kelime vardır, bu da
+2*(L-1) mesafesine (bayt cinsinden ifade edilir) eşittir.
+2 farkı topladığımızda şunu elde ederiz:
+
+OFFSET_X=2*(Xa/16+L-1).
+
+
+| |        | |\\\\|\\\\|    |\\\\|
+| A |        | | B |\\\\|	| C |
+|____|_ _    |____|\\\\|\\\\|_ _    |\\\\|
+
+\____________________/\______________________/
+|            |
+Xa/16 kelime         L kelime
+
+kelime A ile kelime B arasındaki mesafe = 2*(Xa/16)
+kelime B ile kelime C arasındaki mesafe = 2*(L-1)
+
+Şekil 26 OFFSET_X hesaplaması
+
+Bu durumda, DMA kanallarının işaretçilerine yazılacak adres şu şekilde verilir:
+
+ADRES_WORD = ADRES_BITPLANE+OFFSET_Y+OFFSET_X.
+
+Modüller ve blok boyutu ile ilgili olarak, yükselen durumdan fark yoktur,
+ hepsi aynı formüllerle hesaplanır.
+Artık, kaynak hedef adresinden daha küçük bir bellek adresinden başladığında bile, üst üste binen 2 dikdörtgen bölgeyi doğru bir şekilde kopyalayabiliriz
+: bu, örnek 9l3.s'dir.
+
+Aşağı yönde maskeler ve kaydırma, yukarı yönde olduğundan farklı davranır
+.
+Maskeler her zaman aynı şekilde çalışır, ancak uygulandıkları kelimeler değişir
+.
+BLTAFWM içindeki maske, yukarı yönde olduğu gibi,
+her satırda bleatiyoruz ilk kelimeye uygulanır.
+Ancak, aşağı doğru modda ters yönde blipping yaptığımız için, ilk kelime
+dikdörtgenin en sağındaki kelimedir, yukarı doğru modda ise en soldaki kelimedir
+.
+Aynı şekilde, BLTALWM içindeki maske her zaman
+her satırın son blipping yapılan kelimesine uygulanır, ancak aşağı doğru modda bu kelime
+en soldaki kelimedir. Özetle:
+
+- Yükselen modda (normal) BLTAFWM en soldaki kelimeye
+ve BLTALWM en sağdaki kelimeye uygulanır.
+
+- Alçalan modda BLTAFWM en sağdaki kelimeye ve BLTALWM
+en soldaki kelimeye uygulanır.
+
+Görüntüyü videoda göründüğü gibi bakarsak, azalan moda geçildiğinde
+maskeler üzerinde çalıştıkları sütunları değiştirir. Bunu doğrulamak için
+ders9m1.s örneğini yükleyin ve çalıştırın. Bu örnek, ders9h1.s ile tamamen aynı şeyleri yapar,
+ sadece azalan modda çalışır. Maskelerin
+aynı etkileri yarattığını, ancak sütunları değiştirdiğini göreceksiniz.
+
+Aşağı doğru modda kaydırma temel bir fark gösterir:
+sağa doğru değil, SOLA doğru yapılır. Kaydırma değeri
+örneğin 2 olarak belirtilirse, kaynak 2 piksel SOLA doğru kaydırılır.
+Bu özelliği kullanarak bir görüntünün sola doğru kayma
+efektini gerçekleştirebiliriz. Bunu lezione9m2.s örneğinde bulabilirsiniz.
+
+Bu noktada, nihayet demoların en klasik efektlerinden birini gerçekleştirebiliyoruz
+: SCROLLTEXT, yani ekranda sağdan sola kayan bir metin
+.
+
+Basit ama anlamlı bir örnek ders9n1.s'de bulunabilir, burada
+tüm açıklamaları bulabilirsiniz. Bu örneği özellikle dikkatli bir şekilde inceleyin
+çünkü scrolltext yapmayı bilmek bir demo kodlayıcı için kesinlikle çok önemlidir
+!
+
+Ders9n2.s örneğinde disk1'in girişindeki scrolltext'i bulabilirsiniz.
+
+.-%%%-,
+( )
+( )
+-~x~- ( )
+/% %\ ( )
+| | ( )
+| | ( )
+| __ _, (%%%%-( )
+/\/\ (. ).) `_'_', ( )
+C __) (.( .)-( )
+| /%%% \ (_ ( )
+/ \ %====' /_____/` D)
+/`-_ `---‘ \ |
+.__|%-/~\-%|_/_ |~~~~~~~|| |
+__. ||/.\ | |OooooO
+\ ---. \ | | \ _
+_- ,`_'_’ .%\ \|__ __|-____ / )
+< -(. ).) > \ ( .\ (. ) \(_/ )
+%- _) \_- ooo @ (_) @ \(_//.
+/ /_C (-.____) /((O)/ \ ._/\%_.
+/ |_\ / / /\\\\`-----‘’ _|>o< |__
+| \ooooO ( \ \\ \\___/ \ `_'_', /
+\ \__-| \ `)\\-~\\ ~--. /_(.(.)- _\
+\ \ ) |-`--.`--=\-\ /-//_ ' ( c D\
+\_\_) |-___/ / \ V /.% \/\\\ (@)___/ %|
+/ | / |. /`\\_/\/ / /
+/ | ( C`-'` / | \/ (/ /
+/_________- \ `C__-% | / (/ /
+| | | \__________| \ (/
+
+Scrolltext'in nasıl çalıştığını anladınız mı? Cevabınız evet ise,
+öğrendiklerinizden memnun olmaya başlayabilirsiniz. 
+Artık
+blitter'ın temel işleyişini biliyorsunuz. Bir sonraki derste
+bu güçlü dostumuzun en gizli sırlarını keşfedeceğiz, en büyüğü ve en zor anlaşılanından başlayarak,
+ bu ders boyunca uğraştığımız ama hep kaçındığımız
+MINTERMS'in işleyişi!

@@ -1,0 +1,1715 @@
+
+. : .
+¦.:.:.:..::.::.¦
+|::·· _____:!
+| _____ ____ |
+_! ‘____ | ||
+/ __ | || ||
+\ /\ `--°-’`-°--‘| xCz
+_ __ _________________)\ \____C¯ l___l___________________ __ _
+¯¯ `---’
+ASEMBLER KURSU - DERS 10
+- -- ----------------------------------------------------- -- -
+
+Bu derste blitter'ın en gelişmiş özelliklerinin kullanımını öğreneceğiz
+.
+
+*******************************************************************************
+*                MINTERMS                 *
+*******************************************************************************
+
+Ders 9'da blitter'ın çeşitli
+işlemler yapmamızı sağladığını söylemiştik. Ayrıca işlem türünün
+MINTERMS tarafından belirlendiğini, bunların BLTCON0 kaydının 0 ila 7 arasındaki bitleri, yani
+bu kaydın düşük baytı (LF - Logic Function baytı) olduğunu söylemiştik.
+blitter tarafından gerçekleştirilen işlem değişir.
+Örneğin, belleği silmek için LF baytının
+$00 değerine, kanal A'dan kanal D'ye kopyalamak için ise $f0 değerine ayarlanması gerektiğini biliyoruz.
+Bu değerler blitter tasarımcıları tarafından rastgele seçilmemiştir, ancak şimdi açıklayacağımız çok kesin bir mantığa tabidir. Öncelikle, blitter tarafından gerçekleştirilebilen işlemlerin
+Bu değerler blitter tasarımcıları tarafından rastgele seçilmemiştir,
+ ancak şimdi açıklayacağımız çok kesin bir mantığa tabidir.
+Öncelikle, blitter tarafından gerçekleştirilebilen işlemlerin
+LOGİK işlemler, yani NOT, AND ve OR olduğunu belirtelim, ki bunları artık iyi biliyor olmalısınız
+(aslında, bu işlemlerle aritmetik işlemler de yapabilenler var, ancak
+bunu belki bir sonraki diskte konuşuruz!
+Blitter ayrıca bu tür işlemlerin birkaçını tek bir
+blit işleminde birleştirebilir. Ancak sırayla gidelim.
+Bildiğiniz gibi, blitter'ın 3 giriş kanalı ve bir çıkış kanalı vardır. Şu anda
+kanalların etkinleştirilmesi veya devre dışı bırakılmasıyla ilgilenmeyelim.
+Bir blitter işlemi, A, B ve C kanalları aracılığıyla 3 giriş değerini alan
+ve D kanalı aracılığıyla bir sonuç üreten bir mantıksal işlemdir.
+Tüm mantıksal işlemler gibi, bu işlem de bit-bit olarak gerçekleştirilir, ancak
+blitter her zaman kelimeleri okur (ve yazar), tıpkı 68000'in
+AND tipi bir mantıksal komutla yaptığı gibi.
+Böylece, çıkıştaki kelimenin her biti, girişteki kelimenin karşılık gelen bitlerinin değerlerine göre hesaplanır
+.
+3 giriş biti, 8 farklı kombinasyon oluşturabilir.
+Bir blitter işlemi, giriş bitlerinin her olası
+kombinasyonu için çıkış sonucunun 0 mı yoksa 1 mi olacağını belirleyerek tanımlanır.
+Pratikte, 8 minterm'in her birine (BLTCON0'ın 0 ila 7 bitleri)
+giriş bitlerinin farklı bir kombinasyonu atanır; minterm 0 ise,
+ giriş kombinasyonunun sonucu 0 olur, 1 ise
+sonuç 1 olur.
+
+Bu, aşağıda gösterildiği gibi bir doğruluk tablosu ile görüntülenebilir.
+Üç kaynak kanalı ve her birinin tek bir bit için olası değerleri listelenmiştir.
+Yanında, her kombinasyonla ilişkili bit gösterilmiştir.
+
+
+A    B    C         BLTCON0 konumu
+-    -    -     -----------------
+
+0    0    0            0
+
+0    0    1            1
+
+0    1    0            2
+
+0    1    1             3
+
+1    0    0            4
+
+1    0    1            5
+
+1    1    0            6
+
+1    1    1            7
+
+Şekil 27    MINTERMS
+
+Örneğin, bir blit'in, giriş A 0, B 1 ve C 0 olduğunda 1 çıkış üretmesini ve diğer tüm durumlarda 0 çıkış üretmesini istiyorsak,
+ minterm 2'yi 1'e ayarlamalı ve diğer tüm minterm'leri sıfırlamalıyız.
+0 çıkışı üretmesini istiyorsak, minterm 2'yi 1'e ayarlamalı ve
+diğer tüm mintermleri sıfırlamalıyız. Böylece LF baytına $04 değerini yazacağız.
+Başka bir örnek olarak, LF'deki $80 (= 1000 0000 ikili) değeri, yalnızca
+kaynak A, B ve C'nin karşılık gelen bitlerinin tümü 1 olarak ayarlanmış olan hedef bitlerini 1 olarak ayarlar.
+Hedef bitlerinin diğer tüm bitleri, A, B ve C için diğer kombinasyonlara karşılık geldiğinden
+sıfırlanır.
+Bunun nedeni, LF baytındaki 6'dan 0'a kadar olan bitlerin 0 değerini almasıdır.
+Bunun nedeni, LF baytındaki 6 ila 0 bitlerinin 0 değerini almasıdır.
+Elbette, aynı anda birden fazla minterm'i 1 olarak ayarlamak mümkündür.
+Örneğin, LF değerini $42 (= 0100 0010 ikili) olarak ayarlarsak,
+2 minterm “yakarız”.
+Bu değerle, 2 durumda çıkış 1 olur:
+A=0, B=0 ve C=1 (LF'nin 1 bitine karşılık gelir) ve A=1, B=1 ve C=0
+(LF'nin bit 6'sına karşılık gelir). Diğer durumlarda çıkış 0 olur.
+Şimdi, silme ve kopyalama için kullandığımız minterm değerlerinin anlamını anlamaya çalışalım.
+Silme durumunda
+Silme durumunda LF=$00 olur.
+Tüm mintermlere değer 0'dır. Bu, kaynak kanalların herhangi bir kombinasyonu için
+çıkışta her zaman 0 üretileceği anlamına gelir.
+Pratikte okuduğumuz her şey her zaman 0 yazarız, yani sileriz (
+Aslında silme sırasında hiçbir şey okumayız çünkü
+A, B ve C kanallarını etkinleştirmiyoruz, ancak yine de LF=$00 koymalıyız, nedenini
+daha sonra açıklayacağız). A'dan D'ye bir kopya yapmak için, bildiğiniz gibi,
+LF=$F0 (=%11110000) koyalım. Bu şekilde, çıkış 4 farklı kombinasyona karşılık 1
+değerine sahipken, kalan 4 kombinasyonda 0 değerine sahiptir.
+Şekil 27'deki tabloda görebileceğiniz gibi,
+ 
+, A=1 ile mümkün olan tüm kombinasyonlardır ve aynı şekilde
+0 olarak ayarlanan mintermlere karşılık gelen kombinasyonlar,
+ A=0 olanlardır. Bu, A=1 olduğunda çıkışın 1
+ve A=0 olduğunda çıkış değeri 0 olur, B ve C değerlerinden bağımsız olarak.
+Pratikte, çıkış A kanalının aynı değerini alır ve dolayısıyla
+onun tam kopyası olur. Bunun yerine B kanalından D kanalına kopyalamak istersek,
+farklı bir LF değeri kullanmalı ve B=1 kombinasyonlarına karşılık gelen minterms'leri
+1'e (şekil 27'de görüldüğü gibi
+minterms 2,3,6 ve 7) ve diğerlerini (minterms 0,1,4 ve 5) sıfırlayarak
+LF=$CC (=%11001100) elde ederiz.
+Minterms'leri uygun şekilde programlayarak blitter ile birçok işlem yapabilirsiniz.
+Örneğin
+Örneğin, bir dikdörtgenin tüm piksellerini 1 olarak ayarlamak istediğimizi varsayalım
+(pratikte, tüm bitleri 0 olarak ayarlayan silme işleminin tersi
+).
+Silme işleminde olduğu gibi, sadece çıkış kanalını kullanıyoruz.
+İstediğimiz, girişlerin herhangi bir kombinasyonu için çıkışın her zaman 1 olmasıdır
+.
+Bu sonucu elde etmek için tüm mintermlere 1 değerini vererek LF=$FF elde ediyoruz.
+
+Bu işlemi lezione10a1.s örneğinde görebilirsiniz.
+
+lezione10a2.s örneğinde ise NOT işlemini gösteriyoruz.
+
+Açıklama için listeye bakınız.
+______ ______
+(:::::\`~-. ___ /|\ ___ .-~ /:::::)
+`\:::::\ `\ __\\\\|||||////__ /‘ /:::::/’
+`\-::::\_ `\.\\\\\|||||////./‘ _/::::-/’
+`--..__`\/ \\\\|//// \/ __..--‘
+>’ .--. `\ /‘.--. `<
+_...--/ -< | | >- \--..._
+/ \ `\()| |()/’ / \
+/|| `\| ____. ` ‘ .____ |/’ ||\
+/||| | ‘ `\ /::\ /’ ` | |||\
+|||||\ .---. __|_. /::::::\ ._|__ .---. /|||||
+|||||||-._|_ `-._ /::::::::::\ _.-‘ _|_.-|||||||
+\||||||||||| /::/’ |::| `\::\ |||||||||||/
+\|||||||||| /::/ |::| \::\ ||||||||||/
+`\||||||||\ (:::`---‘::`---’:::) /||||||||/‘
+/ `-._`-.::::::::::::.-'_.-’ \
+| .________. |
+| |
+| |
+| |
+\ /
+`\ /‘
+`~-.________________________.-~’
+
+Şimdi 2 operandlı bir işlem örneğine geçelim, örneğin OR.
+Çıkışın A ve B kanallarının OR'una eşit olmasını istiyoruz.
+OR'un doğruluk tablosunu tekrar düşünürsek, çıkışın
+A=1 ve B=1 olduğu tüm durumlarda 1 olması gerektiğini anlıyoruz.
+Şekil 27'de 27'de görebileceğiniz gibi, toplamda 6 durum
+LF=$FC
+
+sonucunu verir.
+lezione10b2.s bir AND işlemi gerçekleştirir.
+
+Belirli bir işlemi gerçekleştiren LF baytını hesaplamanın başka bir yolu
+Venn diyagramlarını kullanmaktır:
+
+______ 0 ______
+/     \ / \
+/     \/     \
+/     /\     \
+/ A     / \ B    \
+| -     | | -	 |
+|     | 6 |     |
+|    4 |____| 2     |
+|     /| |\     |
+|    / | 7 | \     |
+\ / \ / \    /
+\ / 5 \/ 3 \ /
+\ |     /\     | /
+\|_____/ \_____|/
+|         |
+|     1     |
+|         |
+\         /
+\ C     /
+\ - /
+\______/
+
+
+Şekil 28    Venn diyagramı
+
+Bu diyagramın kullanımını birkaç örnekle açıklayalım
+
+
+1. D=A (yani hedef = yalnızca kaynak A) seçmek için,
+yukarıdaki şekilde A dairesinin tamamen içinde bulunan mintermlere
+bakın. Bu, 7, 6, 5 ve 4 minterm serisidir.
+Seçilen mintermlere 1, seçilmeyenlere 0 yazıldığında
+değer şu şekilde olur:
+
+Minterm sayısı        7 6 5 4 3 2 1 0
+Seçilen mintermler    1 1 1 1 0 0 0 0
+-----------------
+F 0 yani $F0
+
+2. İki kaynağın birleşiminden oluşan bir fonksiyon seçmek için,
+her iki daireden (kesişimlerinden) mintermleri arayın. Örneğin,
+kombinasyon A “AND” B,
+A ve B dairelerinin ortak alanı, yani mintermlere 7 ve 6 ile temsil edilir.
+
+Minterm sayısı        7 6 5 4 3 2 1 0
+Seçilen mintermlere    1 1 0 0 0 0 0 0
+-----------------
+C 0 yani $C0
+
+3. Kaynaklardan birinin tersi olan “NOT” işlevini kullanmak için, örneğin:
+
+NOT A
+
+A ile temsil edilen daireye dahil olmayan tüm mintermlere bakın.
+Bu durumda, mintermlere 0, 1, 2 ve 3 vardır.
+
+
+Minterm sayısı        7 6 5 4 3 2 1 0
+Seçilen mintermler    0 0 0 0 1 1 1 1
+-----------------
+0 F yani $0F
+
+
+4. Mintermleri birleştirmek, yani aralarında bir “OR” oluşturmak için, değerlerin OR'unu yapın.
+Örneğin, (A AND B) OR (B AND C) işlemi şu şekilde olur
+
+Minterm sayısı            7 6 5 4 3 2 1 0
+A AND B                1 1 0 0 0 0 0 0
+B AND C                1 0 0 0 1 0 0 0
+-----------------
+(A AND B) OR (B AND C)        1 1 0 0 1 0 0 0
+-----------------
+C 8 yani $C8
+
+
+Her halükarda, zahmetten kurtulmak istiyorsanız (yazık, TEMBELLER! :),
+en sık kullanılan Minterm değerlerinin bir tablosunu aşağıda veriyoruz.
+Bu tabloda, şimdiye kadar kullanılanlardan farklı bir gösterim kullanılmaktadır:
+
+İki terim birbirine bitişikse, aralarında AND işlemi yapılır
+(ör. AB, A AND B anlamına gelir);
+
+bir terimin üzerinde bir çizgi NOT anlamına gelir:
+_
+(ör. A, NOT A anlamına gelir);
+
+iki terim “+” ile ayrılmışsa, aralarında OR işlemi yapılır
+(ör. A+B, A OR B anlamına gelir);
+
+AND önceliklidir, dolayısıyla AB + BC, (A AND B) OR (B AND C) ile eşittir.
+İşte tablo:
+
+İşlem    Değer        İşlem    Değer
+Seçili     LF        Seçili     LF
+--------    -------        --------    -------
+D = A         $F0        D = AB         $C0
+_                 _
+D = A         $0F        D = AB         $30
+_
+D = B         $CC        D = AB         $0C
+_                 __
+D = B         $33        D = AB         $03
+
+D = C         $AA        D = BC         $88
+_                 _
+D = C         $55		D = BC         $44
+_
+D = AC         $A0        D = BC         $22
+_                 __
+D = AC         $50        D = AC         $11
+_                     _
+D = AC         $0A        D = A + B     $F3
+_                 _     _
+D = AC         $05        D = A + B     $3F
+_
+D = A + B     $FC        D = A + C     $F5
+_                 _     _
+D = A + B     $CF        D = A + C     $5F
+_
+D = A + C	 $FA        D = B + C     $DD
+_                 _     _
+D = A + C     $AF        D = B + C     $77
+_
+D = B + C     $EE        D = AB + AC     $CA
+_
+D = B + C     $BB
+
+
+Şekil 29    En çok kullanılan mintemler
+
+
+NOT: Amacınıza uygun LF değerini bulmak için
+Deftronic tarafından programlanan “minterm” yardımcı programını da kullanabilirsiniz.
+Trash'M'One ile aynıdır.
+Bu kısa yardımcı programı bu diskte bulabilirsiniz.
+Sözdizimi şöyledir: NOT için, kaydırılmamış kanal harfini
+(küçük harf) yazın, örneğin “abc”.
+Normal kanal için kaydırılmış harf (büyük harf) kullanılır.
+İki bitişik harf, kanallar arasında AND anlamına gelirken, “+” ile ayrıldıklarında
+kanallar arasında OR anlamına gelir.
+__
+Örnek: ABC isteniyorsa:
+
+minterm    Abc
+
+sonuç: $10
+
+Örnek 2: Sadece kaynak A isteniyorsa:
+
+minterm    A
+
+sonuç: $F0    (istendiği gibi)
+
+Örnek 3: sadece (A AND B) OR C isteniyorsa:
+
+minterm    AB+C
+
+sonuç: $DA.
+
+___________
+\ _/___
+\____________)
+|. _ |
+|___/ |
+`------'
+./ _ \.
+__ |___/ ) |
+(__|_____/ |
+|________|____. _ __ ____
+| _) | - --- --- --- -( )
+| |----. | -- - ( ( ) )
+__| | |__| _ - -- -- vrooom ) )
+___|_____|________/ | --- -- - ---( ( ( )
+(____________________| (____ _ __)
+(_) (_)
+
+*******************************************************************************
+*                BOBS                     *
+*******************************************************************************
+
+Dersin en önemli kısmına, yani BOB'lara neredeyse geldik.
+Bunları ele almadan önce başka bir kavramı tanıtmak gerekiyor: bit-plane
+maske.
+ Bu, basitçe bir şeklin “gölgesini” oluşturan bir bit düzlemidir, yani bir şeklin boyutlarıyla aynı boyutlarda bir bit düzlemidir ve
+şeklin piksellerine karşılık gelen pikseller 1 olarak ayarlanmış, arka plan renginden farklı bir renkle boyanmış
+ve şeklin arka plan rengiyle aynı renkteki pikseller 0 olarak ayarlanmıştır.
+Örneğin, aşağıdaki sayı tablosunu ele alalım: 0020 0374 5633 0130. Bu, 8 renkli (3 bit düzlem) ve 4 piksel genişliğinde bir görüntüyü temsil eder.
+Örneğin, aşağıdaki sayı tablosunu ele alalım:
+
+0020
+0374
+5633
+0130
+
+Bu, 4 piksel genişliğinde ve 4 satır yüksekliğinde 8 renkli (3 bit düzlemi) bir görüntüyü temsil eder.
+ Her sayı, piksele atanan rengi gösterir. Bu görüntünün maskesi
+şöyledir:
+
+0010
+0111
+1111
+0110
+
+0'dan (arka plan) farklı renklerin en az bir bit düzlemi
+1 olarak ayarlandığını görebiliriz.
+
+Bu nedenle maske, tüm bit düzlemlerinin OR
+işlemi yapılarak şekilden oluşturulabilir, ders10c1.s ve ders10c2.s örneklerinde gösterildiği gibi
+Bu örnekler, blitter'ı mantıksal işlemler yapmak için kullanmayı da gözden geçirmenize olanak tanır.
+Özellikle, lezione10c2.s'de ilk kez
+blitter'ın 4 kanalını da kullanan bir blitter işlemi gösterilmektedir.
+
+Kefrens Converter'da ise, bir şeklin maskesini otomatik olarak oluşturma seçeneği vardır.
+Maske bit düzlemleri, bir görüntünün
+bölümlerini, başka bir görüntünün şekline göre görüntülememizi sağladıkları için kullanışlıdır.
+Bunun örneklerini
+
+ders10c3.s ve ders10c4.s'de görüyoruz. Burada, bir görüntüyü aydınlatarak bir kısmını görünür hale getiren bir reflektör oluşturmak için daire şeklinde bir maske kullanıyoruz.
+bir yansıtıcı oluşturmak için kullanıyoruz
+ve görüntünün bir kısmını görünür hale getiriyoruz.
+
+2 örnek, aynı etkiyi yaratmasına rağmen, yorumlarda açıklandığı gibi çok
+farklı teknikler kullanıyor.
+BOB'ları anlamak için gerekli olan ders q4.s'yi özellikle iyi çalışın.
+Bu örnekte,
+maske bit düzlemi, 5 bit düzleminden oluşan bir görüntünün bazı kısımlarını “seçmek” için kullanılıyor. bit düzlemi maskesi, 5 bit düzleminden oluşan bir görüntünün
+bazı kısımlarını “seçmek” için kullanılır. Seçim, bit düzlemi maskesi ile görüntüyü oluşturan 5 bit düzlemi arasında
+bir AND işlemi gerçekleştirilerek yapılır. Görüntü normal formatta olduğundan, her düzlem için bir tane olmak üzere 5 
+ayrı blittate gerçekleştirilir.
+Maske, elbette her blittate için aynıdır (tek bir bit düzleminden oluşur). 
+Maske, elbette her blipping için
+aynıdır (tek bir bit düzleminden oluşur).
+Ders 10c4.s örneğindeki tekniği interleaved formatındaki bir ekrana uygulamak istediğimizde
+bir sorunla karşılaşırız. Bu formatta çalışırken,
+ tüm düzlemleri aynı anda blipping yaparız.
+Ancak maske bir düzlem boyutundadır ve bu nedenle
+görüntüyü oluşturan düzlemlerin sayısına eşit boyutta bir blipping işleminde
+kullanılamaz. Bu sorunu çözmek için
+maskemizi değiştirmeliyiz. Maskenin her satırı, şeklin TÜM bit düzlemlerinin karşılık gelen satırını
+seçmesi gerektiğinden, satırı
+bit düzlemlerinin sayısı kadar tekrarlamalıyız. Dolayısıyla, interleaved formatında,
+her satırı şeklin bit düzlemlerinin sayısı kadar tekrarlanan bir bit düzlemi maskesi
+kullanmalıyız. Daha önce gördüğümüz şekil
+(3 düzlem) durumunda, interleaved maskemiz aşağıdaki gibidir:
+
+0010\
+0010 |    - normal maskenin ilk satırı 3 kez tekrarlanır
+0010/
+0111
+0111
+0111
+1111
+1111 
+1111
+0110
+0110
+0110
+
+Gördüğünüz gibi, şekil 3 bit düzlemine sahip olduğundan, normal formattaki maskenin her satırı
+interleaved maskeyi elde etmek için 3 kez tekrarlanmıştır.
+ Interleaved format, bu nedenle, normal formatta gerekenden daha fazla bellek kaplayan bir maske kullanmamızı gerektirir
+.
+Örnek lesson10c5.s, lesson10c4.s'nin interleaved versiyonudur ve
+
+Ders10c5.s örneği, ders10c4.s'nin interleaved versiyonudur ve
+söylediklerimizi pratikte görmemizi sağlar.
+
+___
+_( )_ 
+__( . . .)__ 
+_( _ .. ._ . )_ 
+( . _/(_____)\_ )
+ 
+(_ // __ | __ \\ __)
+(__( \/ o\ /o \/ )__)
+( .\_\__/ \__/_/. )
+\_/¬(_. ._))\_/
+/___( )___\
+( | |\___/| | )
+||__| | |__||
+||::|__|__|::||
+||:::::::::sc|| 
+.||:::__|__:;:||
+ 
+/|. __ __ .|\.
+./(__..| . .|.__) \.
+(______|. .. |______)
+ 
+/| |_____|
+/|\
+:
+
+Maskelerin nasıl çalıştığını iyi anladıysanız, BOBS ile arka plan sorununu
+bir kez ve sonsuza kadar çözmeye hazırsınız demektir.
+Hatırlayacağınız gibi, lesson9i3.s örneğinde sorunun çözümüne oldukça
+yaklaşmıştık. Arka plan kaydediliyor ve daha sonra
+yerine yeniden çiziliyor.
+ Tek sorun, BOB figürünü çevreleyen dikdörtgende arka plan silinip 0 rengiyle değiştiriliyor olmasıdır.
+Aslında, bir BOB çizerken 0 rengini herhangi bir renk olarak değil,
+ sadece BOB figürüne ait olmayan dikdörtgenin piksellerini belirtmek için kullanıyoruz
+. 
+Bu,
+sprite'larda yaptığımızın aynısıdır, 0 rengini “şeffaf” olarak kullanırız.
+BOB'u ekrana çizdiğimizde, 0 rengiyle boyanmış piksellerin yerine arka planın görünmesini isteriz,
+ pratik olarak ekrana
+0'dan farklı renkteki pikselleri yazabilmeliyiz.
+Bu mümkün değildir çünkü bildiğiniz gibi blitter (ve okur) HER ZAMAN
+TAM kelimeleri.
+Bu nedenle farklı bir strateji benimsenir. BOB'u hedef üzerine basitçe kopyalamak yerine,
+ daha karmaşık bir blitter işlemi yaparız.
+Bellekten BOB'un yanı sıra arka planı da okuruz, bunları “karıştırırız”,
+ böylece BOB'un 0 renkli piksellerinin yerine arka plan pikselleri görünür
+ortaya çıkacak ve sonucu ekrana yazıyoruz.
+Bu strateji aşağıdaki şekilde gösterilmiştir. Burada bir BOB
+ve 6*8 piksel boyutunda bir arka plan parçası bulunmaktadır.
+“.” sembolü 0 renkli bir pikseli, “#” sembolü
+farklı renkteki bir BOB pikselini ve “o” sembolü farklı renkteki bir
+arka plan pikselini temsil etmektedir:
+
+
+BOB            ARKA PLAN........
+
+        ...o....
+..####..        ...oo...
+.#.##.#.        ..oooo..
+..####..        ..ooooo.
+...##...        .ooooooo
+..#..#..        oooooooo
+
+\             /
+\             /
+\             /
+BOB, ARKA PLAN üzerine yerleştirilmiş
+...o....
+..####..
+.#o##o#.
+..####o.
+.oo##ooo
+oo#oo#oo
+
+
+Şekil 30    Bob ve arka plan
+
+Bu şekilde istediğimiz efekti elde ederiz.
+Şimdi, BOB'u arka planla nasıl “karıştıracağımızı” anlamamız gerekiyor. BOB'u arka planla “karıştırmak” gerektiğini anlamak kalıyor.
+Doğru şekilde “karıştırmak” için, BOB'un hangi piksellerinin
+renk 0 olduğunu ve hangilerinin olmadığını bilmeliyiz.
+Bu bilgiler, BOB'un bitplane maskesinde bulunur ve
+bildiğiniz gibi, BOB'un renk 0 olan her pikseli için 0 bit ve
+diğer renklerdeki her piksel için 1 bit içerir.
+Karıştırma işlemi şu şekilde gerçekleşir:
+
+- Her piksel için maskeyi okuruz
+- Maskenin değeri 1 ise, BOB'daki karşılık gelen pikseli kopyalarız
+- Maskenin değeri 0 ise, arka plandaki karşılık gelen pikseli kopyalarız.
+
+Bu işlemi tek bir blitter ile
+aşağıdaki şekilde gerçekleştirebiliriz: maskeyi blitterin A kanalından,
+BOB'u B kanalından, arka planı C kanalından okuruz, maskeyi
+kopyalanacak pikselleri (arka plandan veya BOB'dan) seçmek için kullanırız ve
+sonucu D kanalına yazarız (kanalların atanması rastgele değildir).
+Seçim, aşağıdaki mantıksal denklemle gerçekleştirilir:
+
+D = (A AND B) OR ( (NOT A) AND C)
+
+Bu denklem, daha önce açıklanan seçim prosedürüyle tam olarak aynı şekilde çalışır.
+ Aslında, maske A = 1 olduğunda (yani BOB'da 0'dan FARKLI renkte bir
+piksel olduğunda), denklem şu şekilde basitleşir
+şekilde basitleşir:
+
+D = (1 AND B) OR ( (NOT 1) AND C) = B OR (0 AND C) = B OR 0 = B
+
+Böylece BOB pikseli kopyalanır.
+A = 0 olduğunda (yani BOB'da 0 renkli bir piksel olduğunda) denklem
+şekline gelir:
+
+D = (0 AND B) OR ( (NOT 0) AND C) = 0 OR (1 AND C) = 0 OR C = C
+
+Böylece arka plan pikseli kopyalanır.
+Bu mantıksal denklem blitter tarafından (kendiniz hesaplayabilirsiniz)
+LF = $CA, “COOKIE CUT” olarak bilinen değer yani “
+çerez kesme” olarak bilinir. Daha önce de belirttiğimiz gibi, kanalların atanması
+kanalların özelliklerine göre dikkatlice yapılmıştır.
+Aslında, yatay hareketleri akıcı bir şekilde gerçekleştirmek için
+BOB ve maske için blitterin kaydırma özelliğini kullanmak gerekir; bu nedenle C kanalı
+(kaydırma yapamaz) arka plan için kullanılır. Ayrıca,
+maskeleme hilesi uyguluyoruz, böylece
+son kelime sıfırlanıyor ve son kelimede
+arka plan blitterleniyor.
+
+Örnekler lezione10d1.s ve lezione10d1r.s (sırasıyla
+normal ve interleaved versiyonlarda) uzun zamandır beklenen BOB'un bir arka plan üzerinde hareket ettiğini göstermektedir.
+
+_|_
+__|__ |___| |\
+|o__| |___| | \
+|___| |___| |o \
+_|___| |___| |__o\
+/...\_____|___|____\_/
+\ o * o * * o o /
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*******************************************************************************
+*        BLITTER'IN HIZI (VE SADECE BU DEĞİL)             *
+*******************************************************************************
+
+Şimdi çok önemli bir konuyu ele almanın zamanı geldi: blitter hızı.
+Bildiğiniz gibi, blitter görevlerini tamamlamak için belirli bir süreye ihtiyaç duyar ve
+karmaşık efektler programlarken bunu dikkate almak gerekir.
+Blitter hızını ölçmek için çok basit bir teknik kullanacağız.
+“bakır monitör” olarak bilinen ve sonucu ekranda gerçek zamanlı olarak gösteren
+basit bir teknik kullanacağız.
+Teknik çok basittir: belirli bir rengi (genellikle siyah)
+arka plan olarak kullanıyoruz.
+Ardından, blitter işlemini başlatmadan hemen önce, “MOVE.W #$xxx,$dff180” komutuyla
+işlemci aracılığıyla arka plan rengini değiştiriyoruz.
+Blitter işlemi bittiğinde arka plan rengini başlangıçtaki rengine geri döndürürüz.
+Bu şekilde, blitter işleminin farklı renkle boyanan ekranın büyüklüğüyle orantılı bir süre
+sürdüğünü biliriz.
+Bu tekniğin her türlü rutini ölçmek için kullanıldığını ve
+özellikle bir değişiklik (örneğin bir optimizasyon) sonrasında rutinin hızının veya yavaşladığını anlamak için çok yararlı olduğunu unutmayın.
+Bir örnek, lezione10e1.s dosyasında gösterilmiştir.
+
+Bir örnek ders10e1.s'de gösterilmiştir.
+
+Bu örnekte, blitter'ı ekranda bir dikdörtgeni kopyalamak için kullanıyoruz.
+Bu örnekten yola çıkarak, blitter'ın hızı hakkında bazı düşüncelerimizi paylaşabiliriz.
+ Öncelikle, daha önce de belirttiğimiz gibi,
+hız, blitter'ın boyutuna bağlıdır.
+Örnekte dikdörtgenin yüksekliğini ve/veya genişliğini değiştirmeyi deneyin
+ve kendiniz göreceksiniz.
+Bu mantıklıdır, çünkü dikdörtgen ne kadar büyükse,
+hareket ettirilecek kelime sayısı da artar. Aynı şekilde, bit düzlemlerinin sayısı da
+hızı etkiler (ders10e1.s'de “DisegnaOggetto” rutinindeki yineleme sayısını değiştirmeyi deneyin),
+ çünkü bit düzlemi ne kadar fazla olursa
+hareket ettirilecek veri miktarı da o kadar fazla olur.
+
+Ders10e1r.s örneği, önceki örneğin rawblit versiyonudur.
+
+Çalıştırdığınızda, çok az da olsa daha hızlı olduğunu fark edeceksiniz.
+O zaman, rawblit'in tüm avantajı ne, diye sorabilirsiniz.
+Aslında, daha önce de söylediğimiz gibi, rawblit tekniği
+blitter'ı hızlandırdığı için değil, işlemciye zaman kazandırdığı için
+.
+Şimdiye kadar gördüğümüz 2 örnekte, sadece blitterin harcadığı zamanı ölçtük
+.
+
+Örneklerde lezione10e2.s ve lezione10e2r.s ise, farklı renkler kullanarak
+blitterin harcadığı zamanı ve işlemcinin harcadığı zamanı
+işlemcinin harcadığı zamanı vurgulamak için farklı renkler kullanıyoruz.
+
+Bu örneklerin karşılaştırılması, rawblit modunun avantajlarını tam olarak göstermektedir:
+bu teknikle işlemci çok az zaman harcar, sadece blitter kayıtlarını yüklemek için
+zaman harcar ve ardından diğer görevleri yerine getirmek için serbest kalır.
+ Normal modda ise işlemci, bir blitter işleminin bitmesini beklemek zorundadır
+ve ancak o zaman bir sonraki blitter işlemini başlatabilir
+.
+Rawblit tekniğinin avantajından yararlanmak için, blitter işleminden sonraki rutinin blitter'ı KULLANMAMASI gerektiği açıktır.
+Aslında, (örneklerde olduğu gibi) bir blitter işleminden hemen sonra blitter'ı kullanan bir
+rutin varsa, işlemci yine de blitter'ın görevini bitirmesini beklemek zorunda kalacak ve
+bu durumda hiçbir avantaj elde edemeyeceğiz.
+Bu nedenle, programları optimize etmek için izlenecek bir kriter,
+mümkün olduğunda blitter kullanan rutinleri “uzak” yerlere, yani
+blitter kullanmayan diğer rutinlerle aralıklı olarak yerleştirmektir, böylece blitter
+ve işlemci paralel olarak ilerleyebilir.
+Ancak, bu kriterin özellikle hızlı belleğe sahip makinelerde
+geçerli olduğunu belirtmek gerekir, çünkü işlemcinin 
+çip belleğine erişmesi gerektiğinde bellek erişiminde çatışmalar oluşur, bunu
+birazdan daha ayrıntılı olarak ele alacağız.
+Şimdilik, lezione10e2.s ve lezione10e2r.s örneklerinde başka bir şeye dikkat edelim:
+blitter, silme (yeşil ekran)
+ve çizim (kırmızı ekran) için yaklaşık aynı süreyi kullanır. İyi düşünürseniz, bu durum
+size garip gelebilir: aslında 2 blitter işleminin boyutu aynıdır
+ama silme işleminin tek bir kanal kullanan bir blitter işlemi olduğunu,
+ kopyalama işleminin ise 2 kanal kullandığını dikkate almak gerekir. Kanal sayısı arttıkça
+blitter tarafından okunan ve yazılan kelime sayısı da artar, bu nedenle
+blitter işlemi daha fazla zaman almalıdır.
+
+o . o . o . o . o . o
+o
+..
+ ___
+_n_n_n____i_i ________ ______________ _++++++++++++++_
+*>(____________I I______I I____________I I______________I
+/ooOOOO OOOOoo oo oooo oo oo ooo ooo
+------------------------------------------------------------
+
+Ancak, lezione10e3.s örneğine bakın.
+
+Bu örnek öncekilere benzer, ancak basit bir kopya yapmak yerine
+şekil ile sıfırlanmış bir düzlem arasında OR işlemi gerçekleştirir.
+Elbette etki her zaman aynıdır, ancak şimdi
+3 kanallı bir bliçleme (D=A OR B) gerçekleştiren rutinin önemli ölçüde
+daha yavaş olduğunu görebilirsiniz.
+Hız, hangi ve kaç kanalın kullanıldığına bağlı olarak
+oldukça karmaşık bir şekilde değişir ve aşağıdaki tabloda özetlenebilir:
+
+bit 8-11
+Kanalların
+BLTCON0 kullanımı     Belleğe erişim sırası
+--------- -------- --------------------------------------
+F A B C D A0 B0 C0 - A1 B1 C1 D0 A2 B2 C2 D1 D2
+E A B C A0 B0 C0 A1 B1 C1 A2 B2 C2
+D A B D A0 B0 - A1 B1 D0 A2 B2 D1 - D2
+C A B A0 B0 - A1 B1 - A2 B2
+B A C D A0 C0 - A1 C1 D0 A2 C2 D1 - D2
+A A C A0 C0 A1 C1 A2 C2
+9 A D A0 - A1 D0 A2 D1 - D2
+8 A A0 - A1 - A2
+7 B C D B0 C0 - - B1 C1 D0 - B2 C2 D1 - D2
+6 B C B0 C0 - B1 C1 - B2 C2
+5 B D B0 - - B1 D0 - B2 D1 - D2
+4 B B0 - - B1 - - B2
+3 C D C0 - - C1 D0 - C2 D1 - D2
+2 C C0 - C1 - C2
+1 D D0 - D1 - D2
+0 hiçbiri - - - -
+
+Bu tablo, aktif kanalların her kombinasyonu için, blitter tarafından gerçekleştirilen
+3 kelimelik bir blitter işlemi durumunda belleğe erişim sırasını gösterir
+.
+Her erişim için, erişimi gerçekleştiren kanal belirtilir ve tire işaretleri
+blitter tarafından kullanılmayan bus döngülerini gösterir. Örneğin, şu dize:
+
+A0 B0 - A1 B1 - A2 B2
+
+önce A kanalı (A0) otobüse erişir, ardından B (B0) ve ardından blitter
+bir otobüs döngüsü kullanmaz (işlemcinin
+belleğe erişmesine izin verir), ardından tekrar A kanalı (A1) ve böyle devam eder.
+
+Bu tablo aslında sadece örnek amaçlıdır, çünkü
+blitter'ın özel modlarının kullanımı ve
+işlemci ve diğer DMA kanalları ile rekabet gibi birçok faktörü dikkate almamaktadır (bu konuda
+ders 8'e bakınız). Bununla birlikte, en iyi kanal kombinasyonlarının
+hangileri olduğu konusunda fikir edinmek için çok yararlıdır. Bu
+tablonun 3 kelimelik bir blitter işlemi için geçerli olduğunu unutmayın. Daha fazla kelimelik blitter işlemleri için
+blitter, tabloda “ortada” bulunan erişim dizisini
+birçok kez tekrarlar. Örneğin, A ve D kanallarını kullanan 5 kelimelik bir blitter işlemi
+aşağıdaki diziye sahiptir:
+
+A0 - A1 D0 A2 D1 A3 D2 A4 D3 A5 D4 - D5
+
+Tabloyu incelediğimizde bazı ilginç gözlemler yapabiliriz.
+Yalnızca D kanalının kullanıldığı diziye bakarsak, blitter'ın
+otobüsü bir döngüde bir kez kullandığını görürüz. Aksine, A ve D kanalları
+kullanıldığında, blitter (ilk ve son kelime hariç) tüm otobüs döngülerini kullanır.
+ Bu durum,
+örneklerde silme rutininin (D kanalı) yaklaşık olarak
+çizim rutiniyle (A ve D kanalları) aynı hızda olmasını açıklamaktadır. Ancak,
+B'den D'ye bir kopya yaptığımızda durumun farklı olduğunu unutmayın.
+
+Bunu pratikte lezione10e4.s dosyasında görebilirsiniz.
+
+Benzer şekilde, tabloya bakıldığında, iki kaynaklı blitterleme durumunda
+A ve B veya A ve C'nin kullanılması daha uygun olduğu, ancak B ve C'nin
+daha fazla döngü israfına neden olduğu
+
+Bununla birlikte, blitter'ın hızının, diğer DMA kanalları (video, ses, bakır, işlemci) ile olası çakışmalardan da etkilendiğini unutmamalısınız
+.
+Bu çakışmalar, blitter'ın döngülerini “çalarak” onu geciktirebilir. Aslında,
+ders 8'de açıkladığımız gibi, blitter'ın veri yoluna erişimde önceliği sadece CPU'dur.
+Bu, başka bir aygıtın (örneğin bakır) blitter ile aynı anda RAM'e erişmek istediğinde
+önceliğin diğer aygıta ait olduğu anlamına gelir
+.
+Blitter'a öncelik veren tek aptal işlemcidir.
+Ancak burada da öncelik tam değildir. Aslında blitter,
+büyük bir cömertlik göstererek, işlemcinin 3 kez üst üste
+erişmeye çalıştığını ancak başka birinin önceliği aldığı için başaramadığını fark ederse,
+ “Bu sefer sen geç, hadi” der ve
+bir döngü boyunca veriyi
+Bu mekanizma, DMA'nın aşırı yüklenmesi durumunda
+işlemcinin veriyi almak için çok uzun süre beklemesi olasılığını azaltır.
+Bununla birlikte, blitter'ın cömertliğini bastırmak da mümkündür.
+DMACON kaydının 10. bitini (blitter_nasty, yani kötü blitter olarak adlandırılır) 1 olarak ayarlayarak
+blitter artık bu şekilde davranmayacak, ancak 
+her seferinde işlemciden öncelik alacaktır.
+Programımızın rutinlerinin tümü blitter'ı kullanması durumunda
+işlemci kayıtları yükleyip beklemeye geçer,
+ bu biti 1 olarak ayarlamak kesinlikle daha uygun olacaktır.
+Tabii ki bu durum, programın yonga belleğinde
+bulunması ve önbellek olmaması durumunda anlamlıdır, aksi takdirde
+işlemci ve blitter arasında RAM'e erişim için çatışma olmaz.
+
+Blitter Nasty bitine ilişkin bir örnek ders10e5.s'de bulunabilir.
+
+Blitter kullanımını en üst düzeye çıkarmak için,
+blitter ile ilgili kayıtların yazılmasını en üst düzeye çıkarmalısınız.
+Şimdiye kadar yaptığımız örneklerde ve dersin geri kalanında yapacağımız örneklerde
+, açıklığı artırmak için 
+kayıtların yazılmasını olabildiğince optimize etmedik.
+Bir blitter işlemi sırasında, değişen tek kayıtlar BLTxPT ve
+BLTSIZE kayıtlarıdır. BLTCONx, BLTxMOD ve BLTxWM kayıtları sabit kalır.
+Bu, bu kayıtların içeriği
+diğer rutinler tarafından değiştirilmezse, her blitter işleminin başında yeniden yazılmalarına gerek olmadığı anlamına gelir.
+Blitting döngüleri olması durumunda rutinleri optimize etmek için alınacak bir önlem
+,
+ blitter kayıtlarına yazılacak değerleri işlemci kayıtlarına yerleştirmek
+ve döngü içindeki
+MOVE.W #YYY,$DFFxxx komutlarını daha hızlı olan MOVE.W Dx,$DFFxxx komutlarıyla değiştirmektir.
+Kayıtların yazılmasında tek tek uygulanan bu optimizasyonlar
+çok küçük hız artışları sağlar ve bakır monitörde fark edilmesi zordur.
+ Ancak, birçok karmaşık efektin bulunduğu bir demoda, bir araya geldiklerinde
+önemli bir etkiye sahiptir.
+
+Örnek olarak, lezione10c3.s dosyasının bu hilelerle optimize edilmiş bir versiyonu olan lezione10e6.s dosyasına bakın.
+\\\|///  \\ ~ ~ // ( @ @ ) ______________________________oOOo_(_)_oOOo____________________________________ ******************************************************************************* *
+
+\\\|/// 
+\\ ~ ~ //
+( @ @ )
+______________________________oOOo_(_)_oOOo____________________________________
+*******************************************************************************
+*            ÇİFT TAMPONLAMA                 *
+*******************************************************************************
+
+Şimdiye kadar gördüğümüz tüm bob örneklerinde, ekranda hareket eden tek bir bob vardı.
+Şimdi daha fazlasını ekleyelim.
+Örneğin, “sahte” arka plan tekniğini uygulayalım: arka plan için bir bit düzlemi ve bobları hareket ettirmek için 3 düzlem kullanacağız.
+Tüm boblar aynı bit düzlemlerinde hareket ettiğinden, bit düzlemi maskeleme tekniğini kullanarak arka planı çizmemiz gerekecektir.
+Tüm boblar aynı bitplane'ler üzerinde hareket ettiğinden, yine de
+bitplane maskesi tekniğini kullanarak çizmemiz gerekecektir.
+Ancak, bobların bitplane'leri başlangıçta sıfırlandığından, arka planı kaydetmek ve geri yüklemek zorunda kalmayacağız
+.
+Bu nedenle, her karede bu plane'leri silmek, ardından
+bobları yeni konumlarına yeniden çizmeden önce silmek yeterli olacaktır.
+
+Bu teknik, lezione10f1.s örneğinde uygulanmıştır.
+
+Bu programı çalıştırdığınızda, hoş olmayan bir sürprizle karşılaşacaksınız: boblar
+sadece ekranın alt kısmında doğru şekilde çizilirken, üst kısımda
+doğru şekilde çizilmez. Neden?
+Rutinlerimizde bir hata mı var? Hayır, rutinlerimizde bir sorun yok.
+Sorun, bunların çok yavaş olması. Bildiğiniz gibi, programımız çalışırken
+elektronik fırça görüntüyü ekrana çizer.
+Ekran
+Görüntünün sabit görünmesi için, ekranı
+(yani silme, bob çizme, çizgi çizme vb.) Vertical Blank sırasında,
+yani elektronik fırçanın aktif olmadığı süre boyunca değiştirmeye çalışırız.
+Ancak, ekranda çok fazla değişiklik yapmamız gerekiyorsa,
+rutinlerimiz Vertical Blank sırasında görevlerini yerine getirmek için yeterince hızlı olmayabilir
+. Bu durumda da tam olarak bu olur.
+Bob sayısını artırdıkça, bunları çizmek için gereken süre artar ve
+sonuç olarak Vertical Blank sırasında bunu yapamazsınız.
+Sonuç olarak, bazen boblar, elektronik fırça ekranın o kısmını çizdikten SONRA
+ekrana çizilir ve bu nedenle boblar
+görünmez.
+Elektronik fırça yukarıdan aşağıya doğru hareket ettiğinden, boblar ne kadar
+yukarıda çizilirse, bu durum o kadar sık meydana gelir.
+Örneği dikkatlice incelerseniz, tüm bobların düzgün bir şekilde çizildiği ekran alanının
+çizim rutinleri işini bitirdikten SONRA
+göründüğünü, bakır monitörde vurgulandığı gibi
+görebilirsiniz.
+“Çift tamponlama” tekniği bu sorunu çözmemizi sağlar.
+Bu, bob'larla değil, herhangi bir efektle kullanabileceğiniz genel bir tekniktir.
+Özellikle 3d rutinlerinde kullanacağız.
+Bu teknik, tek bir ekran yerine iki ekran (tampon olarak adlandırılır) kullanmayı içerir.
+İki tampon, bir kare ve bir kare olmak üzere dönüşümlü olarak görüntülenir.
+İki tampon alternatif olarak görüntülenir, biri bir kare, diğeri
+bir kare.
+Tamponlardan biri görüntülenirken, diğerinde serbestçe çizim yapabiliriz,
+ kararlılık konusunda endişelenmeden, çünkü görüntülenen
+görüntü, değiştirmediğimiz ilk tampondakidir.
+Bir sonraki Dikey Boşluk oluştuğunda, 2 tampon değiştirilir.
+Daha önce çizdiğimiz tampon görüntülenir
+ve yaptığımız değişiklikler gösterilir, daha önce görüntülenen tampon ise
+artık üzerine çizim yapabileceğimiz bir tampon haline gelir.
+Her Dikey Boşluk'ta bu değiş tokuşu tekrarlayarak, her zaman
+görüntülenmemiş bir tampon üzerinde çizim yapabiliriz ve elektronik fırçanın ne yaptığı konusunda endişelenmemiz gerekmez.
+Bu teknik sayesinde, çizim rutinlerimizin tek zaman sınırlaması
+elektronik fırçanın ekranın sonuna ulaşmadan önce bitmesi
+gerekiyor olmasıdır. Bu bize 1/50 saniye (Pal'da, NTSC'de 1/60)
+süre verir.
+
+
+<>+<> ////// __v__ __\/__
+`\|||/ /---\ “”“‘’”" | _ - | (_____) . / ^ _ \ .
+(q p) | o o | <^-@-@-^> (| o O |) .(O O), |\| (o)(o) |/|(
+_ooO_<_>_Ooo_ooO_U_Ooo_ooO__v__Ooo_ooO_u_Ooo_ooO__(_)__Ooa__oOO_()_OOo___
+[_____}_____!____.}_____{_____|_____}_____i____.}_____!_____{_____}_____]
+__.}____.|_____{_____!____.}_____|_____{.____}_____|_____}_____|_____!__
+[_____{_____}_____|_____}_____i_____}_____|_____}_____i_____{_____}_____]
+*******************************************************************************
+*        AKTİF OLMAYAN BLITTER KANALLARININ KULLANIMI             *
+*******************************************************************************
+
+Bazı durumlarda, aktif olmayan kanalların da blitter işlemine “katılması” yararlı olabilir
+.
+Bunun ne anlama geldiğini iyi anlamak için blitter hakkında bir şey daha bilmeniz gerekir.
+Bir giriş kanalı (A, B veya C) aktif olduğunda, bellekten kelimeleri okur.
+Her kelime okunduktan sonra, blitter veri kayıt defteri adı verilen özel bir kayda kopyalanır
+blitter veri kaydı olarak adlandırılan özel bir kayda kopyalanır.
+Her kanalın kendi veri kaydı vardır ve bu kaydın adında kanalı tanımlayan harf bulunur
+: dolayısıyla BLTADAT (kanal A, $DFF074), BLTBDAT
+(kanal B, $DFF072), BLTCDAT (kanal C, $DFF070) ve BLTDDAT (kanal D $DFF000) vardır.
+Veri kaydındaki kelime daha sonra diğer kanallardan gelen kelimelerle
+mantıksal işlemlerden geçirilir ve sonuç
+D kanalı aracılığıyla belleğe yazılır.
+Daha iyi anlamak için bir örnek verelim. B ve C kanalları arasında AND işlemi yapan bir blitteri ele alalım.
+Blitter içinde şu işlemler gerçekleşir:
+1 - B kanalı bir kelime okur ve BLTBDAT'a kopyalar.
+
+1 - B kanalı bir kelime okur ve BLTBDAT'a kopyalar
+2 - C kanalı bir kelime okur ve BLTCDAT'a kopyalar
+3 - BLTBDAT ve BLTCDAT'ın içeriği arasında bir AND işlemi gerçekleştirilir
+4 - Sonuç, kanal D üzerinden yazılır
+5 - Sonraki kelimeler için 1'den 4'e kadar olan adımlar tekrarlanır.
+
+Gerçekte işler biraz farklıdır, çünkü bazı işlemler
+blitter'ı hızlandırmak için paralel olarak gerçekleştirilir, ancak mantıksal düzeyde
+işler bu şekilde yürür ve bizim bilmemiz gereken de budur.
+Bir kanal devre dışı bırakıldığında ne olur? Tabii ki bellekten hiçbir şey okumaz,
+ bu nedenle ilgili BLTxDAT kaydı değiştirilmez
+.
+Bu kaydın içeriği korunur ve yine de
+mantıksal işlemlerde kullanılabilir.
+Ayrıca bu kayıt CPU tarafından da yazılabilir, bu da
+bunu uygun değerlere ayarlamamızı sağlar (BLTDDAT kaydı değil!).
+Bu durum, ders 7'de sprite'lar için gördüğümüz durumla benzerdir.
+Sprite'lar
+da, veri kayıtlarına (SPRxDAT) okunan verileri kopyalayan DMA kanallarına (SPRxPT kayıtları) sahiptir.
+Bazı uygulamalarda
+ancak, veri kayıtlarına doğrudan işlemci (veya bakır) ile yazmak yararlıdır.
+Şimdi blitter'ın bu özelliğinin yararını görelim.
+Örneğin, bir dizi
+bellek konumunu sabit bir değerle doldurmak istediğimizi düşünelim, örneğin ekrana
+dolu olmayan, “çizgili” bir dikdörtgen çizmek için, veya grafikçilerin dediği gibi
+bir “desen” (yani bir doku).
+Bu sorunu, dikdörtgenimizi programımızın veri bölümüne kaydedip blitter ile kopyalayarak, tıpkı diğer şekiller gibi
+çözebiliriz.
+Ancak daha iyi bir çözüm, blitter kanallarını devre dışı bırakma olanağıdır.
+Bu sorunu çözmek için, kanal A'dan D'ye bir kopya yapabiliriz, KANAL A'YI DEVRE DIŞI TUTARAK ve “desen”i BLTADAT kaydına yazarak.
+Sorunu çözmek için, kanal A'dan D'ye bir kopya yapabiliriz,
+ KANAL A'yı devre dışı bırakarak ve “deseni” BLTADAT kaydına yazarak.
+ Bu şekilde iki avantaj elde ederiz:
+dikdörtgeni programımızın verileri arasında saklamak zorunda kalmayız böylece bellek tasarrufu sağlarız ve
+A kanalı devre dışı olduğu için
+A'dan D'ye normal bir kopyalama yaparken yapacağımızdan daha az bellek erişimi gerçekleştiririz, böylece
+işlemciye RAM'e erişim için daha fazla olasılık veririz.
+
+Bu uygulamayı pratikte görmek için lezione10g1.s dosyasını yükleyin.
+
+Bu teknik, sadece sabit bir değerin basit kopyaları için değil,
+ aynı zamanda bir işlenenin sabit olduğu daha karmaşık mantıksal işlemlerde de uygulanabilir
+.
+
+Ders10g2.s ve ders10g3.s'de 2 örnek bulabilirsiniz.
+
+.-----------.
+| ¬ |
+| |
+| ___ |
+_j / __\ l_
+/,_ / \ __ _,\
+.\¬| / \__¬ |¬/....
+¯l_\_o__/° )_|¯ :
+/ ¯._.¯¯ \ :
+.--\_ -^---^- _/--. :
+| `---------‘ | :
+| T ° T | :
+| `-.--.--.-’ | .:
+l_____| | l_____j
+T `--^--' T
+l___________|
+/ _ T
+/ T | xCz
+_\______|____l_
+(________X______)
+
+*******************************************************************************
+*            SIFIR BAYRAĞI VE ÇATIŞMALAR             *
+*******************************************************************************
+
+Bu, blitter'ın açıklanacak son donanım özelliğidir!
+Blitter, işlemcinin SIFIR bayrağına benzer şekilde çalışan SIFIR bayrağına sahiptir.
+Bu bayrak, DMACONR kaydının 13. bitidir.
+Bu bayrak, DMACONR kaydının 13. bitidir. Bir blitter işlemi
+sonuç olarak TÜMÜ SIFIR çıkarsa, Sıfır bayrağı BİR olarak ayarlanır.
+Aksine, sonuç kelimesindeki en az bir bitin değeri 1 ise,
+bayrak SIFIR değerini alır.
+Bayrağı, blitter işleminin sonucu
+belleğe yazılmadığında, yani D kanalı devre dışı olduğunda da bu şekilde davranır
+.
+Bu, bir bob
+ile ekrandaki bir çizim (zaten çizilmiş başka bir bob olabilir) arasındaki çarpışmaları tespit etmemize yardımcı olduğu için çok yararlıdır.
+Şu anda tek bit düzlemli görüntülerle çalıştığımızı varsayalım.
+Çakışmaları tespit etmek için (blitter ile) bob ile bobun yerleştirilmesi gereken ekran kısmı arasında bir AND
+işlemi gerçekleştiririz, ANCAK
+sonucu hiçbir yere yazmayız.
+Bu blitter işlemi sadece çakışmayı test etmek için kullanılır.
+AND işlemini gerçekleştirdiğimizde ne olur? Bildiğiniz gibi,
+2 bit arasındaki AND işleminin sonucu, her iki bit operandın değeri 1 olduğunda 1 olur.
+Bizim durumumuzda bu, sonucun bir bitinin SADECE
+bob'un 1 değerindeki bir biti ile görüntünün 1 değerindeki bir biti
+aynı konumda çakıştığı
+durumda 1 olabileceği anlamına gelir.
+Dolayısıyla, bir çarpışma varsa, sonucun en az bir biti DEĞER değeri alır
+ve buna karşılık Sıfır bayrağı SIFIR değerini alır.
+Aksine, çarpışma olmazsa, bob'un hiçbir biti
+arka planın bir bitiyle eşleşmez bu durumda AND HER ZAMAN SIFIR olur ve Sıfır bayrağı
+BİR değerini alır. Böylece Sıfır bayrağı, bir
+çarpışma olduğunda ve olmadığında bize haber verebilir.
+Birden fazla bit düzlemine sahip görüntülerle çalışırken, işler
+karışabilir, çünkü düzlemler bazında bakıldığında çakışmayan 2 farklı renkteki piksel arasında çarpışma meydana gelebilir.
+Örneğin, 1 renkli bir piksel (düzlem 1 = 1 ve diğerleri 0) ile 2 renkli bir piksel (düzlem 2 = 1 ve diğerleri 0) arasında çarpışma meydana gelirse
+Örneğin, renk 1 olan bir piksel 
+(düzlem 1 = 1 ve diğerleri 0) ile renk 2 olan bir piksel (düzlem 2 = 1 ve
+diğerleri 0) arasında bir çarpışma meydana gelirse, düzlemler arasında AND işlemi yapıldığında sonuç her zaman 0 olur.
+Bu durumlarda bit düzlem maskeleri kullanmak daha uygundur.
+Bunlar, bob'un karşılık gelen pikselinin
+arka plan renginden farklı bir renge sahip olduğu her durumda 1 bitine sahiptir.
+Bu nedenle, 2 bitplane maskesi arasında AND işlemi yapıldığında, piksel rengi ne olursa olsun tüm çarpışmalar algılanır
+(bu, 1 plane'lik görüntüler olan
+2 bob'un “gölgeleri” arasındaki çarpışmaları algılamak gibidir).
+
+Örneği ders 10h1.s'de görebilirsiniz.
+
+\\ ,\\ /, ,,//
+\\\\\X///////
+\¬¯___ __/
+_;=( ©)(®_)
+(, _ ¯T¯ \¬\
+T /\ ' ,)/
+|(‘/\_____/__
+l_¯ ¬\
+_T¯¯¯T¯¯¯¯¯¯¯
+/¯¯¬l___¦¯¯¬\
+/___, ° ,___\
+¯/¯/¯ °__T\¬\¯
+( \___/ ’\ \ \
+\_________) \ \
+l_____ \ \ \
+/ ___¬T¯ \ \
+/ _/ \ l_ ) \
+\ ¬\ \ \ ())))
+__\__\ \ ) ¯¯¯
+(______) \/\ xCz
+/ /
+(_/
+
+*******************************************************************************
+*             SINUSCROLL                 *
+*******************************************************************************
+
+Neredeyse herkes sine-scroller'ın ne olduğunu bilir.
+Bu, ekranda yukarı ve aşağı hareket eden bir scrolltext'tir
+ve bir sinüzoid oluşturur.
+Sine-scroller'ın nasıl çalıştığını açıklamaya başlamadan önce,
+bazı noktaları netleştirmek gerekir.
+Öncelikle, zaman. Sine-scroller çok yavaş çalışan bir rutindir.
+İyi bir sine-scroller, bir karede mevcut olan zamanın dörtte birinden fazlasını
+alabilir. Önbellek ve hızlı bellek olmayan sistemlerde
+(pratik olarak Amiga 500 ve 600) için, BLITTER_NASTY bayrağını 1 olarak ayarlamak son derece yararlıdır.
+ Bu, blitter'a 68000 üzerinde mutlak öncelik vererek
+rutinin performansını artırır.
+Ayrıca, elde etmek istediğiniz sine-scroller'ın “kalitesini” de dikkate almalısınız.
+ Bununla, her sinüzoidal konumda kaç pikselin
+görüntülenmesi .
+1 piksel sinüs kaydırıcı en akıcı görünüme sahiptir, ancak
+en fazla zamanı da gerektirir.
+“Çift tamponlu” olmayan bir ekran kullanıyorsanız, başka efektler için zamanınız olmayacağını
+beklemeyin. Öte yandan, 4 piksel sinüs kaydırıcı bile
+çok “pikselli” görünmeye başlar. Bu nedenle, önce 2 piksel sinüs kaydırıcıyı nasıl
+yapacağınızı, ardından 1 ve 4 piksel versiyonlar için yapmanız gereken değişiklikleri açıklayacağız.
+Biraz kafanız karıştı mı? Kalite konusunda söylediklerimizin tam olarak ne anlama geldiğini bir örnekle görelim.
+Aşağıdaki şeklin bir bitmap yazı tipindeki A harfi olduğunu düşünün:
+
+.**************.
+****************
+****************
+******....******
+*****......*****
+****************
+****************
+****************
+*****......*****
+*****......*****
+*****......*****
+*****......*****
+*****......*****
+*****......*****
+*****......*****
+................
+
+Şekil 31 A harfi
+
+
+Bir “*” 1 olarak ayarlanmış bir biti, bir “.” ise sıfırlanmış bir biti gösterir.
+“A” karakteri, normal olarak yatay olarak kaydırıldığında
+her zaman font verilerinde saklandığı şekilde görünür.
+Bir sine scroller'da bunu istemiyoruz. Karakteri oluşturan
+piksel sütunlarını, bir sinüzoid değerlerine göre farklı
+dikey konumlara getirmek istiyoruz.
+1 piksel sinüs kaydırıcıda, her piksel sütunu farklı bir
+dikey konuma gelir. Bunun yerine, 2 piksel sinüs kaydırıcıda, piksel sütunları
+2'şerli çiftler halinde eşleştirilir ve her sütun çifti, diğer çiftlerden farklı bir
+dikey konuma gelir.
+1 piksel sinüs kaydırıcı, A karakterini aşağıdaki şekilde gösterildiği gibi deforme eder
+.
+
+.
+**
+***
+****
+*****
+******
+*******
+********
+*********
+*****..***
+******..***
+*******..***
+********..***
+*****.***.****
+*****..***.****
+.****...*******.
+.***....*******
+.**.....******
+.*......*****
+.......*****
+......*****
+.....*****
+....*****
+...*****
+..*****
+.*****
+.****
+.***
+.**
+.*
+.
+
+
+Şekil 31 1 piksel sinüs kaydırıcı tarafından deforme edilmiş A harfi
+
+Gördüğünüz gibi, her piksel sütunu diğerlerinden farklı bir dikey konumda
+bulunmaktadır. Un sine-scroller da 2 pixel invece produce il seguente risultato:
+
+.*
+**
+****
+****
+******
+******
+********
+********
+*****.****
+******..**
+******..****
+********..**
+*****.**..****
+*****.********
+*****...**.****.
+..***...********
+***.....******
+..*.....******
+*......*****
+.......*****
+.....*****
+.....*****
+...*****
+...*****
+.*****
+..****
+****
+..**
+**
+..
+
+Şekil 32 2 piksel sinüs kaydırıcı ile deforme olmuş A harfi
+
+Gördüğünüz gibi, bitişik sütun çiftleri aynı dikey konuma sahiptir.
+4 piksel sinüs kaydırıcıda, anladığınız gibi, piksel sütunları
+4'erli gruplar halinde toplanır ve her grup diğerinden farklı bir konuma gelir
+.
+Şimdi, ‘1 piksel’ veya ‘2 piksel’ sinüs kaydırma
+‘2 piksel’.
+Sine-scroller oluşturma yöntemi çok basittir.
+Daha önce gördüğümüz gibi normal bir metin kaydırma rutininden başlıyoruz
+.
+Ancak, metnimizi görünür ekranda çizip kaydırmak yerine
+bunu bellekte bir yere ayrılmış bir veri tamponunda yapıyoruz.
+Bu kaydırma tamponu hiçbir zaman görünmez.
+Bu tampondan dikey “dilimler” alıyoruz ve
+bunları görünür ekrana kopyalıyoruz.
+Her “dilim”, sinüs eğrisinin değerlerine göre farklı dikey konumlara kopyalanır
+sinüs dalgasının değerlerine göre farklı dikey konumlara kopyalanır.
+“Dilimler”in kalınlığı, sine-scroller'ın kalitesini belirler.
+Dilimler 1 piksel kalınlığında ise, 1 piksel sine scroller'ımız olur,
+2 piksel kalınlığında ise 2 piksel rutinimiz olur ve bu şekilde devam eder.
+“Dilimlerin” nasıl kopyalandığını daha ayrıntılı olarak görelim.
+Dilimlerin çok ince olması nedeniyle, tek bir kelime genişliğinde blipping yapacağız.
+Kelimenin içinde sadece dilimi (yani ilgilendiğimiz sütunların
+), kanal A'nın maske kayıtlarından birini kullanacağız
+(bu, okumak için kanal A'yı kullanmak zorunda olduğumuz anlamına gelir),
+ bu da ilgilendiğimiz dilim
+dışındaki tüm piksel sütunlarını silmemizi sağlar.
+Tabii ki, maskenin değeri okunacak “dilim”e göre değişecektir
+.
+Yazma işlemi, daha önce de belirttiğimiz gibi, her seferinde farklı bir
+dikey konumda gerçekleşir. Yazma işlemini gerçekleştirirken,
+A'dan D'ye basit bir kopyalama yapmak yeterli değildir: bu şekilde, bir “dilim” kopyaladığımızda
+önceden kopyaladığımız ve mevcut ‘dilim’ ile aynı kelimeye ait olan “dilim”lerin bir kısmını önceden kopyalanmış ve mevcut “dilim” ile
+aynı kelimeye ait olan kısımları sileriz.
+Aslında, diğer ‘dilimler’ bizimkine üst üste binmese bile (çünkü
+birbirlerinin yanında yer alıyorlar), bizim belgemiz bir kelime genişliğinde olduğu için
+basit bir kopyalama ile, mevcut “dilimin” yanında bulunan ve maske tarafından sıfırlanan piksel sütunlarını da ekrana kopyalarız
+.
+Bu sorunu çözmek için, kelimemiz ile onu yazdığımız arka plan arasında bir OR işlemi yapıyoruz.
+ Bu şekilde, mevcut kelimenin sıfırlanan pikselleri
+arka planın piksellerini üzerine yazmaz.
+Sine-scroller'ı gerçekleştirmek için, bu işlemle tüm scrolltext'i bir “dilim” bir “dilim” ekran tamponundan ekrana kopyalamak yeterlidir.
+Tabii ki, tüm işlem her karede tekrarlanmalıdır, çünkü scrolltext yer değiştirmiştir ve her işlemden önce ekranı silmek gerekir.
+Tabii ki tüm prosedür her karede tekrarlanmalıdır,
+çünkü scrolltext her seferinde yer değiştirmiştir ve her seferinde, bunu yapmadan önce
+ekranı silmek gerekir.
+Sinüs dalgasının genişliği ne kadar büyükse, işlemde dahil olan ekran alanı da o kadar büyük olur ve her seferinde silmemiz gerekir.
+Bu nedenle, performansı artırmak için geniş olmayan bir sinüs dalgası kullanmak daha uygundur.
+Ders 10i1.s ve ders 10i2.s'de sırasıyla 2 piksel ve 1 piksel sine-scroller bulabilirsiniz.
+
+Ders 10i1.s ve ders 10i2.s'de sırasıyla 2 piksel ve 1 piksel sinüs kaydırıcı bulacaksınız.
+/ #\ ...
+
+/ \ : :
+/ /\ \c o o ø
+/%/ \ ( ^ ) /)OO
+( u / __\ O / \ \)(/
+UUU_ ( /) `-‘` \ /%/ / \| / < :\ )/ / / . \::. >.( \ ’ / / /\ ‘::./|. ) \#/ / / \ ’:
+UUU_ ( /) `-‘` \ /%/
+/ \| / < :\ )/ /
+/ . \::. >.( \ ’ /
+/ /\ ‘::./|. ) \#/
+/ / \ ’: ). )
+__ û%,/ \ / (. )
+( \% / / / ) .‘
+\_ò / / / `:’
+\_/ / /
+/\./
+/.%
+/ %
+( %
+\ ~\
+\__)
+
+*******************************************************************************
+*                ANİMASYON                 *
+*******************************************************************************
+
+Dersi, blitter ile animasyonların nasıl oluşturulacağına dair kısa bir açıklama ile sonlandırıyoruz.
+ Bir animasyon, belirli bir sırayla gösterilmesi gereken bir dizi görüntüden (fotogram)
+oluşur.
+Genellikle, bir fotogram ile diğer fotogram arasında görüntünün tamamı değişmez, sadece
+bazı kısımları değişir.
+Örneğin, rüzgarla hareket eden bayrakların olduğu bir kale olabilir
+.
+Açıkçası, bayrakların çizildiği ekranın sadece bir kısmı
+bir kare ile diğer kare arasında değişir.
+Bellek tasarrufu için animasyonun tüm görüntülerini kaydetmek uygun değildir
+: ilk görüntüyü ve ardından ilk görüntüden farklı olan diğer görüntülerin “parçalarını” kaydetmek yeterlidir
+.
+Bu şekilde, animasyonu gerçekleştirmek için yeni “parçaları”
+eski görüntünün üzerine kopyalamak yeterlidir.
+Bu amaçla, bildiğiniz gibi veri kopyalamada (temel) 68000'den çok daha
+hızlı olan blitter çok yararlıdır.
+Esasen, bir animasyon gerçekleştirmek için blitter ile kopyalar yapmak gerekir,
+ ki bu konuda artık ustayız.
+Animasyonlar, kare dizisinin yapısına göre iki türe ayrılabilir
+.
+Birinci tür animasyonlarda, “döngüsel” animasyonlar olarak adlandırılır, kareler
+önceden belirlenmiş bir sıraya göre arka arkaya çizilir.
+Son kare çizildikten sonra, animasyon ilk kareden başlayarak devam eder
+.
+İkinci tür animasyonlarda (“ileri-geri” animasyonlar) da
+kareler belirli bir sıraya göre çizilir. Ancak, son kare çizildikten sonra
+son kare çizildikten sonra, animasyon kareleri ters sırayla, sondan bir önceki kareden ilk karesine kadar yeniden çizerek devam eder
+.
+Bu noktada animasyon tekrar ilk kareden son karesine kadar düz sırayla devam eder
+sonuncuya kadar, ardından ters sırayla ve böyle devam eder.
+Animasyonun türüne göre farklı bir kare yönetimi rutini
+kullanılmalıdır.
+
+Ders10l1.s ve ders10l2.s listelerinde her tür için birer örnek animasyon
+sunuyoruz.
+
+Animasyonlu boblar da yapabilirsiniz. 
+Bunlar, çizildiklerinde
+her seferinde şekil değiştiren boblardır.
+Tabii ki boblar için de, daha önce bahsettiğimiz 2 teknikten birine göre
+sırayla sunulan bir dizi kareye sahibiz. Bobun çizilmesi gerektiğinde
+her seferinde farklı bir şekil kullanmak gerekir.
+Bu nedenle, herhangi bir bob figürünü, değişken boyutlarda çizebilen evrensel bir rutin kullanmak çok kullanışlıdır.
+Normal formatlı ekranlar için böyle bir rutini
+
+lezione10m1.s örneğinde, INTERVIEED formatlı ekranlar için ise lezione10m2.s örneğinde bulabilirsiniz.
+
+.
+.¦.¦:.:¦:.:¦
+.;/‘____ `;l
+;/ / ¬\ __\
+/ / ° \/o¬\\
+/ \______/\__//
+/ ____ \ \
+\ \ \ , ) \
+/\ \ \_________/
+/ \ l_l_|/ /
+/ \ \ / /
+__/ _/\ \/\__/ /
+/ ¬`----’¯¯\______/
+/ __ __ \
+/ / T \
+
+******************************************************************************
+*            BLITTER'IN ÖZEL MODLARI             *
+******************************************************************************
+
+Şimdiye kadar açıklanan tüm işlevlere ek olarak, blitter ayrıca
+çizgiler çizme ve alanları “doldurma”, yani
+bir bit düzleminin belirli bir bölgesindeki tüm bitleri 1 olarak ayarlama olanağına sahiptir.
+Bu ek özellikler, blitter'ın özel çalışma modları ile elde edilir
+.
+
+Çizgi çizme ile başlayalım. Blitter,
+çizgi çizme modunda (line-mode) çalışırken, ekranın bir noktasından
+(P1 olarak adlandıracağımız) başka bir noktaya (P2 olarak adlandıracağımız) bir çizgi çizer.
+ X1 ve Y1 ile sırasıyla P1'in x ve y koordinatlarını, X2 ve Y2 ile
+P2'nin x ve y koordinatlarını gösterelim. “Çizgi modunda” birçok kayıt,
+tamamen farklı şekilde çalışır ve
+uygun şekilde ayarlanmaları gerekir. Bazı ayarlar P1 ve P2'nin konumuna bağlıdır.
+Kayıtların kullanımını açıklamadan önce
+önemli bazı hususları belirtmek gerekir.
+Çizim sırasında blitter, ekranı P1 noktasına göre “sekiz parçaya” böler.
+Daha iyi anlamak için aşağıdaki şekle bakın:
+
+|
+|
+\ (2) | (1) /
+\      | /
+\ 3 | 1 /
+\ | /
+\ | /
+(3) \ | / (0)
+\ | /
+7 \ | / 6
+\|/
+-------------*-------------
+/|\
+5 / | \ 4
+/ | \
+(4) / | \ (7)
+/ | \
+/ | \
+/ 2 | 0 \
+/      | \
+/ (5) | (6) \
+|
+|
+
+
+Şekil 1 Sekizgenler
+
+Şekilde yıldız işareti (*) P1 noktasını temsil eder. Blitter
+ekranı şekilde gösterilen 8 bölgeye (sekizgenler) ayırır.
+Çizilecek çizgi sekizgenlerden birine, P2'nin bulunduğu sekizgene aittir.
+ Parantez içindeki sayılar sekizgenleri
+bizim “insan” (yani saat yönünün tersine) notasyonuna göre.
+Blitter ise bunları biraz garip bir şekilde numaralandırır, bu da
+parantez içinde olmayan sayılarla gösterilir. Ekranın bu bölünmesini
+daha sonra dikkate alacağız.
+ 
+Ayrıca, blitteri hazırlamak için kullanacağımız bazı miktarları tanımlamamız gerekir.
+P2 ve P1'in absisleri arasındaki farka DiffX diyelim, negatif olması durumunda işareti değiştirerek her zaman pozitif olmasını sağlayalım.
+Formül olarak şunu yazalım:
+DiffX = abs(X2 - X1)
+
+burada “abs” bir sayının mutlak değerini hesaplayan fonksiyonu belirtir.
+Aynı şeyi ordinatlar için de yapalım:
+
+DiffY = abs(Y2 - Y1).
+
+Bu noktada DX ve DY'yi sırasıyla
+DiffX ve DiffY arasındaki maksimum ve minimum değerler olarak tanımlayalım. Formüllerde:
+
+DX = max(diffX,diffY)
+DY = min(diffX,diffY).
+
+Şimdi blitter kayıtlarının nasıl ayarlanacağını görelim,
+BLTCON1 ile başlayalım, bu kayıt line-mode'u etkinleştirir. BLTCON1'in 0 bit'i
+tam da bu amaç için kullanılır. 1 olarak ayarlandığında line-mode etkinleştirilir. 1
+bit, blitter alanlarının daha sonra
+doldurulmasına olanak tanıyan “özel” çizgiler çizilmesini sağlar. Bunu daha sonra ele alacağız, şimdilik
+0 olarak bırakalım (normal çizgiler). Bit 2, 3 ve 4'e, P2 noktasının bulunduğu
+oktant numarası yazılmalıdır. Tabii ki blitter numaralandırmasını kullanmalıyız.
+ Normal numaralandırmayı blitter tarafından kullanılan saat yönünün tersine
+dönüştürmek için aşağıdaki tabloyu kullanabilirsiniz:
+
+
+BLTCON1 Bit Değeri     Sekizlik Sayısı
+---------------------     --------------
+4 3 2
+- - -
+1 1 0            0
+0 0 1            1
+0 1 1            2
+1 1 1            3
+1 0 1            4
+0 1 0            5
+0 0 0            6
+1 0 0			7
+
+BLTCON1'in 6. biti (SIGN biti olarak adlandırılır)
+4*DY-2*DX<0 ise 1 olarak ayarlanmalıdır. Aksi takdirde (yani 4*DY-2*DX>0 ise) 0 olarak ayarlanmalıdır.
+BLTCON1'in 12 ila 15 bitleri, hattın başlangıç konumunu içerir.
+ “desen”
+konumunu içerir. Aslında, sadece ‘düz’ çizgiler değil, aynı zamanda
+çizgili çizgiler de çizilebilir, bu, tüm çizgi boyunca tekrarlanan bir “desen” ile yapılır
+(desen örneklerini ders 9'da gördük). BLTCON1'in 12 ila
+15 bitleri, desenin kullanılmaya başlanacağı pikseli gösterir
+. Tabii ki (sadece 4 bitimiz var), bu, çizginin ilk 16 pikselinden
+biri olmalıdır.
+BLTCON1'in diğer tüm bitleri 0 olarak bırakılmalıdır.
+Şimdi BLTCON0'a gelelim. Bu kaydın alt baytı (LF, minterms'inki)
+2 farklı çizim modu seçilmesini sağlar. LF=$4A olarak ayarlandığında
+çizgi ile çizildiği arka plan arasında bir OR-hariç işlemi gerçekleştirilir.
+ Pratikte, çizginin geçtiği pikseller ters çevrilir.
+LF=$CA olarak ayarlandığında ise çizgi ile arka plan arasında basit bir OR işlemi gerçekleştirilir
+ve arka plan arasında basit bir OR işlemi gerçekleştirilir. Pratikte, çizginin geçtiği pikseller açılır.
+Blighting için etkinleştirilecek kanallar A, C ve D'dir. Bu nedenle, bit 8, 9 ve 11
+1'e, 10 ise 0'a ayarlanmalıdır.
+BLTCON0'ın 12 ila 15 bitleri ise X1'in en anlamlı 4 bitini
+(yani en düşük) bitleri içermelidir.
+Diğer kayıtların ayarları ise daha basittir.
+BLTAFWM ve BLTALWM kayıtları $FFFF değerine ayarlanmalıdır (hiçbir şeyi maskelemezler).
+BLTADAT kaydı ise çizilecek pikseli temsil eden $8000 değerini içermelidir.
+BLTADAT kaydı ise, çizilecek pikseli temsil eden $8000 değerini içermelidir.
+ BLTBDAT kaydı ise, daha önce bahsettiğimiz
+çizginin “desenini” içerir. $FFFF değeri, sürekli bir çizgi çizer
+.
+Çizgi çiziminde, BLTAPT'nin sadece alt kısmı, yani
+sadece 16 bitlik BLTAPTL kaydı, 4*DY-2*DX değerine ayarlanmalıdır.
+BLTAMOD kaydı ise 4*DY-4*DX değerine ayarlanmalıdır.
+BLTBMOD kaydı 4*DY değerine ayarlanmalıdır.
+BLTCPT ve BLTDPT kayıtları,
+P1 pikselini içeren ekran kelimesinin adresini
+içermelidir. BLTCMOD ve BLTDMOD kayıtları, ekran genişliğini
+bayt cinsinden içermelidir.
+Son olarak, BLTSIZE kaydı,
+2 kelime genişliğinde ve DX+1 satır yüksekliğinde bir blitter işlemi gerçekleştirecek şekilde ayarlanmalıdır.
+Bu, 0 ila 5 bitlerinin 2 sayısını 
+6 ila 15 arasındaki bitler ise DX+1 değerini içermelidir. Genellikle olduğu gibi, BLTSIZE
+kayıt defterine yazıldığında blitter etkinleştirilir. Bu nedenle, bu kayıt defteri
+en son yazılmalıdır.
+
+Özetle, kayıt defterlerine yüklenecek değerler şunlardır:
+BLTADAT = $8000
+BLTBDAT = satır deseni ($FFFF tek bir satır için)
+
+BLTAFWM = $FFFF
+BLTALWM = $FFFF
+
+BLTAMOD = 4 * (dy - dx)
+BLTBMOD = 4 * dy
+BLTCMOD = bit düzleminin genişliği (bayt cinsinden)
+BLTDMOD = bit düzleminin genişliği (bayt cinsinden)
+
+BLTAPT = (4 * dy) - (2 * dx)
+BLTBPT = kullanılmıyor
+BLTCPT = satırın ilk pikselini içeren kelimeye işaretçi
+BLTDPT = satırın ilk pikselini içeren kelimeye işaretçi
+
+BLTCON0 bit 15-12 = X1'in en alt 4 biti
+BLTCON0 bit 11 (SRCA), 9 (SRCC) ve 8 (SRCD) = 1
+BLTCON0 bit 10 (SRCB) = 0
+BLTCON0 LF kontrol baytı = $4A (EOR'da satır başına)
+= $CA (OR'da satır başına)
+
+BLTCON1 bit 0 = 1
+BLTCON1 bit 4-2 = sekizli sayı (tablodan)
+BLTCON1 bit 15-12 = hat deseni için başlangıç biti
+BLTCON1 bit 6 = 1 eğer (4 * dy) - (2 * dx)) < 0
+= 0 aksi takdirde
+BLTCON1 bit 1 = 0 (normal hatlar için)
+= 1 (dolgu için özel hatlar için)
+
+BLTSIZE bit 15-6 = dx + 1
+BLTSIZE bit 5-0 = 2
+
+Çizgi izleme örneği ders10n.s'de bulunmaktadır.
+Bu, hızden ödün vererek anlaşılmasını kolaylaştırmak için
+özel optimizasyonlar yapılmadan
+olabildiğince basitleştirilmiş bir rutindir.
+
+
+Alanları Doldurma Modu
+
+Verileri kopyalamanın yanı sıra, blitter kopyalama sırasında aynı anda bir
+doldurma işlemi de gerçekleştirebilir. Bu mod, herhangi bir standart blitter işleviyle (kopyalama, AND, OR, vb.) etkinleştirilebilir
+ve zaten bildiğiniz tüm diğer işlemlerden (kaydırma, maskeleme, vb.) SONRA gerçekleştirilir.
+Doldurmanın nasıl çalıştığını anlamak için, blitter'ın çıkışına bir bit bir seferde yazdığını (ki bu, her seferinde BİR WORD yazdığı için doğru değildir) ve
+Doldurmanın nasıl çalıştığını anlamak için, blitter'ın
+çıkışa bir bit yazdığını (bildiğiniz gibi bu doğru değildir, çünkü her zaman
+bir KELİME yazar) ve basit bir kopyalama işlemi yaptığını hayal edin.
+0 değerindeki bitleri okuduğu sürece, bunları normal şekilde kopyalar. Bir noktada,
+değeri 1 olan bir bit gelir. Bunu da çıkışa kopyalar, ancak
+bu andan itibaren, sonraki bitleri kopyalamaya devam etmek yerine,
+değeri 1 olan tüm bitleri çıkışa gönderir. Ancak, değeri 1 olan ikinci bir bit okuduğunda,
+normal davranışına geri döner. Sonra üçüncü 1 değerindeki biti okuduğunda,
+çıktıya 1 göndermeye başlar, bir sonraki 1 girişine kadar ve böyle devam eder.
+Örnek bir giriş bit dizisini ve karşılık gelen çıkışı göstererek kopyalanan verilere ne olduğunu görelim
+:
+
+giriş     000100010010010001000001000110010010
+çıkış        000111110011110001111111000110011110
+
+Pratikte, değeri 1 olan bitler alanın kenarları olarak kabul edilir ve bu nedenle
+blitter, kenarların içindeki bitleri doldurur (yani 1 olarak ayarlar).
+Şimdi fill-mode'un teknik ayrıntılarına bakalım.
+Daha önce de belirttiğimiz gibi, fill-mode herhangi bir
+blit ile birlikte kullanılabilir, çünkü doldurma işlemi, 3 kaynaktan okunan veriler
+minterms tarafından seçilen mantık fonksiyonuna göre birleştirildikten sonra gerçekleştirilir
+.
+Ancak fill-mode, yalnızca aşağı doğru gerçekleştirilen blit'lerle kullanılabilir
+.
+İki farklı dolgu türü vardır: kapsayıcı ve dışlayıcı. Her dolgu türünün
+kendi etkinleştirme biti vardır. Dolgu modunu etkinleştirmek için
+2 etkinleştirme bitinden birini 1 olarak ayarlamanız gerekir. 2 farklı dolguyu aynı anda etkinleştiremezsiniz.
+ 2 dolgu türü arasındaki farklara bakalım.
+Kapsayıcı dolgu modu, çizgilerin aralarını doldurur, çizgileri bozulmadan bırakır.
+Dışlayıcı modu, çizgilerin aralarını doldurur, ancak
+sağdaki sınır çizgisini silerek sol tarafını boş bırakır.
+Bu nedenle, dışlayıcı dolgu, kapsayıcı dolguyla doldurulmuş
+aynı desenin (kontur) bir piksel daha dar dolgulu şekiller oluşturur.
+
+Örneğin, desen:
+
+00100100-00011000
+
+dahil edici dolguyla doldurulduğunda, şu sonucu verir:
+
+00111100-00011000
+
+dışlayıcı dolguyla doldurulduğunda, sonuç şu olur:
+
+00011100-00001000
+
+(Tabii ki, dolgular her zaman 16 bitlik tam kelimeler üzerinde yapılır.)
+
+Çizimler yardımıyla başka bir örnek verelim:
+
+dahil dolgu:
+
+önce             dahil dolgudan sonra
+_______________________ _______________________
+|            |    |            |
+|            |    |            |
+| 1 1 1 1    |    | 11111 11111    |
+| 1 1    1 1    |    | 1111    1111    |
+| 1 1     1 1    |    | 111     111    |
+| 11     11    |	| 11     11    |
+| 1 1     1 1    |    | 111     111    |
+| 1 1    1 1    |    | 1111    1111    |
+| 1 1 1 1    |    | 11111 11111    |
+|            |	|            |
+|_______________________|    |_______________________|
+
+
+özel dolgu:
+
+önce             özel dolgudan sonra
+_______________________     _______________________
+|            |    |            |
+|            |    |            |
+| 1 1 1 1    |    | 1111 1111    |
+| 1 1 1 1    |    | 111     111    |
+| 1 1     1 1    |    | 11     11    |
+| 11     11    |    | 1     1    |
+| 1 1     1 1    |    | 11     11    |
+| 1 1 1 1    |    | 111     111    |
+| 1 1 1 1    |    | 1111 1111    |
+|            |    |            |
+|_______________________|    |_______________________|
+
+
+Gördüğünüz gibi, özel dolgu ile şeklin sol tarafındaki çizgiler silinmiştir
+. Bu şekilde, kenarları daha
+keskin
+şekiller elde edilir. Dahil dolguyu etkinleştiren bit, BLTCON1'in 3. bitidir,
+dahil olmayan dolguyu etkinleştiren bit ise yine BLTCON1'in 4. bitidir.
+
+Dolguyu kontrol etmek için kullanılan başka bir bit daha vardır.
+Bu, BLTCON1'in 2. bitidir (FILL_CARRYIN olarak adlandırılır) ve
+1 olarak ayarlandığında, çizgilerin dışındaki alanların iç alanlar yerine doldurulmasını zorlar.
+ İlk örneğimize geri dönelim ve FILL_CARRYIN biti 1 olarak ayarlandığında bit satırımızda ne olduğunu görelim
+.
+Başlangıç satırı şöyleydi:
+
+00100100-00011000
+
+
+Dolgu dahil ve FILL_CARRYIN=1 olduğunda, çıktı şöyle olur:
+
+11100111-11111111
+
+Dolgu hariç ve FILL_CARRYIN=1 olduğunda, çıktı şöyle olur:
+
+11100011-11110111
+
+İkinci örnekte dolgu dahil ve
+FILL_CARRYIN=1 olduğunda ne olduğunu görelim.
+
+
+önce                 sonra
+_______________________      _______________________
+|            |    |            |
+|            |    |            |
+| 1 1 1 1    |    | 111 1111111 11    |
+| 1 1    1 1    |    | 1111 11111111 11    |
+| 1 1     1 1    |    | 11111 111111111 11    |
+| 11     11    |    | 111111111111111111    |
+| 1 1     1 1    |    | 11111 111111111 11    |
+| 1 1    1 1    |	| 1111 11111111 11    |
+| 1 1 1 1    |    | 111 1111111 11    |
+|            |    |            |
+|_______________________|    |_______________________|
+
+dahil dolgu ve FCI = 1 bit
+
+Dolgu modu özellikle çokgenleri doldurmak için kullanılır. Çokgenlerin kenarları
+blitter'ın çizgi modu kullanılarak çizilir.
+Çok basit bir örnek ders10o.s listesinde verilmiştir.
+Bu örnekte çeşitli dolgu türleri gösterilmiştir.
+Doldurulacak alan eğimi 45 dereceden az olan çizgilerle sınırlandırılmışsa bir sorun ortaya çıkar.
+45 dereceden daha az eğimli çizgilerle sınırlandırılmışsa, bir sorun ortaya çıkar. Bu durumda, bir çizgi
+ekranın aynı yatay satırında bitişik olabilen piksellerden oluşur.
+ Bu durum aşağıdaki şekilde gösterilmiştir.
+ Yıldız işaretleri (*) 1 değerine sahip pikselleri temsil eder.
+
+
+
+*
+*
+*        eğim > 45 derece olan çizgi
+*
+*
+
+
+*
+**
+**        eğim < 45 derece olan çizgi
+*
+**
+
+Gördüğünüz gibi, bir çizginin eğimi 45 dereceden büyük olduğunda,
+2 pikselinin ekranın aynı satırında yan yana olması asla mümkün değildir.
+Aksine, çizginin eğimi 45 dereceden az olduğunda bu durum gerçekleşir.
+Bu durum, doldurma sırasında sorun yaratır. Aslında, blitter
+doldurma sırasında aynı satırda yan yana bulunan 2 pikseli bulduğunda, bunları
+2 ayrı kenar olarak kabul eder ve çizginin sağındaki pikselleri doldurmaz.
+ Bu sorunun bir örneğini listede bulabilirsiniz
+lezione10p.s. Bu sorunu gidermek için, blitter tasarımcıları
+bize özel bir çizgi çizme modu 
+(daha önce bahsetmiştik) sunmuşlardır. Bu mod, her yatay satırda tek bir piksel içeren çizgiler üretir.
+ Açıkçası, bu modda bir çizgi çizip
+doldurma işlemini yapmazsanız, çizgi “parçalı” olarak görünecektir.
+Ders10q.s listesinde, ders10p.s'de gösterilen sorunun çözümünü bulabilirsiniz.
+Ders10r.s
+örneğinde, birçok çizgiden oluşan kapalı bir çokgeni çizip doldurmaya çalışıyoruz.
+Burada da küçük bir sorun olduğunu görüyoruz.
+Sorun, poligonun köşelerinin bir çift çizgiyle ortak olmasından kaynaklanmaktadır.
+ EOR modunda çizgiler çizdiğimizde, arka plan piksellerini ters çeviririz.
+ Köşeler 2 kez ters çevrilir ve sonunda
+sıfırlanır. Bu nedenle, poligonun kenarında bir “delik” oluşur ve
+bu nedenle dolgu yanlış yapılır. Bunun yerine çizgileri
+OR modunda çizdiğimizde, köşeler 1 değerinde kalır. Bu,
+üst ve alt köşelerde sorun yaratır, çünkü bunlar ait oldukları satırda izole olurlar
+ve bu nedenle dolgu onlardan başlar ama
+asla bitmez. Daha iyi anlamak için aşağıdaki şekle bakın (alt köşeye
+ilişkin):
+
+* *
+* * DOLDURMA ÖNCESİ
+* *
+*
+
+^
++---- alt köşe
+
+
+**********
+******* DOLDURMA SONRASI
+****
+************
+
+^
++---- alt köşe
+
+Gördüğünüz gibi, son köşenin bulunduğu satırda doldurma işlemi
+sona ermez, çünkü sol kenar görevi görecek 1 olarak ayarlanmış başka bir piksel yoktur.
+ EOR modundaki çizgilerde bu sorun ortaya çıkmaz,
+ çünkü köşe sıfırlanır (yani, ara köşelerde sorun yaratan fenomen nedeniyle
+).
+Kısacası, ne yaparsak yapalım, her zaman dolguyu bozan bir köşe vardır
+!
+Bundan nasıl kurtulacağımıza bakalım. Çizgileri EOR modunda çizmek daha iyidir
+, böylece üst ve alt köşe sorunu ortadan kalkar. Ayrıca
+çizgileri her zaman yukarıdan aşağıya doğru çizelim ve
+çizmeden önce ilk pikseli (BCHG ile) ters çevirelim. Bu şekilde, bu piksel
+2 kez ters çevrilmiş olacak (BCHG ve ardından blipping ile) ve dolayısıyla
+değişmeden kalacaktır. Böylece sorun çözülür. Aslında (
+noktaları sıraladığımız için) her ara köşe bir kez bir çizginin son
+pikseli olarak çizilir (ve bu nedenle 1 olarak ayarlanır) ve bir kez diğer çizginin ilk
+pikseli olarak çizilir (ve bu nedenle değişmeden kalır, yani 1 olarak kalır).
+Bu teknik, lezione10s.s örneğinde sunulmuştur.
+Şimdi, bir özelliği açıklamak için çizgi işlemine geri dönelim.
+BLTBDAT'ın başlangıç değerini değiştirerek 2 piksel genişliğinde çizgiler çizmek mümkündür.
+Bu teknik, lezione10t1.s örneğinde gösterilmiştir.
+lezione10t2.s örneğinde ise, şimdiye kadar kullanılanlardan daha iyi bir çizgi çizme rutini sunulmaktadır.
+ Bu
+rutin, 68000 assembler'ın birçok özelliğini kullanarak
+blitter kayıtlarının hesaplanmasını ve yüklenmesini optimize eder.
+
+/\\ ____ ,^-o,
+_à /( <. `-,‘ `-’;~~
+~~ _}\ \( _ ) ‘,-’~`../ , \ .‘“v”’.
+\(._(.)‘ `^^ `^^ .:/ \ /\ = 'm’ =
+._> _>. |\__/| ,,///;, ,;/ ( ) “ \|/ ”--_o
+@..@ / \ o:::::::;;/// .( o ). /m“...”m\
+(\--/) /_.~ ~,_\ >::::::::;;\\\ _,/
+(.>__<.) \@/ ‘’\\\\\‘“ ’;\ <__ \_.---.
+^^^ ^^^ A___A ';\ _ \_ / \
+____ / o o \ O\ /O .-/ )-”“”. \)\ /\.\
+_/~____ =^= / O>!<O oP __/_)_( )* // \\
+<______>__m_m_> o o "(__/ (___/ ,/' `\_,
+_____ _____
+oo/><><>\ ()-() (((( ~..~ \9
+( -)><><><> (o o) AMIGA RULEZ ( )(:[ (oo)_____/
+L|_|L|_|‘ /\o/\ (((( WW WW
+_ ,--, ___
+('v’) _ ___/ /\| {~._.~} __ __ 
+(,_,) ,;‘( )__, ) ~ ( Y ) o-’'))_____\\
+.,;;;;;,. // // ‘--; ()~*~() "--__/ * * * )
+.;;’|/‘;;;;’ ' \ | ^ (_)-(_) c_c__/-c____/
+^ ^
+
+Dersi bitirmek için,
+çizgi ve dolgu izleme ile elde edilen bazı efektleri lezione10u1.s, lezione10u2.s,
+lezione10v.s, lezione10x.s listelerinde sunuyoruz. Özellikle sonuncusunda, efsanevi “State of the Art” demosunun
+ana tekniklerinden birini göreceksiniz!

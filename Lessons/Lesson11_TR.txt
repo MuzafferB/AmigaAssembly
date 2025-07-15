@@ -1,0 +1,2304 @@
+
+__________________________________________
+______ |::. .::| ______
+//_____\ |:::: ASSEMBLER KURSU - DERS 11 .::::| /_____\\
+_\\ O o / |::::::::::::::::::::::::::::::::::::::::::| \ o O //_
+\_/\_-_/_ ------------------------------------------' _\_-_/\_/
+/ __|. \/ / \ \/ .|__ \
+/____|. \__/ \__/ .|____\
+.---/ |. \--------------------------------------------/ .| \---.
+/ /____|____\ INTERRUPT, CIAA/CIAB, DOSLIB /____|____\ \
+/ \
+`-------------------------------------------------------------------------'
+
+Yazar: Fabio Ciucci
+
+(Kaynak Dizini7) - ardından “V Assembler3:sorgenti7” yazın
+
+Blitter'ın çalışmasını ayrıntılı olarak öğrendikten sonra, Amiga'nın donanımını
+iyi bildiğinizi söyleyebilirsiniz, çünkü 68000, blitter ve copper
+programlamayı biliyorsunuz. Ancak öğrenmek hiç bitmez ve bu
+dersde 68000 hakkında ileri düzey bilgiler, örneğin interrupt'lar
+Blitter ve Copper'ın özel kullanımlarını gösteren listeler ve
+son olarak, şu ana kadar sadece
+fare basıncını test etmek için kullandığımız CIAA ve CIAB yongalarının kullanımı.
+68000 ile ilgili yeni bilgilerle başlayalım, böylece
+DERS 8'de yaptığımızdan daha iyi bir başlangıç yapabiliriz.
+Aşağıda açıklanacak olan istisna vektörleri, kesintiler vb. hakkındaki bilgiler
+oyun ve demo programlama için hepsi yararlı ve vazgeçilmez değildir,
+ sadece bir kısmı işimize yarayacaktır. Bu nedenle, bahsedilen konuların çokluğundan korkmayın
+: pratikte kullanacağımız çok az şey var!
+Öncelikle, 680x0'ın iki çalışma modundan bahsetmek gerekir, yani
+ve denetleyici modundan bahsetmeliyiz. 68000-2.txt dosyasında,
+açıklamadan, denetleyici modunda, yani bir istisna veya kesinti sırasında
+yürütülmesi gereken “ayrıcalıklı” komutlar olduğundan bahsedilmişti.
+Şimdiye kadar rutinlerimizi her zaman USER modunda, yani
+kullanıcı modunda çalıştırdık, çünkü ayrıcalıklı komutları yürütmek gerekli değildi
+ve işlemcinin kesintilerini kullanmadık.
+Öncelikle, kullanıcı modu ile denetleyici modu arasında yürütme hızının değişmediğini belirtmeliyim,
+ bu nedenle programınızı bir istisna
+veya kesinti olarak yürütmek, yürütmeyi kesinlikle etkilemeyecektir.
+Ayrıca, “istisna” adı, “istisnai” durumlarda
+gerçekleşmesi gereken bir şey olduğu için verilmiştir örneğin GURU olarak bilinen bir yazılım
+hatası. Amiga işletim sistemi tarafından neden olunan
+guru'lar (exec hataları gibi) ve 680x0'ın yaratıcısı Motorola tarafından doğrudan programlanan
+guru'lar olduğunu unutmayın. Örneğin,
+BUS hataları, SIFIRLAŞMA, vb., yani vektörler bu türdendir.
+İşletim sisteminin, kendi rutinimizi çalıştırırken bile
+fare imlecinin konumunu güncelleyebildiğini fark etmişsinizdir,
+ tabii ki Disable() çağrısıyla çoklu görev özelliğini devre dışı bırakmadığımız sürece.
+ Peki, işlemci bizim döngümüzü çalıştırıyorsa,
+her kare diğer şeyleri nasıl günceller? Sistem kesintilerini devre dışı bırakırsanız
+her şeyin kilitlendiğini hatırlayacaksınız. Aslında, kesintiler,
+her kare programımızın çalışmasını “kesintiye uğratır”,
+kendi rutinlerini çalıştırır ve programımızın çalışmasını
+bıraktıkları yerden devam ettirir, hem de biz farkına bile varmadan!
+Kesintilerin yanı sıra, ,
+denetleyici modunda rutinleri çalıştırmanın başka yolları da vardır, örneğin TRAP komutları veya bir programdaki herhangi bir hata
+.
+ Örneğin, sıfırla bölme gerçekleştiğinde veya işlemci
+hiçbir komutla eşleşmeyen veriler bulduğunda,
+guru meditation ve software failure rutinleri denetleyici modunda çalıştırılır.
+Diğer işlemcilerin emülatörleri, örneğin, emüle edilen işlemcinin her
+ikili komut değerine, örneğin bir 80286 veya
+Commodore 64'ün 6502'sine, o komutun o işlemci için yapacağı işlemleri yapan bir rutin karşılık gelir
+(kabaca!)..
+Şimdi, bu kursun amacı işletim sistemleri
+veya emülatörler programlamayı öğrenmek değildir, çünkü Amiga'nın işletim sistemi zaten
+dünyanın en iyisidir ve Amiga üzerindeki emülatörler o kadar üstündür ki
+Amiga sahibi olanlar MacIntosh ve MSDOS programlarını çalıştırabilir ve
+eski C64 ve Spectrum oyunlarını oynayabilir.
+Ancak bir demo veya oyun ya da
+protracker/octamed gibi bir yardımcı program yazmak isterseniz, bazı kesmeleri yönetmek ÇOK YARARLI olacaktır.
+Eski tip birçok demo ve oyun, 68000'i denetleyici moduna geçirerek
+başlıyordu, hemen SR'ye yazıyor ve Stack ile garip oyunlar yapıyordu.
+Ancak, bu oyunların çoğu 68020 işlemcili bilgisayarlarda çalışmıyor, çünkü
+daha gelişmiş işlemcilerdeki Durum Kaydı'nın, bu programcılar tarafından
+bilinmeyen ek işlevleri vardır ve bitleri rastgele ayarlayarak veya sıfırlayarak
+büyük bir hata yaptılar. Ayrıca, denetleyici modunda yığın (SP)
+denetleyici moduna “özel” bir yığınıdır, kullanıcı yığınına ise
+USP (Kullanıcı Yığın İşaretçisi)ile erişilir. Kısacası, denetleyici modunda
+, 68020/30/40 ve hatta 68060'ın tüm yeni özelliklerini
+mükemmel bir şekilde bilmiyorsanız, çok dikkatli olmalısınız!
+Aslında, kullanıcı modu, farklı işlemcilerde farklı etkiler yaratabilecek komutları
+yürütmekten kaçınmak için kullanılır ve yalnızca
+işletim sistemleri tarafından yürütülmelidir. Ancak kodlayıcılar her zaman denetleyici modda kayıtları alt üst etmekten
+daha havalı hissetmişler ve bunun sonucunda
+“uyumsuz kod yazamayan programcılar” olarak ün salmışlardır.
+Ancak teoriye devam etmeden önce denetleyici modda birkaç komut çalıştıralım.
+ Bir
+rutini istisna durumunda çalıştırmanın birçok yolu vardır, ancak en “güvenli” yol, işletim sisteminin
+“exec.library/Supervisor” işlevini kullanmaktır. Bu işlev, giriş olarak
+A5'e çalıştırılacak rutinin adresini koymayı gerektirir:
+
+move.l    4.w,a6            ; ExecBase in a6
+lea    SuperCode(PC),a5    ; Denetleyicide çalıştırılacak rutin
+jsr    -$1e(a6)        ; LvoSupervisor - rutini çalıştır
+; (kayıtları kaydetmez! dikkat!)
+rts                ; rutini çalıştırdıktan sonra çık
+; “SuperCode” süpervizörde.
+
+SuperCode:
+movem.l    d0-d7/a0-a6,-(SP)    ; Kayıtları yığına kaydeder...
+                ; yürütülecek komutlar...
+                ; bir alt rutin gibi....
+movem.l    (SP),d0-d7/a0-a6    ; Kayıtları yığından geri alır
+RTE    ; Return From Exception: RTS gibi, ancak istisnalar için.
+
+
+
+Görüldüğü gibi, daha kolay bir şey olamaz. Yürütülecek rutin
+JSR veya BSR ile çağrılacak bir alt rutin olarak düşünülebilir, ancak
+adresi A5'e ve
+ExecBase'i A6'ya yerleştirdikten sonra “JSR -$1e(a6)” ile çağrılır. Kısa “alt yordam denetleyicisi”nin sonunda,
+geri dönmek için RTS koymak yerine, istisnalardan ve kesmelerden geri dönmek için özel olan
+RTE koymanız gerekir. Bu noktada işlemci,
+“JSR -$1e(a6)” altındaki komutu, tıpkı
+bir ‘BSR’ veya “JSR” gibi Supervosor işlevi kayıtları
+kaydetmez veya movem ile geri yüklemez, bu nedenle
+supervisor rutininde herhangi bir kayıt değiştirilirse, bu değerler o rutinden döndüğünde kalacaktır.
+Bu nedenle, kayıtları
+supervisor rutininin başında ve sonunda manuel olarak kaydetmenizi ve geri yüklemenizi öneririm.
+SP veya A7'ye süpervizör modunda erişildiğinde, süpervizör yığınına kaydedilir
+ve USP olarak çağrılabilir kullanıcı yığınına kaydedilmez. Bu
+bir sorun değildir, çünkü süpervizör yığını kullanıcı yığını gibi kaydeder ve geri yükler,
+ ancak yığının tehlikeli bir şekilde programlanması durumunda
+genel bir çökmeyle karşılaşabilirsiniz.
+Örnek ders11a.s'de ayrıcalıklı komutları çalıştıralım.
+Yalnızca süpervizör modunda çalıştırılabilen ayrıcalıklı komutlar şunlardır:
+
+ANDI.W    #xxxx,SR
+ORI.W    #xxxx,SR
+EORI.W    #xxxx,SR
+MOVE.W    xxxxx,SR
+MOVE.W    SR,xxxxx
+MOVEC    kayıt,kayıt    ; 68010+ - özel kayıtlar
+; önbellek kontrolü, MMU, vektörler gibi:
+; CAAR,CACR,DFC,ISP,MSP,SFC,USP,VBR.
+RTE
+
+MOVES, RESET, STOP da vardır, ancak bunlar bizi ilgilendirmez.
+Status Register üzerinde işlem yapma olasılığı çok azdır, çünkü
+çok tehlikelidir (68000 ve diğer 680x0 arasındaki SR bitlerinin farklılığı nedeniyle)
+ve bunu bozmak gerekli değildir. Ayrıca, bir istisnaya atlandığında
+Program Counter'ın yanı sıra Status Register da yığına kaydedilir
+kayıt da yığına kaydedilir ve RTE anında eski Program Sayacı değeri geri yüklenir,
+ böylece “JSR -$1e(a6)” altına geri dönülür ve eski SR,
+böylece istisna yürütülürken hiçbir değişiklik olmaz.
+Bunun yerine MOVEC komutu bizim için çok daha önemli, çünkü
+68020+ işlemcilerde de çalışacak bir kesme kullanabilmek için
+VBR'nin (Vector Base Register) nerede olduğunu bilmek gerekiyor.
+CACHE kontrolüne gelince, kullanıcıların demo veya oyunu çalıştırmadan önce
+ayar farklılıklarını değerlendirebilmeleri için, bunları bir yardımcı programla etkinleştirebilmeleri veya devre dışı bırakabilmeleri
+daha iyi olacaktır. Bunun yerine, hangi önbelleklerin etkinleştirileceğini ve
+hangilerinin devre dışı bırakılacağını kullanıcı yerine biz belirlemeye karar verirsek, 68060
+ve onu taklit edebilecek yeni RISC işlemcilerde çalışmayan kod yazma riski
+ve onu emüle edebilecek yeni RISC işlemcilerde çalışmayabilir.
+Sadece 68010 ve sonraki modellerde bulunan MOVEC komutu,
+bir An veya Dx kaydının içeriğini özel bir kayda veya tersi yönde kopyalamak için kullanılır.
+68020'de bulunan özel kayıtlara bakalım:
+
+CAAR    - CAche Address Register
+CACR    - CAche Control Register
+VBR    - Vector Base register
+
+Ayrıca DFC (Destination Function Code), SFC (Source Function Code),
+ISP (Kesme Yığını İşaretçisi), MSP (Ana Yığını İşaretçisi), USP (Kullanıcı Yığını
+İşaretçisi) de vardır, ancak bunlar bizi ilgilendirmez, çünkü bunlar yalnızca işletim sistemleri,
+ emülatörler vb. programlayanlar için gereklidir.
+Şu anda bizim için önemli olan, özel VBR kaydının değerini bilmektir,
+ nedenini daha sonra göreceğiz. Bunu elde etmek için örneğin “MOVEC VBR,d0” komutu yeterlidir.
+Peki, Vektör Taban Kaydı nedir? Öncelikle vektörün ne olduğunu açıklamamız gerekir
+(matematikteki vektörlerle veya 3d vektörlerle karıştırmayın!).
+Önce vektör tablosuna bakalım, sonra açıklayalım:
+
+VEKTÖR NUMARASI OFFSET    Atama ve anlam
+
+0    $0    Yalnızca sıfırlama sırasında kullanılır (SSP start)
+1    $4    Yalnızca sıfırlama sırasında kullanılır, çünkü ExecBase (PC start) vardır
+2    $8    GURU/soft. failure: BUS hatası
+3    $c    GURU/soft. failure: Adres hatası
+4    $10	GURU/yazılım hatası: Yasadışı komut
+5    $14    GURU/yazılım hatası: Sıfır bölme
+6    $18    CHK,CHK2 komutlarından kaynaklanan istisnalar (68020+)
+7    $1c    TRAPV komutlarından kaynaklanan istisnalar (68020+ TRAPCC)
+8    $20    GURU/yazılım hatası: Ayrıcalık ihlali
+9    $24    İzleme (izleme istisnası)
+$A    $28    GURU/yazılım hatası: Hat emülatörü %1010 (LINE-A)
+$B    $2c    GURU/yazılım hatası: Hat emülatörü %1111 (LINE-F)
+$C    $30    kullanılmıyor
+$D    $34    Koprocessör protokol ihlali (68020+)
+$E	$38    Biçim hatası (sadece 68020, CALLM,RTM'den sonra)
+$F    $3c    Başlatılmamış kesinti
+...
+    ...
+
+$18    $60    Yanlış kesinti
+
+; İşte kesinti vektörleri: ilgilendiğimiz bunlar!
+
+$19    $64    INTERRUPT seviye 1 (softint,dskblk,tbe)
+$1a    $68    INTERRUPT seviye 2 (portlar: I/O,ciaa,int2)
+$1b    $6c    INTERRUPT seviye 3 (coper,vblanc,blit)
+$1c    $70    INTERRUPT seviye 4 (ses kanalları aud0/aud1/aud2/aud3)
+$1d    $74    INTERRUPT seviye 5 (rbf,dsksync)
+$1e    $78    INTERRUPT seviye 6 (exter: ciab,int6 + inten)
+$1f    $7c	INTERRUPT seviye 7 (harici donanım kartları: NMI)
+
+$20    $80    TRAP #0 ile çağrılabilir vektör
+$21    $84    TRAP #1 ile çağrılabilir vektör
+$22    $88    TRAP #2 ile çağrılabilir vektör
+$23    $8c	TRAP #3 ile çağrılabilir vektör
+$24    $90    TRAP #4 ile çağrılabilir vektör
+$25    $84    TRAP #5 vektörü, vb., TRAP #15'e kadar
+...
+
+matematik kopyalayıcı ve MMU hataları için vektörler gelir,
+ bunlar bizi ilgilendirmez.
+
+
+-| |-
+-| [-_-_-_-_-_-_-_-] |-
+[-_-_-_-_-] | | [-_-_-_-_-]
+| o o | [ 0 0 0 ] | o o |
+| | -| | | |- | |
+| |_-___-___-___-| |-___-___-___-_| | 
+| o ] [ 0 ] [ o |
+ 
+| ] o o o [ _______ ] o o o [ | ----__________
+_____----- | ] [ ||||||| ] [ |
+| ] [ ||||||| ] [ |
+_-_-|_____]--------------[_|||||||_]--------------[_____|-_-_ 
+( (__________------------_____________-------------_________) )
+ 
+
+
+VBR kaydının değerini aramaya gerek olmayan bir 68000 işlemci durumunu düşünelim
+(böyle bir kayıt bile yoktur!).
+Bu durumda ofset, bellek konumu ile aynıdır! $0 = $00000000
+$4 adresinde Execbase'i buluruz, oysa $0'daki ilk long genellikle
+sıfırlanmıştır. Ancak $8 konumunun “içinde” BUS ERROR durumunda
+“GURU MEDITATION/SOFTWARE FAILURE” yazısını görüntüleyen rutinin adresini buluruz.
+ Aslında, 68000-2.TXT'de gördüğümüz gibi, bu guru'nun
+kimlik numarası #00000002, yani vektör numarasıdır.
+Üçüncü vektör, ADDRESS ERROR (#00000003) guru'sunu görüntüleyen rutinin adresini içerir ve bu şekilde devam eder.
+Pratik olarak, işlemci bu hatalardan birini bulduğunda, ilgili vektöre atlar ve bu vektörde, durumun ciddiyetine göre (sistem veya kullanıcı hatası gibi) süpervizör modunda çalıştırılacak rutinin adresini içerir.
+Pratikte, işlemci bu hatalardan birini bulduğunda,
+yönetici modunda çalıştırılması gereken rutinin adresini içeren
+karşılık gelen vektöre atlar (durumun ciddiyeti göz önüne alındığında!).
+Sıfırlama sırasında, vektörlerdeki tüm adresler
+ROM'dan ilkinden sonuncuya kadar yazılır. Yazılım hatası veya guru mesajlarını değiştiren küçük programlarınız varsa,
+ bunların 
+vektörleri normal sistem rutinlerine değil, kendi
+rutinlerine “yönlendirir”.
+Elbette vektörleri değiştirmek için “yasal” yollar da vardır, yani
+işletim sisteminin yapıları ve rutinleri aracılığıyla. Kendi rutininizin adresini
+vektöre doğrudan yazmak etkisiz veya uyumsuz olabilir.
+Örneğin:
+
+MOVE.L    #MiaDivisionePerZero,$14.w    ; guru vektörünü div. ile sıfırla.
+;
+rts
+
+MiaDivisionePerZero:
+...
+RTE
+
+BİRKAÇ NEDENLE ASLA BU ÖRNEĞİN GİBİ YAPMAYIN. İLK NEDEN
+68020+'DA BU VEKTÖRÜN $14 ADRESİNDE BULUNACAĞI GARANTİ EDİLEMEZ, İKİNCİ
+NEDEN İSE BU YÖNTEM MMU VE AMIGA İŞLETİM SİSTEMİ YAPILARIYLA UYUMLU DEĞİLDİR
+.
+Her neyse, teorik olarak bu sistem çalışmalıdır ve Amiga500'de
+routine supervisor iyi yazılmışsa neredeyse her zaman çalışır.
+Ancak hata/guru vektörlerinin değiştirilmesi bizi hiç ilgilendirmez, çünkü
+programımız guru/yazılım hatasına atladığında düzeltilmesi gereken hatalar içermemelidir
+!
+“TRAP #xx” komut vektörleri de bizi pek ilgilendirmiyor. Bu vektörler
+geçmişte istisna durumlarına geçmek için kullanılıyordu, ancak biz daha güvenli bir yol gördük,
+ işletim sistemi aracılığıyla.
+Yine de, merak edenler için, “eski” yol şöyleydi:
+
+move.l    $80.w,OldVector        ; Eski TRAP #0 vektörünü kaydet
+move.l    #SuperCode,$80.w    ; Süpervizörde çalıştırılacak rutin
+; TRAP #0 vektörüne yerleştir
+TRAP	#0            ; Supercode'u istisna olarak çalıştır
+move.l    OldVector(PC),$80.w    ; eski TRAP #0 vektörünü geri yükle
+rts                ; süpervizördeki
+; “SuperCode” rutinini çalıştırdıktan sonra çık.
+OldVector:
+dc.l    0
+
+SuperCode:
+movem.l    d0-d7/a0-a6,-(SP)    ; Kayıtları yığına kaydet...
+                ; yürütülecek komutlar
+...                ; bir alt rutin gibi....
+movem.l    (SP),d0-d7/a0-a6    ; Kayıtları yığından geri alır
+RTE    ; Return From Exception: RTS gibi, ancak istisnalar için.
+
+Gördüğünüz gibi, TRAP komutunun işlevini kolayca anlayabilirsiniz:
+pratikte, bir “TRAP #0” komutu çalıştırıldığında, adresi $80 adresindeki .l dosyasında bulunan rutin istisna olarak çalıştırılır,
+ “TRAP #1” komutu ile ise $84 adresinde bulunan rutin çalıştırılır ve bu şekilde devam eder.
+Aynı şekilde, kesmeler de kesme durumunda çalıştırılacak rutinin adresini içerir.
+Aynı şekilde, kesmeler de kesme durumunda yürütülecek rutinin adresini içerir.
+ Eski kesme ayarlama yöntemi şöyleydi:
+
+move.l    $6c.w,OldInt6c        ; Eski int seviye 3'ü kaydeder
+move.l    #MioInt6c,$6c.w        ; Int seviye 3 için benim rutinim
+
+Programın sonunda eski kesme $6c'de geri yüklenirdi.
+Bu kesmede genellikle “BSR.w MT_MUSIC” yerleştirilir, çünkü
+bu kesme (VERTB) her kare için bir kez çalıştırılır.
+
+_----| _ _ _ _ _ 
+----|_----| ]-I-I-I-[
+_ _ _ _ _ _ _----| | ----| \ ` ' /
+]-I-I-I-I-[ ----| | | |. ` |
+\ ` '_/ | / \ | | /^\|
+[] `__| ^ / ^ \ ^ | |*||
+ 
+|__ ,| / \ / ^ ^`\ / \ | ===|
+___| ___ ,|__ / ^ /=_=_=_=\ ^ \ |, `_|
+I_I__I_I__I_I (====(_________)_^___|____|____
+ 
+\-\--|-|--/-/ | I [ ]__I I_I__|____I_I_|
+|[] ` '|_ |_ _|`__ ._[ _-\--|-|--/-/
+/ \ [] ` .| |-| |-| |_| |_| |_| | [] [] | 
+<===> .|-=-=-=-=-=-=-=-=-=-=-| / \
+] []|` ` [] | . _________ . |- <===>
+ 
+<===> ` ‘ |||| | | ||| | [] <===>
+\_/ -- |||| | | ||| | . ’ \_/
+./|' . . . .|||||/|_______|\|||| /|. . . . .|\_
+- --------------------------------------------------- 
+
+*******************************************************************************
+*        68010 VE ÜSTÜ İŞLEMCİLERDE VBR KAYIT DEĞERİ     *
+*******************************************************************************
+
+VBR'nin vektörlerle ne ilgisi olduğunu merak ediyor olabilirsiniz. Aslında, Vector
+Base Register, vektörlerin adresini bulmak için ofsetlerin ekleneceği BASE adresidir.
+ VBR=0 ise, seviye 3 kesme 68000'de olduğu gibi
+$6c adresinde bulunur ve aynı şekilde TRAP #0 da
+her zaman $80'de bulunur ve yukarıda gördüğümüz örnekler çalışır.
+Ancak VBR $10000'de olsaydı, seviye 3 kesmesi artık
+$6c'de değil, VBR+$6c'de, yani $1006c'de olurdu! Aynı şey diğer tüm vektörler için de geçerlidir.
+Dolayısıyla, genel olarak:
+
+vektör adresi = VBR + OFFSET
+
+68000 işlemcide taban her zaman $0000'dır, öyle ki
+VBR kaydı veya MOVEC ayrıcalıklı komutu yoktur. Ancak 68010 ve üstü işlemcilerde VBR
+başka yerlere, hatta FAST RAM'e taşınabilir.
+Sıfırlamadan sonra, VBR her zaman sıfırlanır, hem A3000 hem de A1200
+veya A4000'de. VBR, SETPATCH veya diğer yardımcı programlar çalıştırıldığında taşınır.
+Aslında, tek başına bir diskten başlatıldığında çalışan birçok demo/oyun
+setpatch'i önceden yüklemeden, Workbench kabuğundan yüklendiğinde çalışmaz.
+ Bazıları çalışır, ancak “sessiz”dir, çünkü
+müzik çalan interrupt'larını $6c'ye yazarlar, oysa
+VBR, $0000'dan daha ileriye işaret eder.
+Bunu bildiğimize göre, işlemcinin 68000 mi yoksa
+68010+ mu olduğunu kontrol etmek yeterlidir ve 68010 veya üstü ise VBR değerini alıp
+değiştirmek istediğiniz vektöre ekleyin.
+Pratikte nasıl yapılacağı aşağıda gösterilmiştir:
+
+move.l    4.w,a6        ; ExecBase in a6
+btst.b    #0,$129(a6)    ; 68010 veya üstü olup olmadığını kontrol et
+beq.s    IntOK        ; 68000! O halde taban her zaman sıfırdır.
+lea    SuperCode(PC),a5 ; Süpervizörde çalıştırılacak rutin
+jsr    -$1e(a6)    ; LvoSupervisor - rutini çalıştır
+; (kayıtları kaydetmeyin! dikkat!)
+bra.s    IntOK        ; VBR değerini aldık, devam edelim...
+
+;**********************SÜPERVİZÖRDEKİ KOD 68010+ için **********************
+SuperCode:
+movem.l    a0-a1,-(SP)    ; a0 ve a1'i yığına kaydeder
+dc.l     $4e7a9801    ; Movec Vbr,A1 (68010+ komutu).
+; onaltılık sistemde çünkü tüm
+; derleyiciler movec'i derlemez.
+lea    BaseVBR(PC),a0	; VBR değerini kaydetmek için etiket
+move.l    a1,(a0)        ; Değeri kaydeder.
+movem.l    (SP)+,a0-a1    ; a0 ve a1'in eski değerlerini geri yükler
+RTE            ; İstisnadan geri döner
+;*****************************************************************************
+
+BaseVBR:
+dc.l    0
+
+IntOK:
+move.l    BaseVBR(PC),a0     ; A0'da VBR değeri
+move.l    $64(a0),OldInt64 ; Sys int liv 1 kaydedildi (softint,dskblk)
+move.l    $68(a0),OldInt68 ; Sys int liv 2 kaydedildi (I/O,ciaa,int2)
+move.l    $6c(a0),OldInt6c ; Sys int liv 3 kaydedildi (coper,vblanc,blit)
+move.l    $70(a0),OldInt70 ; Sys int liv 4 kaydedildi (audio)
+move.l	$74(a0),OldInt74 ; Sys int liv 5 kaydedildi (rbf,dsksync)
+move.l    $78(a0),OldInt78 ; Sys int liv 6 kaydedildi (exter,ciab,inten)
+
+movem.l    d0-d7/a0-a6,-(Sp)    ; Kayıtları yığına kaydet
+bsr.s	START            ; Ana rutini çalıştır
+movem.l    (sp)+,d0-d7/a0-a6    ; Kayıtları yığından geri al
+
+move.l    BaseVBR(PC),a0     ; A0'da VBR değeri
+move.l    OldInt64(PC),$64(a0) ; Sys int liv1 kaydedildi (softint,dskblk)
+move.l    OldInt68(PC),$68(a0) ; Sys int liv2 kaydedildi (I/O,ciaa,int2)
+move.l    OldInt6c(PC),$6c(a0) ; Sys int liv3 kaydedildi (coper,vblanc,blit)
+move.l    OldInt70(PC),$70(a0) ; Sys int liv4 kaydedildi (audio)
+move.l    OldInt74(PC),$74(a0) ; Sys int liv5 kaydedildi (rbf,dsksync)
+move.l    OldInt78(PC),$78(a0) ; Sys int liv6 kaydedildi (exter,ciab,inten)
+rts
+
+START:
+move.l    BaseVBR(PC),a0     ; A0'da VBR değeri
+move.l	#MioInt6c,$6c(a0)    ; kendi int. seviye 3 rotamı koyuyorum.
+...
+programı çalıştırıyorum
+...
+rts
+
+TRAP komutunu kullanmak isteseniz bile,
+a0'a BaseVbr'yi koymanız ve $80(a0) ofsetini yapmanız gerektiğini unutmayın. Aynı şey tüm vektörler için geçerlidir.
+Bu dersten itibaren yeni bir başlangıç dosyası, startup2.s,
+startup1.s yerine eklenmelidir. Tek fark, yukarıda görülen komutları içermesi ve
+tüm mikroişlemcilerde kesmeleri doğru şekilde değiştirmek için BaseVbr etiketi
+mevcut olmasıdır. Eski kesmelerin kaydedilmesi ve sonunda geri yüklenmesi, DMA ve INTENA kanallarının kaydedilmesi ve geri yüklenmesi ile birlikte başlangıçta yapılır.
+ve sonunda geri yükleme, DMA ve INTENA kanallarının kaydedilmesi ve geri yüklenmesi ile birlikte
+başlangıç tarafından yapılır.
+Diğer bir değişiklik, fare
+ve klavyenin işletim sistemine girişini engelleyen bir rutinin eklenmesidir. Dosyaları yüklediğimizde bunun gerekli olduğunu göreceğiz.
+Artık bir sistem kesmesini kendi kesmemizle nasıl değiştireceğimizi bildiğimize göre,
+ kendi kesmemizi nasıl yapacağımızı görmeliyiz.
+Sonraki sayfaları önceden görmek için, örnek listede kesme ile müziği çalalım.
+ Ders11b.s. Okumaya devam ederek nasıl çalıştığını daha iyi anlayacaksınız!
+
+|||||
+.__________________________.oOo_/o_O\_oOo.____________________________________.
+*******************************************************************************
+*        BİR KESİME RUTİNİ NASIL “OLUŞTURULUR”         *
+*******************************************************************************
+
+Kesme sistemi (interrupt), harici bir cihazın veya
+özel bir çipin işlemcinin çalışmasını keserek
+kullanıcı modunda, adresi kesme vektörlerinden birinde (örneğin $6c) bulunan
+rutine atlamasını sağlar.
+Bu kesintiler, minimum seviye (1) ile maksimum seviye (7) arasında değişen farklı PRIORIT seviyelerine sahiptir.
+Bu öncelikler, bir kesinti sırasında bir veya daha fazla kesinti meydana gelmesi durumunda kullanılır.
+ Örneğin, normal kullanıcı modundaki program
+düşük seviyeli bir kesinti, örneğin 2, tarafından kesilir ve bu kesinti sırasında
+daha yüksek seviyeli bir kesinti, örneğin 5, talep edilirse, kesinti 2, daha yüksek önceliğe sahip kesinti 5 tarafından kesilir ve bu kesinti tamamlandığında
+daha yüksek seviyeli bir kesme talebi gelirse,
+örneğin 5, kesme 2, daha yüksek önceliğe sahip kesme 5 tarafından kesilir ve
+bu son kesme bittiğinde kontrol
+seviye 2 kesmeye geri döner ve bu da normal programa
+kullanıcı moduna geri döner. Bu şekilde, birden fazla kesme rutini
+yürütülmeyi bekleyebilir ve seviyelerine göre
+önce yürütülürler. İlk mikroişlemcilere kesmelerin eklenmesi,
+ çok uzun bekleme döngüleri nedeniyle CPU'nun gücünün
+sık sık kötü kullanılmasıyla ilgilidir. Örneğin, dikey boşluğun başlamasını
+beklemek gerekirse, ulaşılan satırı kontrol eden bir döngü
+yapılmalı ve bu satıra ulaşılana kadar işlemci
+bu saçma döngüde takılıp kalır. Belirli bir
+sinyal için bekleme süresi birkaç saniye olsaydı, işlemcinin gücünün
+ne kadar boşa harcanacağını bir düşünün! Bu nedenle, işlemcinin
+“olayları” beklemeye gerek kalmadan programları çalıştırmasını sağlayan kesintiler vardır.
+Her dikey boşlukta seviye 3 kesme oluşturulursa,
+işlemciye bir fraktal veya 3D görüntü hesaplatılabilir ve
+kesme oluştuğunda dikey boşluk anında, 
+3 boyutlu katı hesaplama kesilir, Vblank'ın başında yürütülecek rutin çalıştırılır, ardından
+3 boyutlu rutin kaldığı yerden devam eder.
+Çoklu görev, bu sayede mümkündür: bir şey yazdırmak veya okumak
+disk sürücüsünden yazdırmak veya okumak mümkündür, çünkü
+PC MSDOS'tan farklı olarak, işlemci bir görevi yerine getirebilir ve bu görev
+uygun zamanda disk veya seri/paralel port kesintisi tarafından kesilir
+ve bu kesintiler gerçekleştirildikten sonra devam eder.
+Amiga, mevcut 7 kesme seviyesinden 6'sını, belirli durumlarda özel yongalar (blitter, copper, cia) tarafından üretilen sinyallere atar.
+Yedinci seviye, Action Replay gibi harici kartlar tarafından kullanılır, çünkü
+onu üreten IPL2-IPL0 hatları genişletme bağlantı noktasına taşınmıştır.
+İlk 6 kesme seviyesi, özel yongalar tarafından üretilir, örneğin bir bli
+İlk 6 kesme seviyesi, örneğin bir blitter işleminin tamamlanması veya bir dikey boş video sırasında özel yongalar tarafından üretilir.
+
+||||
+_A_ /oO\
+.__________________________(iIi)_\\//_oOo.____________________________________.
+*******************************************************************************
+*            INTENA VE INTENAR NASIL KULLANILIR             *
+*******************************************************************************
+
+INTENA ($dff09a) kaydı aracılığıyla, bu kesintilerin bazılarını maskelemek, yani üretilmelerini önlemek mümkündür.
+Kesinti talep etmek için bir kayıt da vardır, INTREQ ($dff09c).
+Bu kayıtlar DMACON ($dff09a) gibi çalışır, aslında bit 15, belirtilen diğer bitlerin ayarlanması veya sıfırlanması gerektiğini belirler.
+Bu kayıtlar DMACON ($dff09a) gibi çalışır, aslında bit 15,
+diğer belirtilen bitlerin ayarlanması veya sıfırlanması gerektiğini belirler.
+Ders 8'de DMACON/DMACONR için yaptığımız gibi, yazma için INTENA($dff09a) ve okuma için INTENAR($dff01c) kayıtlarının “haritasını”
+görelim:
+:
+
+INTENA/INTENAR ($dff09a/$dff01c)
+
+BIT    AD     SEV.    AÇIKLAMA
+
+15    SET/CLR        “Set/clear” kontrol biti. DMACON'da olduğu gibi, 1 olan bitlerin
+sıfırlanıp sıfırlanmayacağını belirler.
+Bit=0, ne sıfırlanacak ne de sıfırlanmayacaktır.
+14    INTEN        Ana kesme (genel etkinleştirme kesmesi)
+13    EXTER    6 ($78)    Dış kesme, INT6 hattına bağlı
+12    DSKSYN    5 ($74)    DSKSYNC kaydı, sürücüdeki diskten okunan verilerle eşleşirse üretilir.
+Donanım yükleyiciler için kullanılır.
+11    RBF    5 ($74)    Seri portun alım UART tamponu DOLU.
+10    AUD3    4 ($70)    Ses kanalı 3'ün bir veri bloğunun okunması tamamlandı.
+09    AUD2    4 ($70)    Ses kanalı 2'nin bir veri bloğunun okunması tamamlandı.
+08    AUD1    4 ($70)    Ses kanalı 1'in bir veri bloğunun okunması tamamlandı.
+07	AUD0    4 ($70)    Ses kanalı 0'ın bir veri bloğunun okunması tamamlandı.
+06    BLIT    3 ($6c)    Blitter bir blitter işlemini tamamladığında 1 olarak ayarlanır
+05    VERTB    3 ($6c)    Elektronik fırça
+00 satırında, yani her dikey boşluğun başında
+04	COPER    3 ($6c)    Copper ile belirli bir
+video satırında üretilmek üzere ayarlanabilir. Belirli bir WAIT sonrasında talep edilmesi yeterlidir.
+03    PORTS    2 ($68)    Giriş/Çıkış Portları ve zamanlayıcılar, INT2 hattına bağlı
+02    SOFT    1 ($64)    Yazılım tarafından başlatılan kesmeler için ayrılmıştır.
+01    DSKBLK    1 ($64)    Diskten bir veri bloğunun aktarımının sonu.
+00    TBE    1 ($64)    Seri portun iletim UART tamponu BOŞ.
+
+Görüldüğü gibi, DMACON/DMACONR ile benzerlik açıktır:
+-Bit 15 çok önemlidir: eğer bu bit açıksa, $dff09A'da yazma sırasında 1 olarak ayarlanan bitler
+ilgili kesmeleri etkinleştirmek için kullanılır, bit 15
+0 ise, kayıtta 1 olan diğer bitler ilgili kesmeleri devre dışı bırakmak, yani
+maskelemek için kullanılır.
+DMACON'da olduğu gibi bir veya daha fazla kesmeyi etkinleştirmek veya devre dışı bırakmak için 
+ilgili bitleri 1 olarak ayarlamak gerekir; bu kesintilerin
+etkinleştirilip devre dışı bırakılacağını belirleyen bit 15'tür: 1 ise
+etkinleştirilir, 0 ise devre dışı bırakılır (önceki durumlarından bağımsız olarak
+).
+Hangi bitler üzerinde ÇALIŞACAĞIMIZI seçtikten sonra, bit 15'e göre bunları etkinleştireceğimizi (0) veya
+devre dışı bırakacağımızı (1) karar veririz. Bit 0 ne ayarlanır ne de sıfırlanır.
+
+Bir örnek verelim:
+;5432109876543210
+move.w #%1000000111000000,$dff09A ; bit 6, 7 ve 8 ETKİN
+;5432109876543210
+move.w #%0000000100100000,$dff09A ; bit 5 ve 8 DEVRE DIŞIDIR.
+
+-Bit 14 genel anahtar görevi görür (DMACON'daki bit 9 gibi).
+Örneğin, tüm
+kesme seviyelerini geçici olarak devre dışı bırakmak için sıfırlanabilir, tüm kaydı sıfırlamaya gerek kalmaz.
+
+Eski Ders 3a'yı hatırlayacaksınız, şununla:
+
+MOVE.W    #$4000,$dff09a    ; INTENA - Kesmeleri durdur
+
+Tüm kesmeler dururdu, oysa:
+
+MOVE.W    #$C000,$dff09a    ; INTENA - Kesmeleri etkinleştir
+
+;5432109876543210
+hepsi yeniden etkinleştiriliyordu. Peki, $4000 = %0100000000000000, yani
+MASTER biti, yani 14. Bunun yerine $c000 = %1100000000000000, yani
+MASTER bitini ve bununla birlikte tüm kesmeleri yeniden etkinleştirir. Ders 11b.s'de VERTB'yi etkinleştirmek için:
+
+move.w    #$c020,$9a(a5)	; INTENA - “VERTB” kesmesini etkinleştirir
+; seviye 3 ($6c),
+; kare başına bir kez (satır $00'da).
+
+; 5432109876543210
+Aslında, $c020 = %1100000000100000 - bit 5, VERTB, MASTER ile birlikte ayarlanmıştır.
+
+Fark etmiş olabileceğiniz gibi, kesintiler seri portun yönetiminden
+disk sürücüsünün izlerinin senkronizasyonunun okunmasına kadar uzanır ve
+blitter, CIA veya COPPER'ı da es geçmez. Tüm kesinti seviyelerini yeniden tanımlamak
+uyumluluk açısından çok tehlikelidir ve aynı zamanda çok
+zor ve kendi işletim sistemini yapmak isteyenler için özeldir.
+Demo ve oyun programcıları sadece $6c kesintisiyle ilgilenir, yani
+seviye 3 interrupt, yani elektronik fırça (VERTB - bit 5) ile senkronize interruptların
+üretilmesiyle ilgilidir veya bakır (COPER - bit 4) ile belirli video hatlarında
+üretilebilir. Daha nadiren, klavye veya başka bir şeyin yönetimi için interruptlarla
+uğraşmak gerekebilir.
+Özellikle, donanım yükleyici aracılığıyla diskten yükleme modası geçmiştir,
+çünkü oyunlar ve demoların 
+gerektiğinden,
+disk sürücüsünün kesintileri bizi ilgilendirmeyecektir. Ayrıca,
+kabloyla veya modemle bağlı 2 bilgisayarda çift oyun oynamak için seri portu kullanan bir oyun yapmak isteseniz bile,
+ SERIAL.DEVICE işletim sisteminin yasal çağrılarını kullanmak,
+olası çoklu seri kartlar veya yeni donanımlarla uyumsuz kesintiler oluşturmaktan daha iyidir.
+.
+·
+: :
+¦ ¦
+_| l_
+\ /
+\ /
+\ _!_
+\/¡
+
+*******************************************************************************
+*            INTREQ VE INTREQR NASIL KULLANILIR             *
+*******************************************************************************
+
+Ders 11b.s'de INTREQ/INTREQR'yi de gördük. Bunlar nedir?
+$6c kesintisinin nasıl yapılandırıldığını fark etmişsinizdir:
+
+MioInt6c:
+btst.b    #5,$dff01f    ; INTREQR - bit 5, VERTB, sıfırlanmış mı?
+beq.s    NointVERTB        ; Evet ise, “gerçek” bir int VERTB değildir!
+movem.l    d0-d7/a0-a6,-(SP)    ; kayıtları yığına kaydeder
+bsr.w    mt_music        ; müziği çalar
+movem.l    (SP)+,d0-d7/a0-a6    ; kayıtları yığından geri alır
+nointVERTB:	 ;6543210
+move.w    #%1110000,$dff09c ; INTREQ - rich, BLIT,COPER,VERTB silinir
+; 680x0 bunu kendi başına silmez!!!
+rte    ; COPER/BLIT/VERTB int'inden çık
+
+
+NOT: INTREQR, $dff01e/1f kelimesidir. Bu durumda, $dff01e yerine $dff01f baytında işlem yapıyoruz,
+ ancak yine de INTREQR'nin düşük baytıdır.
+
+INTREQ/INTREQR haritası, INTENA/INTENAR haritasıyla aynıdır:
+
+INTREQ/INTREQR ($dff09c/$dff01e)
+
+BIT    AD     SEV.    AÇIKLAMA
+
+15    SET/CLR        “Set/clear” kontrol biti. 1 olan bitlerin
+DMACON'da olduğu gibi sıfırlanıp sıfırlanmayacağını belirler.
+Bit=0, ne sıfırlanacak ne de sıfırlanmayacaktır
+14    INTEN    6 ($78)    CIAB seviye 6 kesme
+13    EXTER    6 ($78)    Dış kesme, INT6 hattına bağlı
+12    DSKSYN    5 ($74)    DSKSYNC kaydı, sürücüdeki diskten okunan verilerle eşleşirse üretilir. Donanım yükleyiciler için kullanılır.
+11    RBF    5
+Seri port alıcı UART tamponu DOLU. ($74)    Seri port alıcı UART tamponu DOLU.
+10    AUD3    4 ($70)    Ses kanalı 3'ten bir veri bloğunun okunması tamamlandı.
+09    AUD2    4 ($70)    Ses kanalı 2'den bir veri bloğunun okunması tamamlandı.
+08    AUD1    4 ($70)    Ses kanalı 1'den bir veri bloğunun okunması tamamlandı.
+07    AUD0    4 ($70)    Ses kanalı 0'dan bir veri bloğunun okunması tamamlandı.
+06    BLIT    3 ($6c)    Blitter bir blitter işlemini tamamladığında 1 olarak ayarlanır
+05    VERTB    3 ($6c)    Elektronik fırça
+00 satırında, yani her dikey boşluğun başında
+04    COPER    3 ($6c)	Copper ile belirli bir
+video satırında üretilmesi için ayarlanabilir. Belirli bir WAIT süresinden sonra talep edilmesi yeterlidir.
+03    PORTS    2 ($68)    Giriş/Çıkış Portları ve zamanlayıcılar, INT2 hattına bağlı
+02    SOFT    1 ($64)    Yazılım tarafından başlatılan kesintiler için ayrılmıştır.
+01    DSKBLK    1 ($64)    Diskten bir veri bloğunun aktarımının sonu.
+00    TBE    1 ($64)    Seri portun UART iletim tamponu BOŞ.
+
+
+Kesinti isteği için bir kayıt ne işe yarar?
+Elbette kesme istemek için. Ayrıca, bir kesme istendiğinde
+otomatik olarak (özel yongalar tarafından) veya
+manuel olarak (programımız tarafından) bu kesme gerçekleştirilir, ancak
+“istek” silinmez, bu nedenle her kesmenin sonunda
+gerçekleştirilen kesmeleri kesme listesinden silmek gerekir.
+
+INTREQ ($dff09c), 680x0 tarafından bir kesmenin, genellikle yazılım kesmesinin, yürütülmesini zorlamak için veya COPPER tarafından belirli bir video hattında COPER kesmesini yürütmek için kullanılır.
+Tabii ki, bir kesme talebi ayarlandıktan sonra, bu kesme INTENA'da etkinleştirilmezse
+bir ömür bekleyebilirsiniz.
+INTREQ'da ayarlanan bir bit, aynı zamanda INTENA'da da ayarlanırsa, o bite karşılık gelen kesme gerçekleşir.
+bir ömür boyu beklemek gerekir.
+INTREQ'de ayarlanan bir bit aynı anda INTENA'da da ayarlanmışsa
+o bite karşılık gelen kesme gerçekleşir.
+INTREQ'nin 14. bitinin ayarlanmış olması durumunda
+seviye 6 kesme gerçekleşir (
+INTENA, Master Enable'da da ayarlanmış olması şartıyla)
+Aksi takdirde, interrupt istekleri otomatik olarak sıfırlanmadığından, zaten gerçekleştirilmiş interrupt istek bitlerini silmek için kullanılır
+.
+Bu duruma dikkat etmek gerekir, çünkü her kesinti gerçekleştirildikten sonra
+istek bitlerini silmeyi unutursanız, işlemci
+onu tekrar gerçekleştirir! Şimdi kesintinin son kısmını anlamış olmalısınız:
+
+;6543210
+move.w    #%1110000,$dff09c ; INTREQ - BLIT/COPER/VERTB isteğini siler. BLIT,COPER,VERTB
+; 680x0 bunu kendi kendine silmez!!!
+rte    ; COPER/BLIT/VERTB kesmesinden çıkış
+
+
+INTREQR ($dff01e) salt okunurdur, INTREQ ise salt yazılabilir.
+ Hangi yonganın kesmeyi talep ettiğini bilmek için kullanılır. Aslında,
+seviye 3 kesmesi ($6c) gerçekleştirilirse, bunun “suçlusu” blitter,
+dikey boşluk veya copper olabilir. INTREQR bitlerini test ederek,
+bu 3'ten hangisinin neden olduğunu anlarız ve hangi rutini çalıştıracağımızı veya
+rutini çalıştırıp çalıştırmayacağımızı belirleriz, eğer bu 3 olasılıktan sadece biri ile ilgileniyorsak. Bit 15,
+ Set/Clr olduğu için INTREQR'de bir anlamı yoktur.
+Şimdi Ders 11b.s'de yapılan kullanımı gözden geçirelim:
+
+btst.b    #5,$dff01f    ; INTREQR - bit 5, VERTB, sıfırlanmış mı?
+beq.s    NointVERTB    ; Evet ise, “gerçek” bir int VERTB değildir!
+
+Bu durumda, bir adres üzerindeki BTST sadece .BYTE olabileceğinden,
+$dff01e yerine $dff01f, yani kelimenin düşük baytı test edilir.
+Noint'e atlanırsa, kesmenin
+bakır veya blitter tarafından üretildiği açıktır ve bit 4 veya 6 ayarlanır. Bu konuda
+, her
+mikrosaniyede gereksiz yere kesmenin tekrar çalışmasını önlemek için bu kesme isteklerini de iptal etmek gerekir:
+
+;6543210
+move.w    #%1110000,$dff09c ; INTREQ - BLIT, COPER, VERTB isteklerini siler
+; 680x0 bunu kendi başına silmediğinden!!!
+rte    ; COPER/BLIT/VERTB kesmesinden çıkış
+
+Sadece VERTB INTENA ile etkinleştirilmiş olmasına rağmen,
+COPER veya BLIT kesmelerinin talep edilip YÜRÜTÜLÜP YÜRÜTÜLMEMESİ garip gelebilir.
+Aslında talep edilmemeleri ve yürütülmemeleri gerekir..
+Ancak muhtemelen MMU veya işlemci hızıyla ilgili nedenlerden dolayı,
+1200 bazından daha hızlı bilgisayarlarda, örneğin A4000'de, bu durum gayet iyi olabilir
+ve bu da bazı demoların, hatta AGA için bazı yeni demoların çalışmasında sorunlara neden olur.
+Aslında, A1200 bazında, VERTB bitinin btst'si olmadan da kesme çalışabilir,
+ ancak A4000 veya A1200 turbo'da durum böyle değildir.
+“teorik olarak” çalışması gerektiğini kabul ediyorum, ancak gerçek şu ki, A1200 için birçok demo,
+A4000'de çalıştırıldığında müziği kare başına 2 kez çalıyor ve bu çok saçma.
+Bu nedenle, bilgisayarınızda her şey çalışsa bile, kesmeyi çalıştırmadan önce her zaman intreq bitlerini test edin,
+ aksi takdirde a4000 ve benzeri sistemlerde
+oyun/demo düzgün çalışmayacaktır.
+
+Özetlemek gerekirse, interrupt'ımızı ayarlamak için yapmamız gerekenler şunlardır:
+
+- VBR adresini alın, eski interrupt'ı kaydedin ve çıkmadan önce geri yükleyin.
+ Bu görev startup2.s tarafından iyi bir şekilde yerine getirilir, sorun yoktur
+: VBR adresi BaseVBR etiketindedir.
+- INTENA ile tüm kesmeleri sıfırlayın. Bu görev de
+startup2.s tarafından MOVE.W #$7fff,$9a(a5) ile gerçekleştirilir.
+- Kesmemizin adresini doğru otovektöre yerleştirin.
+- Yalnızca kesmeyi veya ihtiyacımız olan kesmeleri etkinleştirin
+
+Ve işte interrupt rutinimize eklememiz gerekenler:
+
+- Tüm kayıtları MOVEM ile kaydedin ve geri yükleyin, çünkü
+bir kayıt “kirlenirse”, interrupt sonunda ne olacağını hayal edin,
+ kesintiye uğrayan programın yürütülmesine geri döndüğünüzde
+kim bilir hangi durumda ve kayıtlarda kim bilir hangi değerler olacak!
+- $dff01e/1f (INTREQR) komutunu hemen test edin, bu seviyede bir kesmeyi kimin veya neyin
+olduğunu öğrenmek için. Örneğin, seviye 3 kesme
+COPER, VERTB veya BLITTER tarafından; seviye 4 kesme
+AUD0, AUD1, AUD2 veya AUD3 vb. tarafından oluşturulabilir.
+Bazen bu test yapılmasa da her şey normal
+çalışıyor gibi görünse de, A4000 veya benzeri sistemlerde CPU sanki sarhoşmuş gibi çalışacaktır (ancak bu bir özel efekt olabilir!).
+- Yürütülen kesmeyi neden olan INTREQ ($dff09c) bitlerini silin,
+çünkü bunlar otomatik olarak silinmez. Bunu yapmayı unutursanız
+işlemci kesme talebini sabit olarak alır ve
+sürekli olarak yürütülür.
+- Bir alt yordamı RTS ile sonlandırdığınız gibi, kesmeyi bir RTE ile sonlandırın.
+
+Bu hususları göz önünde bulundurarak, ilk kesmeyi tekrar sunuyorum:
+
+MioInt6c:
+btst.b    #5,$dff01f    ; INTREQR - bit 5, VERTB, sıfırlanmış mı?
+beq.s    NointVERTB        ; Evet ise, “gerçek” bir VERTB kesmesi değildir!
+movem.l    d0-d7/a0-a6,-(SP)    ; kayıtları yığına kaydeder
+bsr.w    mt_music        ; müziği çalar
+movem.l    (SP)+,d0-d7/a0-a6    ; kayıtları yığından geri alır
+nointVERTB:     ;6543210
+move.w    #%1110000,$dff09c ; INTREQ - rich, BLIT,COPER,VERTB'yi siler
+; 680x0 bunu kendi başına silmediğinden!!!
+rte    ; COPER/BLIT/VERTB int'inden çıkış
+
+||||
+<---/oO\--®®
+._________________________________\--/________________________________________.
+*******************************************************************************
+*        INTERRUPT VE İŞLETİM SİSTEMİ             *
+*******************************************************************************
+
+680x0 sadece 7 kesme seviyesine sahiptir, ancak o zaman
+kesmelerin pratikte 15 olması nasıl mümkün olabilir? Paula yongası,
+7 “gerçek” kesme seviyesini sözde kesmelere bölmekle görevlidir. Örneğin,
+üç durumda seviye 3 kesmesine atlar: 
+COPER, VERTB ve BLIT, ve bu üç durumdan hangisinin kesmeyi tetiklediğini
+anlamanın tek yolu
+Paula yongasına bağlı bir kayıt defterine, yani INTREQR'ye bakmaktır!
+Öte yandan, 680x0'da sadece 7 “gerçek” kesme seviyesi olduğundan, Paula tarafından aynı seviyede “ikiye bölünen” kesmelerin
+birbirlerini kesmeleri mümkün değildir. DSKSYNC gibi bir seviye 5 kesme,
+COPER gibi bir seviye 3 kesmenin çalışmasını kesebilir, ancak
+BLIT, COPER'ı kesemez, çünkü her ikisi de 680x0'ın aynı fiziksel seviyesinde bulunurlar.
+Bu nedenle, bir kesme çalışırken, aynı seviyede başka bir Paula psoudolav seviyesi kesme isteği oluşursa, örneğin COPER çalışırken bir BLIT,
+Bu nedenle, bir kesme yürütülürken, aynı 680x0 seviyesinde başka bir Paula psoudolivello kesme isteği
+gelirse,
+örneğin bir COPER yürütülürken bir BLIT, COPER'ı yürüten int
+sonunda, kesme 3 seviyesindeki kesme hemen bir kez daha yürütülür
+seçilir ve bu sefer COPER için rutin çalıştırılır (INTREQR üzerinde yapılan btst'ye göre
+hangi tür “alt kesme”nin çalıştırılacağı belirlenir).
+İşletim sistemindeki kesme düzeylerinin öncelikleri, yani
+Exec.library'de, gördüğünüz gibi donanım önceliğini takip eder:
+
+
+düzey 1: ($64)	EN DÜŞÜK ÖNCELİK
+
+1    boş iletim tamponu    TBE
+2    disk bloğu aktarıldı    DSKBLK
+3    yazılım kesmesi        SOFTINT
+
+seviye 2: ($68)
+
+4    harici portlar INT2 & CIAA    PORTS
+
+seviye 3: ($6c)
+
+5    bakır                COPER
+6    dikey boşluk aralığı    VERTB
+7    blit tamamlandı            BLIT
+
+seviye 4: ($70)
+
+8    ses kanalı 2            AUD2
+9    ses kanalı 0            AUD0
+10    ses kanalı 3            AUD3
+11    ses kanalı 1            AUD1
+
+seviye5: ($74)
+
+12    alma tamponu dolu    RBF
+13    disk senkronizasyonu bulundu        DSKSYNC
+
+seviye 6: ($78)        EN YÜKSEK ÖNCELİK
+
+14    harici INT6 & CIAB        EXTER
+15    özel (ana etkinleştirme)    INTEN
+
+seviye 7: ($7c) (Action Replay gibi harici kartlar)
+
+-    maskelenemeyen kesinti	NMI
+
+İşletim sisteminin kendi kesme rutinlerini yönetmesi,
+bazı kesmeleri bizim tarafımızdan değiştirmeyi daha tehlikeli hale getirir.
+Öncelik 6 ile ilgili olarak, graphics.library, ekranı kontrol etmek için
+CIAB Time Of Day (TOD) zamanlayıcı kesmesini kullanır.
+Öncelik 5'te, DSKSYNC TrackDisk tarafından ve RBF serial.device tarafından kullanılır.
+Seviye 4'te, audio.device tarafından kullanılan ses kanalları vardır.
+Seviye 3'te, blitter bir işlemi tamamladığında gerçekleşen BLIT kesintisi
+genellikle, zaman kaybetmemek için blitter tarafından yeni yazılan verileri yeniden kullanmakla
+ilgili rutinler yerleştirilir.
+Seviye 2'de, CIAA yongasının Timer.device, TimerA kesmesini
+klavye el sıkışması için, TimerB'yi mikrosaniye zamanlayıcı için ve
+50/60Hz'de TOD alarm kesmesini kullanır. Harici donanım kartları için INT2 de mevcuttur
+.
+En alt seviye olan seviye 1'de, TBE kesmesi Serial.device tarafından kullanılır,
+ DSKBLK kesmesi ise TrackDisk.device tarafından kullanılır. SOFTINT kesmeleri, yani
+yazılım kesmeleri, işletim sistemi aracılığıyla tanımlanabilir, örneğin Exec'in Cause işleviyle
+veya SOFT_INT tipi bir mesaj portu oluşturarak.
+
+*******************************************************************************
+*        COPPERLIST TARAFINDAN ÇAĞRILAN COPER KESİNTİLERİ         *
+*******************************************************************************
+
+Seviye 3 ($6c) COPER kesmesini belirli bir video hattında çağırmak istiyorsanız
+,
+ video hattını bekleyen bir bekleme işleminden sonra intreq ($dff09c) içine $8010 yazmanız yeterlidir
+:
+
+COPPERLIST:
+dc.w    $100,$200    ; BPLCON0 - bit düzlemi yok
+dc.w    $180,$00e    ; renk0 MAVİ
+dc.w    $a007,$fffe    ; WAIT - $a0 satırını bekle
+dc.w    $9c,$8010    ; INTREQ - COPER kesmesi isteği,
+; bu da “MOVE.W” ile color0 üzerinde etki eder.
+dc.w    $FFFF,$FFFE    ; Copperlist sonu
+
+Aslında $8010 = $8000 + %10000 değerindedir, yani bit 4, COPER ayarlanır.
+
+Ders 11c.s'de pratik bir örnek görelim.
+
+Elbette kesme, her seferinde “etkisini” değiştirerek farklı hatlara da çağrılabilir.
+Bunu Ders 11d.s'de kontrol edelim.
+
+Kesmelerin özel karmaşıklığı nedeniyle, şimdilik disk kesmeleri, seri port kesmeleri vb. ile ilgili
+başka örnekler vermeyeceğiz.
+Bizi ilgilendiren uygulamalar, yani DEMO ve OYUNLAR için, genellikle
+gördüğümüz iki tür seviye 3 ($6c) kesinti yeterlidir, yani her kare
+çalıştırılan VERTB ve herhangi bir video hattından bakırdan çağrılabilen COPER.
+Diğer kesintilerin uygulamaları, her alanda yaygın oldukları için
+örnek listelerde bulundukça yorumlanacaktır!
+Şimdilik, tüm kesinti seviyelerinin kullanımını önceden tahmin edebiliriz:
+Şimdilik, tüm kesme düzeylerinin kullanımını önceden söyleyebiliriz:
+Ders 11e.s ve Ders 11f.s listelerinde TÜM kesmeler yeniden tanımlanmıştır
+ve TÜM düzeyler etkinleştirilmiştir, ancak elbette yalnızca
+düzey 3'te rutinler vardır. Bu örnek, bir
+herhangi bir kesme seviyesini tanımlamak için “başlangıç” noktası olarak yararlı olabilir: ilgilendiğiniz seviyeyi “kesip”
+içine rutinleri yerleştirebilirsiniz.
+
+· . . . . . ..
+ . . . . ..
+ . . . ..
+ . ,----| . _ _ _ _ _ . ..
+ . `----|,----| ]-I-I-I-[ . . _ _ _ _ _ _
+_ _ _ _ _ _ ,----| |`----| . \_`_ '__/ . ]-I-I--I-I-[
+]-I-I-I-I-[ `----| . | | |. ` |. \_`__ '_/
+\ ` '_/ | /^\ . | | /¯\ | . |~_ [],|
+[¯] `__| | / ^\ | | |_| | _ _ _ _ _ _ _|______|_
+|__ ,| /^\ / ^ \ /^\ | === | I-I-I--I-I-I <=-=-==-=-=>
+___| ___ ,|__ /-=-\/=_=_=_=\-=-\ |, `_ | \ ` ` ‘ ’ / \__ _'_/
+(__I__I_I__I_ ) (====(_________)___)_| ___ |__ | çÅ$t£e | |. _ |
+\-\--|-|--/-/ | I [ ] I ( I|_I I |I ) _|____ ___|_ | _ |
+|[] ` ‘|_ |_ _|`__ ._[ _\ \ | | / / <=-=- øF -=-=> |` ’|
+/ \ [] ` .| |-| |-| |_| |_| |_| | [] [] | /\\__ ___ ___/ | ' |
+<===> .|-=-=-=-=-=-=-=-=-=-=-| , , / \/ \|. . | /\ |[] |
+|[ ]|` ` [] | . _________ . |- , <=======|¦££u$¦øN|<==>|‘ __|
+<===> ` ’ |||| | | ||| | [] <=======| || || ' I-|
+\T/ -- |||| | çOi! | ||| | . ' \T/--T-T-T-T-T-T|T-T||__. |
+__/|\ . .||||| | | |||| |. . ¯¯. /|\__|_|_|_|_|_|||_|/ çO¦!`¶4\_
+¯¯ : \ ||||! ! _o , | ||! | / | \ ! ! ! | !.!| / ¦ ¯
+¦ \ !||! //\/ | |! | \ | / ! !| / :
+: `! '/\ ! ! ! \!/ ! __¦__
+___ _|_______________/ /_ /\________________________________________\ //_ ___
+¯¯¯ ¯|¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯ ¯¯\/ ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯\//¯¯ ¯¯¯
+: ¦
+
+***************************************************************
+* KOPPER HAKKINDA İLERİ DÜZEY BİLGİLER - SADECE COLOR0 KULLANIMI ($180)-BITPLANES YOK *
+*******************************************************************************
+
+Başlıkta da belirtildiği gibi, şimdi sadece
+bitplanes içermeyen bir copperlist kullanarak yapılabilecek uygulamaları göreceğiz. Yani, sadece WAIT ve MOVE komutlarıyla çizimler veya
+animasyonlar oluşturmak.
+Tabii ki, bitplanes eklerseniz,
+bu efektleri “çaprazlayabilir” ve “üst üste bindirebilirsiniz”,
+color0'ın yanı sıra color2 veya color3'ü de birçok kez değiştirerek.
+Ancak, başlamak için henüz ele alınmamış bazı konuları açıklamamız gerekiyor.
+Bu, copper'ın bir komutunu yerine getirmek için harcadığı “zaman” ile ilgilidir.
+MOVE komutunu gerçekleştirmek için harcadığı “zaman”dır. Daha önce, sadece ‘32’ veya “16” renk resmi olarak BPLCON0'da ayarlanmışken, belirli bir video satırında tüm paleti, hatta 32
+renkli paleti değiştirerek ekrana birkaç
+yüz renk getirebildiğimizi görmüştük. Peki, bir satırda 32 rengi değiştirebildik, yani
+bakırın 32 MOVE komutunu gerçekleştirebildik:
+
+dc.w    $180,xxx    ; 1 renk0'da hareket
+dc.w    $182,xxx    ; 1 renk1'de hareket...
+            ; vb.
+
+Aslında, renkleri yatay konum
+$07 veya $01'den değiştirmeye başlarsak, 32 rengin tümü
+ekranın ortasına kadar değiştirilir, çünkü her hareketin
+8 piksel düşük çözünürlük gerektirir. Bu nedenle, çizim gerçekten başlamadan önce
+renkleri 1 satır önce değiştirmek her zaman daha iyidir.
+Arka arkaya yaklaşık 50 MOVE koyarsak, sonuncusu bir alt satıra gelir!
+Ayrıca, 50 milisaniyeden daha kısa bir sürede onlarca hareket yapmak fiziksel olarak imkansızdır
+!
+Ancak bu görünürdeki sınırlamayı amaçlarımız için kullanabiliriz,
+örneğin WAIT kullanmadan, her 8 pikselde yatay olarak rengi değiştirmek için,
+ satır başına yaklaşık 50 COLOR0 ekleyerek.
+Bunun pratik bir örneğini Ders 11g1.s'de görelim.
+Bu listeden yararlanarak, 1 bit düzlemli bir ekranda $182'yi değiştirebiliriz,
+$180'yi değil: Bu şekilde, olası “yazılar”
+üst üste baskı olarak soldan sağa doğru
+yukarıdan aşağıya doğru değil, normalde copperlist ile yaptığımız gibi soluklaşacaktır.
+
+Ders11g2.s ve Ders11g3.s'de bu
+efektin daha renkli versiyonları bulunmaktadır, bunlar “PLASMA” efektleri için bir temel oluşturabilir.
+
+Bu arada, bu tür bir çizginin renklerini “döndürürsek” veya ‘döndürürsek’
+ne elde ederiz? Amiga'nın ilk günlerinde intro'larda kullanılan çok bilinen bir efekt
+: “supercar” efektini Ders11g4.s'de görelim
+
+Belki sadece 2 satırı döngüye sokmak pek etkileyici değildir. Daha fazlasını döngüye sokalım, belki
+“düğüme” benzeri bir efekt yaratarak, Ders11g5.s'de
+
+colorXX'lerin arka arkaya dizilmesinden yararlanan başka bir “fantezi”,
+örnek olarak Ders11g6.s
+
+Şimdi, biraz “ekonomik” bir şekilde plazma benzeri bir efekt yapmanın bir yolunu görelim:
+çok sayıda color0'ın içeriğini değiştirmek yerine, her satırın başına bir wait koyalım,
+ her biri 52 color0 içerecek: satırı
+sağa ve sola, çeşitli wait'lerin yatay konumunu değiştirerek
+kolayca kaydırabiliriz! Pratikte bu, Ders 11g7'de gösterilmiştir.s
+
+* COPPER2 (COP2LC/COPJMP2) KULLANIMI:
+
+$dff080 ve $dff088'in yanı sıra,
+copper 1'i işaretlemek ve başlatmak için $dff084 ve $dff08a'nın
+copper2'yi işaretlemek ve başlatmak için var olduğunu fark etmişsinizdir. Peki copper2 nasıl çalışır? Ve bize ne işe yarayabilir?
+Her çerçeve başlangıcında, bakır 1'i başlatır ve adresi
+$dff080'den okunur.
+Bazen çerçevenin sonunu beklemeden, COPJMP1'e, yani $dff088'e yazarak “anında” başlatırız.
+$dff084'e bir bakır listesi koyarsak (COP2LC), COPJMP2'ye ($dff08a) yazarak da başlatmamız gerekir.
+Bir copperlist'i $dff084'e (COP2LC) koyarsak, onu
+COPJMP2 ($dff08a) yazarak da başlatmamız gerekir.
+Ancak çerçevenin sonunda copper1 yeniden başlatılır.
+Şimdi, bu özellik, 680x0 komutlarında “JMP” ile yaptığımız gibi, atlamak için farklı copperlist'ler yapmak için kullanılabilir
+..
+Örneğin, copper1'i ekranın yarısına kadar çalıştırmak, ardından
+copper 2'den diğer yarısını çalıştırmak istiyorsak, başlangıçta
+copper 2'yi işaret etmek ve copjmp2 ile copperlist'ten başlatmak yeterlidir:
+
+
+move.l    #copper1,$dff080    ; COP1LC
+move.l    #copper2,$dff084    ; COP2LC
+...
+
+section    copperissime,data_C
+
+copper1:...
+    ; çeşitli talimatlar...
+dc.w    $a007,$fffe    ; $a0 satırını bekle
+dc.w    $8a,0        ; COPJMP2 - copper 2'yi başlat
+
+
+copper2:...
+    ; çeşitli talimatlar
+dc.w	$ffff,$fffe    ; Copperlist'in sonu,
+; copper1 ile yeniden başlar!
+
+
+“dc.w $8a,0” noktasına gelen copper, (BRA veya JMP gibi) copper2'ye atlar, ancak
+bu önceden $dff08a'ya yerleştirilmiş olmalıdır. Atlar,
+ “bsr” gibi davranmaz, bu nedenle copper1'in “dc.w $8a,0” altına asla geri dönmez.
+Şimdi copper2'nin birkaç pratik kullanımını görelim. Bunlardan biri
+dinamik copper'lar, yani her kare için değiştirilen 2 copperlist'ten oluşan
+bit düzlemlerinin “çift arabelleğe alınması” gibi. Bu,
+tonları daha ‘pürüzsüz’ hale getirmek için kullanılır, çünkü her kare
+de 2 rengi değiştirirseniz, ara rengi “görmenizi” sağlayan interlace benzeri bir efekt elde edersiniz
+.
+Aynı tonlamaya sahip, ancak biraz “fazlı” 2 copperlist hazırlayın ve
+bunları sürekli değiştirin.
+
+Ders 11h1'de bir Dynamc Cop örneğini görelim.
+Farkı gördünüz mü? AGA tonlaması gibi görünüyor!
+Dinamik copper'ların çok az oyunda kullanıldığını söylemeliyiz, oysa
+yapılması o kadar da zor değil. Dinamik copper'ların kullanıldığı oyunlar arasında
+AGONY ve NAPS TEAM'in İtalyan dövüş oyunu
+SHADOW FIGHTER'ı sayabiliriz.
+
+Şimdi copper2'nin başka bir uygulamasını görelim. Birkaç
+copperlist'i değiştirmek yerine, birkaç düzine copperlist'i döngüye sokabiliriz, böylece
+etkinin her “aşaması” için 1 copperlist hesaplayarak bir copper etkisini "önceden hesaplayabiliriz
+: etki döngüsel olacağı için, her seferinde
+copperlist'in “sonraki” copperlist'e işaret etmek yeterli olacaktır.
+Bu şekilde copper efektini elde ederiz, ancak zaman açısından
+68000 rutinlerinin kullanacağı zamanın TAMAMENİNİ tasarruf ederiz! Dolayısıyla
+söz konusu copper efektinin “ÜCRETSİZ” olduğunu söyleyebiliriz ve
+geri kalan tüm zamanı tüketen bir rutin üzerinde çalıştırabiliriz.
+
+Ders 11h2.s'de “normal” bir rutin ve
+‘bakır’ kareleri önceden hesaplayan versiyonu, yani Ders 11h3.s'yi görelim. “Turbized/önceden hesaplanmış” versiyonun tek dezavantajı
+tüm bakır liste karelerini depolamak için ek bellek gerektirmesidir.
+
+Copper seviye 2 sınavını geçmek istiyorsanız, WAIT'lerin Y koordinatını “maskeleme” yapabileceğinizi de bilmeniz gerekir.
+Pratikte, Y maskeli bir wait şöyledir:
+
+dc.w    $0007,$80FE	; “maskelenmiş” Y'de bekle
+
+Anlamı: Y satırını kontrol etme, ancak mevcut satırın $07 X konumunu bekle
+.
+ Bu, Y konumunu okuyamayan “engelli” bir WAIT'tir.
+Aslında, Y konumunun alt 7 bitini okuyamamaktadır, bu nedenle
+$80 satırından sonra çalışır. Peki, Y konumunu kontrol etmeyen maskelenmiş bir beklemeye ne gerek var?
+Y konumunu kontrol etmeyen maskeli bir beklemeye ne ihtiyacımız var?
+Ders 3'teki efsanevi çubuğu hareket ettirmemiz gerekirse,
+onu oluşturan tüm beklemeleri değiştirmemiz gerekir. Bunun yerine, başa normal bir bekleme
+ve altına tüm maskeli beklemeleri koyarsak, ilk beklemeyi değiştirmek
+yeterli olacaktır, diğerleri “takip edecektir”. 680x0 komut tasarrufu açıktır:
+tek tek bir ekleme/çıkarma ile tüm çubuk hareket eder.
+
+Ders 11h4.s'de bir uygulamayı görelim (Ders 3'teki efsanevi çubuk!).
+
+Dikey $FF çizgisinin altında da çalıştığına dikkat edin, çünkü
+numaralandırma $00'dan başlar. Artık bunu bildiğinize göre, o bölgede bir şeyleri hareket ettirmeniz gerekirse
+bu hileyi kullanabilirsiniz.
+
+Şimdi SKIP komutundan bahsedebiliriz, ancak bunu hiç kimse tarafından kullanıldığını görmedim
+ve kendim de ne işe yarayacağını anlamadım (copper2'yi atlamalar için kullanarak
+her şeyi kolayca yapabilirsiniz...), bu konuyu atlıyorum,
+ umarım bu komutun tamamen gereksiz olduğuna inanırsınız.
+
+Şimdi, “BITPLANES OLMADAN SADECE COPPER” konusunu bitirmek için, bu türün en yaygın efektlerini özetleyen 6
+liste sunuyorum.
+
+Lezione11i1.s tam ekran renk kaydırmasıdır
+
+Lezione11i2.s 3 seviyeli çubuklardan oluşan bir sözde paralaksdır. Örneğin, bir platform oyununda “yükselme” sırasında
+arka plan olarak kullanılabilir.
+
+Lezione11i3 küçük COP'da bir fantezidir...
+
+Lezione11i4.s, elektronik fırçanın yatay konum değerlerini (genellikle farklı değerler) karıştırarak
+bakır gradyan renkleri oluşturan sözde rastgele bir gradyandır.
+Lezione11i5.s, renkleri 3 boyutlu gibi görünecek şekilde döngüsel olarak değiştiren bir bakır listesidir.
+
+Lezione11i6.s, bir bakır gradyanıdır.
+
+Lezione11i7.s, bir bakır gradyanıdır.
+_______j::'__ __:::,__
+_/¯ /. .-^-.-^-.¯\ ¬\_
+/ \_ | ® | © |_/ \
+/ __ T `---‘\--’! \
+/ __/` | ¯¬ _ \¬ \ \
+/ _/ | _/\ ¬_/ _,\ \
+( '\ | ` ¯¯ ¯Y \ \
+\ \ l____________/ \
+\ 7________________\_ /
+\ l ____ ( /
+\_____\ ¬T /______/
+/ \ | / /
+C _ _ ( __ | __ ( _ _(
+¯ T ¯ ¬ | ¯ T ¯ ¯
+/¯ ¯\ ¯\ xCz
+___/_______________\_______\__
+(________________)_____________)
+
+
+*******************************************************************************
+*    KOPPER HAKKINDA İLERİ DÜZEY BİLGİLER - BITPLANLAR DA ETKİN *
+*******************************************************************************
+
+Sadece bakırın move&wait komutlarıyla pek çok şey yapabileceğimizi gördünüz mü?
+ Peki, bitplanes etkinleştirilmiş karmaşık bakır listeleri yaparsak ne olur?
+ Her satırda bplmod'u değiştirerek şekilleri uzatabilir,
+ bplcon1 ($dff102) kullanarak dalgalandırabilir veya hatta her satırda
+bitplanes işaretçilerini değiştirebiliriz!!!
+
+Aşağıdaki listelerde, diwstart/diwstop ve ddfstart/ddfstop'u hesaplamak için özel bir sistem kullanılıyor.
+Bu sistem,
+shift “<<” ve “>>” operatörleri ile “&” (ve) ve yaygın olarak kullanılan “*”, “/”,
+“+”,“-”.
+Normal bir 320*256 ekran yapmak istiyorsanız, önce normal değerleri girin
+veya elle değiştirin. Bunun yerine, özel bir boyutta bir ekran yapmak istiyorsanız,
+ örneğin 256*256, zaman kazanabilirsiniz.
+
+
+scr_bytes    = 40    ; Her yatay satır için bayt sayısı.
+; Bu değerden ekran genişliği hesaplanır,
+; baytları 8 ile çarparak: normal ekran 320/8=40
+; Örneğin, 336 piksel genişliğinde bir ekran için, 336/8=42
+; örnek genişlikler:
+; 264 piksel = 33 / 272 piksel = 34 / 280 piksel = 35
+; 360 piksel = 45 / 368 piksel = 46 / 376 piksel = 47
+; ... 640 piksel = 80 / 648 piksel = 81 ...
+
+scr_h        = 256    ; Ekran yüksekliği satır cinsinden
+scr_x		= $81    ; Ekran başlangıcı, konum XX (normal $xx81) (129)
+scr_y        = $2c    ; Ekran başlangıcı, konum YY (normal $2cxx) (44)
+scr_res        = 1    ; 2 = Yüksek Çözünürlük (640*xxx) / 1 = Düşük Çözünürlük (320*xxx)
+scr_lace    = 0    ; 0 = interlace yok (xxx*256) / 1 = interlace (xxx*512)
+ham        = 0    ; 0 = ham yok / 1 = ham
+scr_bpl        = 1    ; Bitplanes sayısı
+
+; otomatik olarak hesaplanan parametreler
+
+scr_w		= scr_bytes*8        ; ekran genişliği
+scr_size    = scr_bytes*scr_h    ; ekran boyutu (bayt cinsinden)
+BPLC0    = ((scr_res&2)<<14)+(scr_bpl<<12)+$200+(scr_lace<<2)+(ham<<11)
+DIWS	= (scr_y<<8)+scr_x
+DIWSt	= ((scr_y+scr_h/(scr_lace+1))&255)<<8+(scr_x+scr_w/scr_res)&255
+DDFS	= (scr_x-(16/scr_res+1))/2
+DDFSt    = DDFS+(8/scr_res)*(scr_bytes/2-scr_res)
+
+Ardından, copperlist'e şunları yazacağız:
+
+dc.w    $8e,DIWS    ; DiwStrt
+dc.w    $90,DIWSt	; DiwStop
+dc.w    $92,DDFS    ; DdfStart
+dc.w    $94,DDFSt    ; DdfStop
+dc.w    $100,BPLC0    ; BplCon0
+
+Ancak, bu “hatasız” değildir, garip boyutlarda ekranlar yapmak istiyorsanız
+çalışmayabilir ve ‘elle’ yapmak daha iyi olacaktır.
+Değeri hesaplamak için de kullanılabilir,
+montajdan sonra “? DIWS” veya “? xxxx” ile kontrol edip değeri elle yazabilirsiniz.
+İşte bu bölümün listeleri:
+
+Ders11l1.s - her satırda hem color0 hem de bplcon1 ($dff102) değiştirilir,
+bu da bit düzlemlerinin dalgalanmasına neden olur.
+
+Ders11l2.s - Her satırda 4 renkten 3'ünü değiştirir (2 bit düzlemi).
+
+Ders11l3a.s, Ders11l3b.s ve Ders113c.s, 
+disk 1'deki küçük demoda bulunan AMIGA ET logosunun dalgalanma efektini
+elde etmek için gereken 3 adımdır. Parça parça anlatarak tümünü açıklamış olduk!
+Şekil, sıfırlanan modüllerle dönüşümlü olarak negatif modüller sayesinde dalgalanır.
+
+Ders11l4.s - Bu, dalgalanma elde etmenin başka bir yoludur:
+bplpointers her satırda yeniden tanımlanır!
+
+Ders 11l5.s - 40*29 piksel genişliğinde küçük bir resminiz varsa ve
+bunu tüm ekrana doldurmak istiyorsanız ne yapabilirsiniz? 
+8 kat yakınlaştırmayı deneyin, böylece resim 320*232 olur. Bu liste, dikey uzama için modülü, yatay uzama için ise her biti test eden ve onu bir bayta (8 bit) “dönüştüren” bir rutin kullanarak bunu yapar.
+Ders 11l5b.s - Bu, önceki listenin optimize edilmiş bir versiyonudur ve 8 bayta ‘genişletilmiş’ bir baytın 256 olası kombinasyonunu içeren bir tablo kullanır.
+Yatay uzama için modülü kullanır, dikey uzama için ise her biti test eden ve onu bir bayta (8 bit) "d
+
+Lezione11l5b.s - önceki listeden optimize edilmiş bir versiyonudur ve
+8 bayta “genişletilmiş” bir baytın 256 olası kombinasyonunu içeren bir tablo kullanır.
+Çalışması için yarıdan daha az zaman gerektirir! 
+Bu tür optimizasyonları yapmayı öğrenin: daha hızlı hale getirmek imkansız gibi görünen
+rutinler, bazen bu şekilde hızlandırılabilir!
+
+* INTERLACE EKRAN NASIL YAPILIR (512 satır uzunluğunda)
+
+Interlaced modu, iki kat daha fazla video verisi görüntülenmesini sağlar.
+Bu, görüntülenen satır sayısını ikiye katlayarak mümkündür.
+Normalde 256 dikey satır mümkündür, ancak interlace ile
+düşük ve yüksek çözünürlükte 512 satıra ulaşılabilir.
+Ancak bazı özellikler vardır, aslında bitplanes
+'i işaretlemek ve interlace bitini ayarlamak yeterli değildir (bplcon0'ın 2. biti) ayarlamak yeterli değildir.
+RAW şekli için, normal bir
+interlaced çizimi iffconverter ile dönüştürmek ve kaydetmek yeterlidir, yani 320x512 veya
+640x512 boyutunda bir şekil. Daha küçük bir fırça da uygundur, ancak
+görüntünün “ezilmiş”
+ olmaması gerektiğini unutmayın. Bilindiği gibi, interlaced “titrer”, ‘sallanır’.
+Bu bir dezavantajdır, ancak aynı zamanda bir avantajdır, çünkü normal TV veya monitörlerde
+256 satırdan daha yüksek bir dikey çözünürlük mümkün değildir,
+bir “VGA”, yani multisync veya multiscan monitör gerekir.
+“Hile”, tek seferde sadece 256 tek satırı görüntülemek ve
+diğer 256 çift satırı görüntülemek suretiyle yapılır.
+Değişim her kare için gerçekleşir, bu nedenle gözü oldukça aldatır, 
+titreme dışında (renkler iyi seçilirse titreme çok azalır).
+Ancak bu değişim tamamen “otomatik” değildir,
+bizim “elle” yapmamız gereken küçük bir işlem vardır.
+
++-----------------------------------+----------------------------------+
+| KARE 1 (tek satırlar) | KARE 2 (çift satırlar) |
++-----------------------------------+----------------------------------+
+| ÇİZGİ 1: ---> xxxxxxxxxxxx | |
+| | ÇİZGİ 2: ---> xxxxxxxxxxxx |
+| ÇİZGİ 3: ---> xxxxxxxxxxxx | |
+| | ÇİZGİ 4: ---> xxxxxxxxxxxx |
+| SATIR 5: ---> xxxxxxxxxxxx | |
+| | SATIR 6: ---> xxxxxxxxxxxx |
+| SATIR 7: ---> xxxxxxxxxxxx | |
+| | SATIR 8: ---> xxxxxxxxxxxx |
+| SATIR 9: ---> xxxxxxxxxxxx | |
+| | SATIR 10: --> xxxxxxxxxxxx |
+| [...] | |
+| | [...] |
+| SATIR 311: -> xxxxxxxxxxxx | |
+| | SATIR 312: -> xxxxxxxxxxxx |
+| SATIR 313: -> xxxxxxxxxxxx | |
++-----------------------------------+----------------------------------+
+
+Interlaced modu için modülü yeniden tanımlamanız gerekir. Düşük çözünürlükte
+ise 40, yüksek çözünürlükte ise 80 olarak ayarlayın. Pratikte,
+modüle bir satırın uzunluğunu girerek onu atlamak gerekir: modül, her video satırının sonuna eklenen bir değer
+olduğundan, bir satırın uzunluğunu atlarsak
+şöyle bir şey olur: ilk satır okunur ve görüntülenir,
+ sonunda ikinci satır atlanır ve altında
+üçüncü satır görüntülenir; bunun sonunda bir satır atlanır ve
+beşinci satır görüntülenir, vb. Pratikte,
+sadece tek satırların görüntülenmesini sağladık.
+Donanım nedenleriyle ekran 256 satırdan fazlasını görüntüleyemez, ancak
+kimse bize hangi 256 satırı görüntüleyeceğimizi veya görüntülemeyi ne zaman başlatacağımızı söylemiyor.
+Bir kez çift satırları atlarsak ve bir sonraki sefer tek satırları atlarsak,
+256 satırlık bir ekranda 512 satırlık bir ekran görüntüsü görüntüleyebiliriz!
+
+Özetleyelim: Örneğin, 640x512 interlaced bir pic dosyamız var ve
+bunu RAW'a dönüştürdük ve görüntülemek istiyoruz. Resmi
+uygun şekilde işaretledik ve modülü -80'e ayarladık, ayrıca bplcon0 ($dff100) içinde
+(hires bitine ek olarak) interlace bitini ayarladık.
+Ne elde ediyoruz? RESİM DÜŞÜK ÇÖZÜNÜRLÜKLÜ GİBİ GÖRÜNÜYOR! 256 SATIR YÜKSEKLİĞİNDE, SANKİ
+ÇÖZÜNÜRLÜĞÜ DÜŞÜRMÜŞÜZ GİBİ!
+
+Şimdi, interlace'i etkinleştirmek için küçük bir “manuel” işlem yapma zamanı.
+Bunu kontrol etmek için, her karede tek veya çift satırları görüntülemek istediğimizi belirten özel bir bit var.
+Bu, VPOSR ($dff004) bitinin 15'inci bitidir ve LOF veya Long Frame olarak adlandırılır ve “uzun kare” modunda olup olmadığımızı gösterir.
+Bu, VPOSR ($dff004) bit 15'tir, LOF veya Long Frame olarak adlandırılır ve
+“uzun kare”de olup olmadığımızı gösterir. İşte bir rutin örneği:
+
+LACEINT:
+MOVE.L    #BITPLANE,D0    ; Bit düzlemi adresi
+btst.b    #15-8,$dff004    ; VPOSR LOF bit?
+Beq.S    Faidispari    ; Evet ise, tek satırları işleyin
+ADD.L    #80,D0        ; Veya bir satır uzunluğu ekleyin
+; görüntülemeye ikinci satırdan başlayarak
+; çift satırları görüntüleyin!
+FaiDispari:
+LEA    BPLPOINTERS,A1    ; COPLIST'TEKİ PLANE POINTERS
+MOVE.W    D0,6(A1)    ; Şekli işaret et
+SWAP    D0
+MOVE.W    D0,2(A1)
+RTS
+
+Gördüğünüz gibi, LOF biti sıfırlanmıştır, ilk
+çizgiden görüntüleme başlar, ardından modülün etkisiyle 1,3,5,7...
+vb. çizgiler, yani tek sayılar görüntülenir. Aksi takdirde, bir çizgi atlanır ve
+ikinci çizgiden görüntüleme başlar, ardından 2,4,6,8... vb.: ÇİFT!
+
+Bazıları 2 copperlist yapar, biri bir yöne, diğeri diğer yöne bakar
+ve ardından LOF bitine göre her kare birini veya diğerini gösterir. Ancak
+sadece bitplanes'i işaretlemek daha “akıllıca” bence... yine de istediğiniz gibi yapabilirsiniz,
+yöntemi anladığınız sürece sorun yok.
+
+Ders11l6.s - 640x512, 1 bit düzlemli bir örnektir
+
+Ders11l6b.s - 320x512, 4 bit düzlemli bir örnektir
+
+“Copper” dersinin 2. seviyesini tamamlamak için
+sprite'lar için de daha karmaşık bir örnek yapmamız gerekiyor.
+Onları ders 7'de yıldızlar yapmak için nasıl “yeniden kullandığımızı” hatırlıyor musunuz?
+Peki, sprite'ları her 2 satırda bir yeniden kullanırsak ne olur?
+
+Ders11l7.s - Sprite'ların çoklu kullanımı (her biri 128 kez)
+
+____::::____
+_/::__ ·· __ \_
+,|:·( o _, o ) |,
+(|· (_ |)
+`l. _ .j'
+\ \____/ / Zs!
+______\ :l/ /____
+/:::·· ¬\________/ ::\
+/::· ·:\
+
+
+******************************************************************************
+*        2 CHIP 8520, CIAA VE CIAB *
+******************************************************************************
+
+Amiga'yı sökerseniz, Agnus, Paula, Denise, 680x0 vb. dışında
+bir çift 8520 çip, CIA olarak adlandırılan çipler de bulacaksınız. Bu çipler, her biri 16 pin
+Input/Output bir seri kaydırma kaydı, üç zamanlayıcı, bir sadece
+çıkış pini ve bir sadece giriş pini vardır. Sonuç olarak, her ikisi de
+ilgili adreslerine erişerek ulaşılabilen 16 kayda sahiptir:
+
+CIAA adres haritası
+---------------------------------------------------------------------------
+Byte Kayıt Veri bitleri
+Adres Adı 7 6 5 4 3 2 1 0
+---------------------------------------------------------------------------
+$BFE001 pra /FIR1 /FIR0 /RDY /TK0 /WPRO /CHNG /LED OVL
+$BFE101 prb Paralel port
+$BFE201 ddra Port A adresi (BFE001);1=çıkış (normalde $03)
+$BFE301 ddrb Port B için adres (BFE101);1=çıkış (giriş/çıkış olabilir)
+$BFE401 talo CIAA zamanlayıcı A düşük bayt (.715909 Mhz NTSC; .709379 Mhz PAL)
+$BFE501 tahi CIAA zamanlayıcı A yüksek bayt
+$BFE601 tblo CIAA zamanlayıcı B düşük bayt (.715909 Mhz NTSC; .709379 Mhz PAL)
+$BFE701 tbhi CIAA zamanlayıcı B yüksek bayt
+$BFE801 todlo 50/60 Hz zamanlayıcı - bitler 7-0 (VSync veya satır tik)
+$BFE901 todmid 50/60 Hz zamanlayıcı - bitler 15-8
+$BFEA01 todhi 50/60 Hz zamanlayıcı - bitler 23-16
+$BFEB01 Kullanılmıyor
+$BFEC01 sdr CIAA seri veri kaydı (klavyeye bağlı)
+$BFED01 icr CIAA kesme kontrol kaydı
+$BFEE01 cra CIAA kontrol kaydı A
+$BFEF01 crb CIAA kontrol kaydı B
+
+Not: CIAA, INT2, yani seviye 2, $68 kesmesi oluşturabilir.
+
+
+CIAB adres haritası
+---------------------------------------------------------------------------
+Byte Kayıt Veri bitleri
+Adres Adı 7 6 5 4 3 2 1 0
+---------------------------------------------------------------------------
+$BFD000 pra /DTR /RTS /CD /CTS /DSR SEL POUT BUSY
+$BFD100 prb /MTR /SEL3 /SEL2 /SEL1 /SEL0 /SIDE DIR /STEP
+$BFD200 ddra Port A için yön (BFD000);1 = çıkış (normalde $FF'de)
+$BFD300 ddrb Port B için yön (BFD100);1 = çıkış (normalde $FF'de)
+$BFD400 talo CIAB zamanlayıcı A düşük bayt (.715909 Mhz NTSC; .709379 Mhz PAL)
+$BFD500 tahi CIAB zamanlayıcı A yüksek bayt
+$BFD600 tblo CIAB zamanlayıcı B düşük bayt (.715909 Mhz NTSC; .709379 Mhz PAL)
+$BFD700 tbhi CIAB zamanlayıcı B yüksek bayt
+$BFD800 todlo Yatay senkronizasyon zamanlayıcı - bitler 7-0
+$BFD900 todmid Yatay senkronizasyon zamanlayıcı - bitler 15-8
+$BFDA00 todhi Yatay senkronizasyon zamanlayıcı - bitler 23-16
+$BFDB00 Kullanılmıyor
+$BFDC00 sdr CIAB seri veri kaydı (kullanılmaz)
+$BFDD00 icr CIAB kesme kontrol kaydı
+$BFDE00 cra CIAB Kontrol kaydı A
+$BFDF00 crb CIAB Kontrol kaydı B
+
+Not: CIAB bir INT6, yani seviye 6: $78 oluşturabilir.
+
+Bu “harita”dan, 2 CIA'nın görevlerinin klavye okuma,
+ seri port yönetimi (2
+bilgisayar arasında veya bilgisayar ve modem arasında veri alışverişi için), paralel port yönetimi (örneğin
+yazıcı için) ve disk sürücüsünün kafalarının kontrolüne kadar uzanır. Ayrıca
+mikrosaniye veya saatleri sayabilen “saatler” de vardır.
+Ancak, çeşitli nedenlerden dolayı tüm bu özellikler bizi ilgilendirmeyecektir.
+ Öncelikle, disk sürücülerinin donanımıyla ilgili kısım,
+ her iyi oyun/demo Hard Disk (veya CD-ROM!) üzerine yüklenebilmelidir
+sabit diske (veya CD-ROM'a!) yüklenebilmelidir, örneğin Brian The Lion.
+Paralel ve seri portların yönetimi ile ilgili olarak,
+kullanım amaçları oyun için bazı talimatları veya bir karakterin söylediği bazı cümleleri yazdırmak
+olabilir veya seri port için
+ağda, yani bir kabloyla birbirine bağlı iki bilgisayarda iki kişi ile oyun oynama
+kabloyla bağlı iki bilgisayarda oynama imkanıdır. Ancak, yazıcı yönetiminin
+işletim sistemi tarafından “parallel.device”kullanarak işletim sistemine bırakmak daha iyidir. Aynı şey
+seri port için de geçerlidir: serial.device, donanım
+üzerinden yazılmış rutinlerden kesinlikle daha güvenlidir, özellikle gelecekteki Amiga'lar veya çoklu seri kartlar için.
+Zamanlayıcılar konusunda, işletim sistemi kendi görevleri için
+farklı zamanlayıcılar kullandığından, hangilerini kullanacağımıza daha sonra bakacağız.
+Peki, o zaman neredeyse sadece klavyeden okuma ile mi ilgileniyoruz?
+Evet, aslında bir video oyununun koduna bakarsanız,
+sadece $6c (coper/vertb/vblank) ve $68 (klavye
+ciaa'sının int2) kesintileri yeniden tanımlandığını göreceksiniz: seviye 3 ($6c) müziği veya diğer
+rutinleri elektronik fırça ile senkronize etmek için kullanılırken, seviye 2 ($68)
+klavyeyi okumak için kullanılır. Elbette, farenin sol tuşunu veya
+diğer şeyleri okuyarak cia kayıtlarına erişilebilir, ancak bunlar basit kontroller veya
+BIT ayarlarıdır, "btst.b #6,$bfe001" hakkında uzun tartışmalara gerek yoktur.
+Demo sürümlerinde, hiçbir kesmenin yeniden tanımlanmaması
+veya müziği koymak için sadece $6c'nin kullanılması bile kolaydır.
+Öyleyse, CIAA'nın açıklamasını klavye yönetiminden başlayalım.
+Bu işlemde $bfec01 (sdr), $bfed01 (icr), $bfee01 (cra) kayıtları ve
+seviye 2 kesintisi ($68) kullanılır. Önce 3 kaydı ayrı ayrı inceleyelim, ardından
+doğru kullanımlarına ilişkin örnekler verelim. Öncelikle, bir tuşa
+basıldığında veya bırakıldığında, klavyeden $bfec01 aracılığıyla 8 bitlik bir kod gönderilir
+ve seviye 2 kesmesi ($68) oluşturulur.
+ Bu kesmede, klavyeye o tuşun kodunun alındığını “söylemek” gerekir.
+Bu kod, basılan karakterin ASCII kodu DEĞİL,
+klavyede basılan tuşun konumunu gösteren bir koddur.
+
+****************************************************************************
+;* BFEC01 sdr CIAA sdr (seri veri kaydı - klavyeye bağlı)
+****************************************************************************
+
+klavyeye bağlı senkron 8 bitlik bir kaydırma kaydıdır.
+2 şekilde çalışabilir: INPUT veya OUTPUT, ve bu
+iki mod arasında seçim
+INPUT modunda klavyeden alınan veriler kayda
+ve basılan karakteri oluşturan 8 bitin tümü “geldiğinde”, bir INT2 ($68) kesmesi üretilir ve bu kesmeden hangi tuşun basıldığını görmek ve bunu bir değişkende not etmek gerekir.
+Bu durumda, karakterin koduna karşılık gelen bayt okunur: Örneğin: move.b $bfec01,d0
+OUTPUT modunda ise, kayıt defterine yazılır, örneğin “clr.b $bfec01”.
+Bu durumda, karakter koduna karşılık gelen bayt okunur:
+Örnek:
+move.b $bfec01,d0
+
+OUTPUT modunda ise kayıt defterine yazılır, örneğin “clr.b $bfec01”.
+
+****************************************************************************
+;* BFED01 icr CIAA kesme kontrol kaydı
+****************************************************************************
+
+Bu kayıt, CIAA tarafından üretilebilen kesmeleri kontrol eder.
+Cia'lar çeşitli durumlarda kesmeler üretir, örneğin
+bir zamanlayıcının geri sayımı bittiğinde veya seri port
+bir aktarımı tamamladığında.
+Bizi özellikle ilgilendiren, seviye 2'deki INT2 kesmesidir, yani
+$68 ofset vektörü, bir tuşa basıldığında üretilir.
+Icr'lerin ($bfed01 CIAA için ve $bfdd00 CIAB için) çalışması çok
+özeldir, aslında bunlar sadece okunabilir bir
+veri kaydının sadece yazılabilir bir “maske”sinden oluşur. Peki bu ne anlama gelir? Öncelikle,
+çok kolay hata yapıp CIA kesmelerini çıldırtmak mümkündür, ki bu pek
+istenen bir durum değildir. Her kesme, maskenin karşılık gelen biti
+1 olarak ayarlanmışsa etkinleştirilir, çünkü her CIAA kesmesi, bir
+INTREQ ($dff09c) gibi, bu kayıtta kendi istek bitini ayarlar.
+Bu noktada, söz konusu kesme etkinse, bit 7 (IR) ayarlanır, bu
+dmacon'da olduğu gibi bir tür set/clr bitidir, yani bu bit sıfırlandığında
+diğer 6 bit sıfırlanır, bit 7 ayarlandığında ise
+diğer ayarlanmış bitler ayarlanır, sıfır olanlar ise değiştirilmez.
+Kafa karıştırıcı olan şey, kayıt okunduğunda içeriğinin
+sıfırlanmasıdır, ister “tst.b $bfed01” komutu ister herhangi bir
+okuma işlemi yapılsın;
+ kayıt sıfırlandığında, INTREQ ($dff09c) bitlerinin sıfırlanmasına benzer şekilde, kesme isteği de silinir.
+Şimdi sadece klavye kesmesi için işleviyle ilgileniyoruz, bu nedenle
+okuma modunda bitlerini kısaca inceleyelim, sadece ilgilendiğimiz yerlere yorum ekleyelim:
+
+CIAA ICR ($bfed01)
+
+BIT    AD    AÇIKLAMA
+
+07    IR    Ayarlandığında, bir kesme olduğunu gösteren bit.
+06    0
+05    0
+04    FLG
+03    SP    Ayarlandığında, klavye tarafından oluşturulan bir kesmede olduğumuzu gösterir.
+02    ALRM
+01    TB
+00    TA
+
+Kayıt okunduğunda sıfırlandığını unutmayın, bu nedenle hangi bitlerin ayarlandığını öğrenmek istiyorsanız,
+ bunları bir Dx kaydına kopyalamanız ve
+bu kayıt üzerinde kontroller yapmanız gerekir: $bfed01'i yeniden okuduğunuzda bitler sıfırlanmıştır.
+
+****************************************************************************
+;* BFEE01 cra CIAA cra (kontrol kaydı A)
+****************************************************************************
+
+Bu kayıt, bitleri diğer kayıtların işlevini kontrol ettiği için “kontrol” olarak adlandırılır.
+ İşte, klavyeden okuma için ilgilendiğimiz bitlere ilişkin yorumların yer aldığı bir “haritası”
+:
+
+CIA Kontrol Kaydı A
+
+BIT ADI    İŞLEV
+--- ----    --------
+0 START    Zamanlayıcı A
+1 PBON    Zamanlayıcı A
+2 OUTMODE    Zamanlayıcı A
+3 RUNMODE    Zamanlayıcı A
+4 LOAD    Zamanlayıcı A
+5 INMODE    Zamanlayıcı A
+6 SPMODE    1 ise = kayıt ($bfec01) çıktı (yazmak için)
+0 ise = kayıt ($bfec01) giriş (okumak için)
+7 Kullanılmıyor
+
+
+Görüldüğü gibi, bizi ilgilendiren tek bit 6'dır, bu bit $bfec01'in işlevini
+“belirler”, yani yönünün “klavyeye doğru” (çıkış),
+böylece yazabiliriz, veya “klavyeden Amiga'ya” (giriş), böylece
+basılan tuşa ait karakteri okuyabiliriz.
+Modu değiştirmek için şunu yapmanız yeterlidir:
+
+bset.b    #6,$bfee01    ; CIAA cra - sp ($bfec01) çıkış
+....
+bclr.b    #6,$bfee01    ; CIAA cra - sp (bfec01) input
+
+Ya da, daha zarif bulursanız, AND ve OR kullanarak da yapabilirsiniz:
+
+or.b    #$40,$bfee01    ; SP OUTPUT (%0100000, bit 6'yı ayarlayalım!)
+...
+and.b    #$bf,$bfee01“    ; SP GİRİŞ (%10111111, bit 6'yı sıfırlayalım!)
+
+Ayrıca ”0000" 'i bir kayıt defterine taşıyabilir, 5 ile çarpabilir,
+5 ile bölüp, 20 ekleyip, 10 çıkarabilir, 1 ekleyip, 11 çıkarabilir, bit 6'yı ayarlayabilir veya
+sıfırlayabilir ve $bfee01 ile bir and veya or yapabilirsiniz. Assembler,
+aynı şeyi yapmak için sonsuz yol kullanmanıza izin verir. Ancak bset/clr yeterli olabilir!
+Bununla birlikte, giriş modu ile çıkış modu arasında
+yaklaşık 90 mikrosaniye beklemek gerektiğini belirtmek gerekir, çünkü CIAA ve klavye çipinin donanımı
+giriş modunda kendi kendine zamanlamayı yapamaz.
+Basılı tuşa karşılık gelen karakterin 8 biti
+seri olarak bir bitlik parçalar halinde klavye çipinden CIAA'ya aktarılır.
+8 bitin tamamı aktarıldığında, VERİ ALDIKTAN SONRA KİLİTME HATTI KDAT'I EN AZ
+DOKSAN MİKROSANİYE (veya 3/4 raster satır) BOYUNCA AŞAĞI ÇEKMELİYİZ.
+VERİLERİ ALDIĞIMIZI ONAYLAMAK İÇİN. KDAT “ipliği” SP/SPMODE bitinden kontrol edilir
+ve pratikte şunu yapmamız gerekir:
+
+------------------------------------------------------------------------------
+move.b    $bfec01,d0    ; CIAA sdr - Mevcut karakteri oku
+bset.b    #6,$bfee01    ; CIAA cra - sp ($bfec01) çıktı, böylece
+; KDAT hattını indirerek karakteri aldığımızı
+; onaylayabiliriz.
+
+st.b    $bfec01        ; $FF in $bfec01 - evet! veriyi aldım!
+
+; Buraya, 90 milisaniye bekleyen bir rutin koymalıyız, çünkü
+; KDAT hattı, tüm
+; klavye türleri. Örneğin, 3 veya 4 raster satırı bekleyebilirsiniz.
+
+bclr.b    #6,$bfee01    ; CIAA cra - sp (bfec01) tekrar giriş.
+------------------------------------------------------------------------------
+
+Donanım aracılığıyla klavyeyi okurken, 90 milisaniye bekleyen
+zamanlamaya çok dikkat etmek gerekir, bunun 2 nedeni vardır:
+1) Zamanlama rutini, 68000'den 68060'a kadar tüm
+işlemcilerde aynı süre beklemelidir. Bunun için elektronik fırça
+veya CIA zamanlayıcı kullanabilirsiniz, ancak ASLA basit bir
+dbra döngüsü veya bir dizi NOP yapmayın, çünkü 68020+'da önbellek nedeniyle
+bu çok hızlı bir şekilde çalışacaktır.
+2) Rutinimiz tüm 680x0'larda düzgün bir şekilde “beklediğinde”,
+tüm klavyelerin aynı olmadığını da dikkate almanız gerekir!
+Örneğin, bir klavye için 2 raster satırı yeterli olabilirken
+başka bir klavye için 4 satır gerekebilir! Aslında klavyeler
+bir kontrol çipi içerir ve bu, farklı
+Amiga modellerinde farklılık gösterebilir. Örneğin, A1200'de klavye “ekonomiktir”,
+çünkü normal Amiga klavyelerinden (genellikle Mitsumi)
+farklı olarak, bir seferde birden fazla tuşa basılamaz
+... Bir tuşa basılı tutarken başka bir tuşa basarsanız,
+ilk tuşu bıraktığınızda ikinci tuş görünmez.
+Aşağıdakiler arasında beklemesi gereken bekleme rutini:
+“or.b #$40” veya “bset.b #6”,$bfee01 ve “and.b #$bf” veya “bclr.b #6”,$bfee01
+arasında beklemesi, programınızın klavyeyi doğru okuyup okumayacağını veya
+bazı bilgisayarlarda bir tuşa basıldığında donup kalacağını belirler.
+
+Bu konuda, vblank kullanarak doğru şekilde beklemeyi görelim:
+
+; Adres kayıtlarını “kirletmek” istemiyorsanız:
+
+------------------------------------------------------------------------------
+moveq    #4-1,d0        ; 4 raster satırı bekliyoruz (3+rastgele...!)
+waitlines:
+move.b    $DFF006,d1
+stepline:
+cmp.b	$DFF006,d1
+beq.s	stepline
+dbra	d0,waitlines
+------------------------------------------------------------------------------
+
+; Se invece volete “sporcare” anche un registro indirizzi:
+
+------------------------------------------------------------------------------
+lea    $dff006,a0    ; VHPOSR
+moveq    #4-1,d0    ; Bekleyecek satır sayısı = 4 (pratikte 3 artı
+; başlangıç anında bulunduğumuz kesir)
+waitlines:
+move.b	(a0),d1    ; $dff006 - d1'deki mevcut dikey satır
+stepline:
+cmp.b    (a0),d1        ; hala aynı satırda mıyız?
+beq.s    stepline    ; bekliyorsa
+dbra    d0,waitlines    ; “beklenen” satır, d0-1 satır bekleyin
+------------------------------------------------------------------------------
+
+_ ___
+_æøæ,_ ¸æ¤³°¤¤4Øæ,
+,Ø° __¬¶_æ³ ¬VØø
+__æV Ø°4, Ø' ___ 0Ø
+_ØØØØ# #_,²J¹ æ°“°4, IØ
+ÁØ”"ØØØþ_____ØL #__,Ø¹ ØØ
+JØF ØØ³°°0ØØØØØ_ ¬~~ JØ#
+ØØ1 ¶Ø_ ,Ø°¤ØØØØæ______øØØØ,
+#Ø1 °#ØØ# ØØØØØØØØØØØØ¯¬ØQ
+¬ØN `¢Ø&æØØØØØØØØØØØØ` ØW
+¤Øb °¢ØØØØØØØØØØ³ JØØ
+`Øæ ¬`°°°°" _dØØ@
+¬¢Ø_ __øØØØØ
+0Ø ¸___,øøØØØØØØ³
+VØL_ _øØØØØØØØØØØØ² xCz
+¬ØØØØØØØØØØØØØØØ¤³°
+¬ØØØØØØØ°
+°^°°¯
+
+- KOD ÖZELLİKLERİ $bf İLE İLETİLEN KARAKTERec01
+
+Daha önce, iletilen kodun bir ASCII kodu değil,
+basılan tuşla ilgili bir bilgi olduğunu belirtmiştik. Bunun nedeni,
+İngilizce, İtalyanca veya diğer dillerde kullanılan klavyelerde birçok tuşun
+üzerinde farklı harflerin basılı olmasıdır. Ancak, “ikinci satırın üçüncü tuşu” derseniz,
+, yanlış anlaşılma olmaz. Her halükarda, $bfec01'den aldığımız 8 bit (1 bayt),
+ tuş tanımlayıcıyla ilgili 7 bit ve tuşun basılı mı yoksa bırakılmış mı olduğunu belirleyen bir bit içerir
+tuşun basılı mı yoksa bırakılmış mı olduğunu belirleyen bir bit içerir.
+Aslında, tuş tanımlayıcı hem basıldığında hem de
+bırakıldığında gönderilir, ancak en yüksek bit, yani sekizinci bit,
+sıfırlanır (bırakıldığında) veya ayarlanır (basıldığında).
+Yetmezmiş gibi, iletilen tüm kodlar iletilmeden önce bir bit sola döndürülür
+.
+Dolayısıyla iletim sırası 6-5-4-3-2-1-0-7'dir. Ancak
+“ROR.B #1,xxx” komutunu kullanmak yeterlidir.
+Bir bitin iletimi 60 mikrosaniye sürer, bu nedenle karakteri oluşturan tüm bayt
+480 mikrosaniyede aktarılır, böylece
+saniyede 17000 bit aktarılabilir. Ama bu bizim için ne önemi var? Hiçbir önemi yok!
+Bunun yerine, basılan tuşun A, B veya
+başka bir tuş olduğunu nasıl anlayacağımıza bakalım. Donanım kılavuzunda, tuşlar için bir kod listesi vardır
+ve bu listede $01 koduna “1” tuşu karşılık gelir.
+Bu kodları elde etmek için, baytın NOT'unu yapmanın yanı sıra
+“ROR” ile bitleri döndürerek 76543210 sırasını geri getirmemiz gerekir.
+Pratikte yapmamız gereken şey şudur:
+
+move.b    $bfec01,d0    ; CIAA sdr (seri veri kaydı -
+; klavyeye bağlı -
+; klavye çipinden gönderilen baytı içerir) CHAR'ı OKELİM!
+NOT.B    D0        ; bitleri ters çevirerek değeri düzeltelim
+ROR.B    #1,D0        ; ve sırayı 76543210'a geri getirelim.
+
+Şimdi d0'da 65432107 yerine 76543210 bit dizisine sahip bayt var
+ve ayrıca tüm bitler ters çevrilmiş, böylece “sayım”
+sol üstteki ilk tuştan (ESC değil, 1'in yanındaki tuş) başlıyor.
+İşte kod dizisi ve ilgili karakterler (normal ve kaydırılmış, ancak
+burada klavyenin ABD klavyesi olduğunu unutmayın). (BASILMIŞ TUŞLAR)
+
+kod    $00     ;` - ~
+kod    $01 ;1 - !
+kod    $02 ;2 - @
+kod    $03 ;3 - #
+kod    $04 ;4 - $
+kod    $05 ;5 - %
+kod    $06 ;6 - ^
+kod	$07 ;7 - &
+kod    $08 ;8 - *
+kod    $09 ;9 - (
+kod    $0A ;0 - )
+kod    $0B ;- - _
+kod    $0C ;= - +
+kod    $0D ;\ - |
+kod    $0e     ; << boş
+kod    $0F ;0 sayısal tuş takımı
+kod    $10 ;q - Q
+kod    $11 ;w - W
+kod    $12 ;e - E
+kod    $13 ;r - R
+kod	$14 ;t - T
+kod.    $15 ;y - Y
+kod.    $16 ;u - U
+kod.    $17 ;i - I
+kod.    $18 ;o - O
+kod.    $19 ;p - P
+kod.    $1A ;[ - {
+kod.    $1B ;] - }
+kod.	$1c     ; << kullanılmıyor
+kod.    $1D ;1 sayısal tuş takımı
+kod.    $1E ;2 sayısal tuş takımı
+kod.    $1F ;3 sayısal tuş takımı
+kod.    $20 ;a - A
+kod.    $21 ;s - S
+kod.    $22 ;d - D
+kod.    $23 ;f - F
+kod.	$24 ;g - G
+kod.    $25 ;h - H
+kod.    $26 ;j - J
+kod.    $27 ;k - K
+kod.	$28 ;l - L
+kod.    $29 ;; - :
+kod.    $2A ;' - "
+kod.    $2B ;(sadece uluslararası klavyelerde) - return tuşunun yanında
+kod.    $2c     ; << kullanılmıyor
+kod.    $2D ;4 sayısal tuş takımı
+kod.    $2E ;5 sayısal tuş takımı
+kod.    $2F ;6 sayısal tuş takımı
+kod.    $30 ;< (sadece uluslararası klavyelerde sol shift)
+kod.    $31 ;z - Z
+kod.    $32 ;x - X
+kod.	$33 ;c - C
+kod    $34 ;v - V
+kod    $35 ;b - B
+kod    $36 ;n - N
+kod    $37 ;m - M
+kod    $38 ;, - <
+kod    $39 ;. - >
+kod    $3A ;/ - ?
+kod    $3b	 ; << kullanılmıyor
+kod    $3C ;. sayısal tuş takımı
+kod    $3D ;7 sayısal tuş takımı
+kod    $3E ;8 sayısal tuş takımı
+kod    $3F ;9 sayısal tuş takımı
+kod    $40 ;boşluk
+kod    $41 ;geri boşluk <-
+kod    $42 ;sekme ->|
+kod    $43 ;dön sayısal tuş takımı (enter)
+kod    $44 ;dön <-'
+kod    $45 ;esc
+kod    $46 ;del
+kod    $47     ; << kullanılmıyor
+kod    $48     ; << kullanılmıyor
+kod    $49	 ; << kullanılmıyor
+kod.    $4A ;- sayısal tuş takımı
+kod.    $4b     ; <<
+kod.    $4C ;yukarı ok ^
+kod.    $4D ;aşağı ok v
+kod.    $4E ;sa ok »
+kod.    $4F ;sol ok «
+kod.    $50 ;f1
+kod.	$51 ;f2
+kod    $52 ;f3
+kod    $53 ;f4
+kod    $54 ;f5
+kod    $55 ;f6
+kod    $56 ;f7
+kod    $57 ;f8
+kod    $58 ;f9
+kod    $59 ;f10
+kod	$5A ;( sayısal tuş takımı
+kod    $5B ;) sayısal tuş takımı
+kod    $5C ;/ sayısal tuş takımı
+kod    $5D ;* sayısal tuş takımı
+kod    $5E ;+ sayısal tuş takımı
+kod    $5F ;yardım
+kod    $60 ;lshift (sol)
+kod    $61 ;rshift (sağ)
+kod    $62     ;caps lock
+kod    $63 ;ctrl
+kod    $64 ;lalt (sol)
+kod    $65 ;ralt (sağ)
+kod    $66 ;lamiga (sol)
+kod    $67 ;ramiga (sağ)
+
+
+Gördüğünüz gibi, sıra tuşların sırasını kabaca takip ediyor,
+1,2,3,4,5... ile başlayan satırdan sonra q,w,e,r,t,y... vb. ile devam ediyor.
+Bu kodlar BASILMIŞ tuşlara atıfta bulunur, burada bit 7, bir tuşun basılı mı yoksa bırakılmış mı olduğunu
+belirleyen bit, sıfırdır. Aslında
+byte üzerinde bir NOT işlemi gerçekleştirdik, bu da bit 8'i tersine çevirdi: bir
+tuş BASILI ise, artık bit 8=0, bir tuş bırakılırsa, bit 8=1 olur.
+Tuş bırakılırsa, bit 7 (sekizinci) ayarlı olarak kabul edilir,
+bu nedenle önceki tablo şu şekilde olur:
+
+kod    $80     ;` - ~
+kod    $81 ;1 - !
+kod    $82 ;2 - @
+...
+
+Amiga600'lerde sayısal tuş takımı bulunmadığından,
+ bu bilgisayarlarda sayısal tuşları kullanırsanız bunları basmanız mümkün değildir
+! Bu nedenle sayısal tuşları kullanmamanızı tavsiye ederim.
+Bu hususları göz önünde bulundurarak, “ActualKey” değişkenine basılan tuşların kodunu kaydetmemizi sağlayacak
+2. seviye kesme ($68) kodunu görebiliriz
+:
+
+___________
+/~~/~~|~~\~~\
+\ \ | / /______
+__\_________/__oOOo_Z________
+|::888°_~_°888 o¯¯¯T::::Y~~~~~|
+_ |:::\ °‘° / __ ||::::| |
+\\/Z |::::\ `-’ /¯]|··|T|::::| |
+(\\ )|::::/\`='/\¯ ¯¯ |::::l_____j
+\¯¯/ ~Z \ ¯¯¯ /~~~~~~~/~~~~~~~~~~~
+/¯¯\_/ \ _ / _ /
+\ / /T (Y) |\__/
+\_____/ | ¯ |
+| : |
+| |
+| . | ppX
+
+*****************************************************************************
+*    KESİNTİ ROUTİNİ $68 (seviye 2) - KLAVYE yönetimi
+*****************************************************************************
+
+;03    PORTS    2 ($68)    Giriş/Çıkış Portları ve zamanlayıcılar, INT2 hattına bağlı
+
+MioInt68KeyB:    ; $68
+movem.l d0-d1/a0,-(sp)    ; kullanılan kayıtları yığına kaydeder
+lea    $dff000,a0    ; ofset için özel kayıt
+
+MOVE.B    $BFED01,D0    ; Ciaa icr - d0'da (icr'yi okurken
+; sıfırlanmasına da neden oluyoruz, bu nedenle int
+; “iptal” edilir, intreq'te olduğu gibi).
+BTST.l    #7,D0    ; bit IR, (cia kesmesi izinli), sıfırlandı mı?
+BEQ.s    NonKey    ; evet ise, çık
+BTST.l    #3,D0    ; SP bit, (klavye kesintisi), sıfırlandı mı?
+BEQ.s    NonKey    ; evet ise, çık
+
+MOVE.W    $1C(A0),D0    ; INTENAR d0'da
+BTST.l    #14,D0        ; Master etkinleştirme biti sıfırlandı mı?
+BEQ.s    NonKey        ; Evet ise, kesme etkin değil!
+AND.W    $1E(A0),D0    ; INREQR - d1'de sadece
+; INTENA ve INTREQ'de ayarlanmış bitler
+; böylece gerçekleşen kesmenin
+; etkinleştirildiğinden emin olunur.
+btst.l    #3,d0        ; INTREQR - PORTS?
+beq.w    NonKey        ; Hayır ise, çık!
+
+; Kontrollerden sonra, buradaysak karakteri almamız gerekir!
+
+moveq    #0,d0
+move.b    $bfec01,d0    ; CIAA sdr (seri veri kaydı - klavyeye bağlı
+; klavye çipinden gönderilen baytı içerir
+; karakteri OKELİM!
+
+; karakter d0'da, onu “işleyelim”...
+
+NOT.B    D0        ; bitleri ters çevirerek değeri düzeltelim
+ROR.B    #1,D0        ; ve diziyi 76543210'a geri getirelim.
+move.b    d0,ActualKey    ; karakteri kaydedelim
+
+; Şimdi klavyeye veriyi aldığımızı bildirmeliyiz!
+
+bset.b    #6,$bfee01    ; CIAA cra - sp ($bfec01) çıktı, böylece
+; KDAT hattını indirerek karakteri aldığımızı
+; onaylıyoruz.
+
+st.b    $bfec01        ; $FF in $bfec01 - evet! veriyi aldım!
+
+; Buraya, 90 mikrosaniye bekleyen bir rutin koymalıyız, çünkü
+; KDAT hattı, tüm klavye türleri tarafından “anlaşılabilmesi” için yeterince uzun süre düşük kalmalıdır
+; . Örneğin, 3 veya 4 raster hattı bekleyebilirsiniz.
+
+moveq    #4-1,d0    ; Bekleyecek satır sayısı = 4 (pratikte 3 artı
+; başlangıç anında bulunduğumuz kesir)
+waitlines:
+move.b    6(a0),d1    ; $dff006 - d1'deki mevcut dikey satır
+stepline:
+cmp.b    6(a0),d1    ; hala aynı çizgide miyiz?
+beq.s    stepline    ; bekliyorsa
+dbra    d0,waitlines    ; “beklenen” çizgi, d0-1 çizgi bekleyin
+
+; Bekledikten sonra, $bfec01'i giriş moduna geri getirebiliriz...
+
+bclr.b    #6,$bfee01    ; CIAA cra - sp (bfec01) tekrar giriş.
+
+NonKey:        ; 3210
+move.w    #%1000,$9c(a0)    ; INTREQ isteği kaldır, int çalıştır!
+movem.l (sp)+,d0-d1/a0    ; kayıtları yığından geri yükle
+rte
+
+-----------------------------------------------------------------------------
+
+Yeni bir şey fark etmemiş olmalısınız, bu sadece daha önce açıkladığımız şeylerin bir “özetidir”.
+Sonuçta sadece birkaç satır ve sadece d0 ve a0 kayıtlarını kullanıyoruz, bu hiç de ZOR bir rutin değil!
+Hatırlamanız gereken tek şey, bu kesmeyi vektöre
+$68+VBR koymak ve INTENA bit 3'ü
+($dff09a) etkinleştirmektir. ($dff09a) bitini ayarlayarak etkinleştirmenizdir.
+Örneğin, müzik çalmak için seviye 3 ($6c) kesme kullanıyorsanız
+,
+ sadece VERTB (bit 5) kullanarak şunu yazabilirsiniz:
+
+; 5432109876543210
+move.w    #%1100000000101000,$9a(a5) ; INTENA - sadece VERTB
+; seviye 3 ve seviye 2'yi etkinleştir
+
+Başka bir deyişle “move.w #$c028,$dff09a”.
+
+Bu kesmenin doğru kullanımını Ders11m1.s'de görebiliriz.
+
+Bu listede, klavye kodu, rutinin gerçek çalışmasını “görmek” için color0'a girilmiştir.
+Çıkmak için doğal olarak bir tuşa basmanız gerekir: boşluk çubuğu.
+Kolaylık olması açısından, Ders11m2.s'de klavye kodlarını ASCII'ye dönüştürmek için basit bir rutin eklenmiştir.
+
+Kolaylık olması açısından, Ders11m2.s'de klavye kodlarını ASCII'ye dönüştürmek için basit bir rutin eklenmiştir.
+Bu, klavye ile yazılanları yazdırmak istediğinizde
+kullanışlı olabilir, örneğin bir yardımcı program yapmak veya sadece adınızı
+oyununuzun yüksek skorlarına yazmak istediğinizde.
+
+___________
+( ¬)
+\_ _/
+L L
+____/___ ___\____
+//¯¯¯¯¯¯\\_//¯¯¯¯¯¯\\
+(( ___¯¯¯___ ))
+\\ _/\___\X/___/\_ //
+\ T \ / T /
+| T |
+__| - o|O - |__
+tS / ¬| | | ¬\ tS
+\ / / ¯\_____T_____/¯ \ \ /
+->----/ /\ / \ /\ \----<-
+/ \ \ (_____) / / \
+\ \_/\_______/\_/ /
+\_________A_________/
+
+*****************************************************************************
+;        CIAA VE CIAB ZAMANLAYICILARI
+*****************************************************************************
+
+Bu zamanlayıcılar aslında oyunlarda çok az kullanılır ve demolarında neredeyse
+hiç kullanılmaz, sadece müziği çalan bazı (karmaşık) rutinlerde kullanılır,
+ancak bunları dahil etmek yeterlidir ve kendi başlarına çalarlar.
+Ayrıca, bu zamanlayıcılar işletim sistemi tarafından da kullanılır, bu nedenle
+kullanıldığında programın çıkışında her şeyin çılgına dönme riski vardır
+.
+Ayrıca, $dff006 ile raster satırlarını beklerken, bu riski almadan
+gerekli tüm beklemeleri yapabilirsiniz.
+Bu nedenle, derste sadece birkaç liste
+zamanlayıcıyı örnek olarak kullanmaktadır. Daha ileri derslerin listelerinde, bu zamanlayıcıların uygulamalarını bulacağız ve bunları tek tek inceleyeceğiz.
+- CIAA veya CIAB'ın A zamanlayıcısının kullanımı
+
+Ders11n1.s
+
+Ders11n1b.s    - CIAA veya CIAB'nin B zamanlayıcısının kullanımı
+
+Ders11n2.s    - TOD (Time of day) zamanlayıcısının kullanımı
+
+CIA zamanlayıcılarını kullanırken, işletim sisteminin bunları
+aşağıdaki amaçlarla kullandığını unutmayın: (CIAB kullanmak daha iyidir!)
+
+CIAA, zamanlayıcı A    Klavye ile arayüz oluşturmak için kullanılır
+
+! CIAA, zamanlayıcı B    Exec tarafından görev alışverişi vb. için kullanılır.
+
+CIAA, TOD        Timer.device tarafından kullanılan 50/60 Hz zamanlayıcı
+
+CIAB, zamanlayıcı A    Kullanılmaz, programlar için kullanılabilir
+
+CIAB, zamanlayıcı B	Kullanılmaz, programlar için kullanılabilir
+
+CIAB, TOD        Elektronik fırçanın konumlarını takip etmek için graphics.library tarafından kullanılır
+.
+
+İşletim sistemi için de gerekli olan zamanlayıcıları kullanmanız gerekiyorsa, bunu yalnızca
+çoklu görev ve sistem kesintilerini devre dışı bıraktıysanız, yani
+sistemin tam kontrolünü ele geçirdiyseniz yapın. Asla CIAA, zamanlayıcı B'yi kullanmayın!
+
+|||||
+||||| _A_ /o O\
+_ _ ___.oOo _o_O_ oOo. __ ____ ___ _ _ _____ _ _ _ _ (_^_)_\_/ _oOo. _
+*****************************************************************************
+;        DOS.LIBRARY İLE DOSYA YÜKLEME
+*****************************************************************************
+
+Bu dersin sonuna gelmişken, çeşitli iyileştirmeler ve konuların ardından
+VERİ YÜKLEME konusundan daha iyi bir konu olamaz.
+Eğer “büyük” bir şey programlamak istiyorsanız, çizim, müzik ve çeşitli verilerin miktarı açısından,
+ her şeyi
+incbin ile dahil edip mega çalıştırılabilir dosyayı “WO” ile kaydedemezsiniz, çünkü dosya
+çok büyük olur ve belleğe yüklenemez.
+Örneğin, bir slayt gösterisi yapmak istediğinizi varsayalım, yani bir dizi resmi
+birbiri ardına gösteren bir program ve bu resimlerin
+30 tane olduğunu ve her birinin 100Kb. Toplamda 3 MB resim oluyor. 3 MB'yi aşan bir dosyayı kaydetmek için 
+30 INCBIN dizisi oluşturamayacağımızdan,
+tek tek “yüklemek” için bir yol bulmamız gerekiyor.
+Ama nasıl? Başlıca iki yol var:
+
+1) DISKETTEN OTOMATİK YÜKLEME, yani DOS ile uyumlu olmayan bir yöntem.
+ Aslında, birçok oyun disketinin
+Workbench yüklendikten sonra sürücüye takıldığında “DIR” gibi komutlarla okunamadığını
+ve DOS uyumlu olmadığı veya HATALI olduğu kısacası
+bozuk diskler gibi görünürler! XCOPY veya DCOPY gibi kopyalayıcılarla kopyalandıklarında
+bu DOS olmayan oyunların bazıları “KIRMIZI” izlerde görünür, yani
+kopyalayıcı tarafından bile tanınmaz, diğerleri ise DOS tarafından okunamaz olmasına rağmen
+“SAĞ” olarak görünür, yani yeşil izlerde.
+CRACKED oyunların (koruması kaldırılmış ve korsanlar tarafından dağıtılan)
+hepsinin ikinci türde, yani YEŞİL izlerde olduğunu belirtmeliyim, çünkü korumanın kaldırılması
+genellikle kopyalanamayan izleri kopyalanabilir hale getirmektir, ancak
+çoğu zaman dos tarafından okunamazlar. TRACKMO'lar demoların büyük bir kısmını oluşturur
+ve “kopyalanabilir” izlere sahiptir, ancak dos ile okunamazlar.
+Bir özellik, mutlak adresler için kod yazılması gerektiğidir,
+ yeniden konumlandırılamaz, bu nedenle genellikle sadece ilk
+mega CHIP RAM kullanılır veya a1200 için ilk 2 mega ve olası
+FAST RAM genişletmeleri kullanılmaz, mini işletim sistemlerine benzeyen COMPLESSI LOADER
+CON RILOCATORI kullananlar hariç, ancak bunlar genellikle
+aşırı “aşırı programlama” nedeniyle 68040'ta hata verir.
+Bu sistemin “avantajı”, floppy disklerde normal DOS'tan biraz daha hızlı olmasıdır,
+ ancak dezavantajı, programı sabit diske yükleyememek
+ve CD32 vb. için dönüştüremeyebilmektir.
+
+2) DOS.LIBRARY KULLANARAK “YASAL” YÜKLEME, yani işletim sistemini kullanan herhangi bir program tarafından kullanılan yönteme çok benzer bir yöntemdir
+ve C, AMOS vb. herhangi bir dil ile derlenmiştir.
+Aslında, kendi copperlist'imizi koruyarak ve donanım kayıtlarında
+çalışarak ‘hibrit’ bir sistem oluşturuyoruz,
+ yani dos.library'yi kendi copperlist'imiz ve interrupt'larımızla “özel” bir durumda kullanıyoruz. yani dos.library'yi
+“özel” bir durumda, kendi bakır listemiz ve kesintilerimizle kullanıyoruz.
+Bu sistemi kullanan programların bir özelliği,
+işletim sisteminin “bozulmadan” bırakılması ve kodun
+tamamen yeniden konumlandırılabilir olmasıdır (olası FAST RAM'e erişebilme).
+Bu sistemin avantajı, sabit disk, CD-ROM
+ve sistem tarafından desteklenen tüm sürücülerde, hatta gelecekteki çevre birimlerinde de kullanılabilmesidir.
+
+İlk sistem, donanım düzeyinde programlama yapmak isteyenler için daha çekici görünebilir
+ancak aslında bu, ESKİ,
+SIK SIK UYumsuz ve programı (veya demoyu) HD'ye yükleyememe nedeniyle sınırlayıcı bir yöntemdir
+. Amiga500 için tek diskli bir demo veya oyun
+söz konusu olduğunda, trackloader seçeneği kabul edilebilir
+olabilir, ancak 2 disk ve üzeri sistemler, giderek artan sayıda
+HardDisk sahiplerini kızdırmaktan başka bir işe yaramaz.
+HD'ye yüklenen bir oyun, en hızlı loader ile diskten yüklenen bir oyundan her zaman daha hızlı yüklenir
+.
+Sonra FAST RAM meselesi var: trackloader ile kullanabilmek için
+bulunduğu yeri bulan ve
+kodu doğru adrese yeniden yerleştiren bir mini işletim sistemi yapmak gerekir. Sizi yanlış yola sokmamak için
+bu tür yükleyiciler+yeniden yerleştiricilerin listesini sunmayacağım. Oyununuzu CD32'ye dönüştürebilmenin
+CD32'ye dönüştürebilmenin veya 68060 ve herhangi bir sabit diskte çalışmasını görmenin
+yerine, “elle” yeniden konumlandırıcıyı çalıştırmayı denediğinizde başarısız olduğunu veya
+programın hızlı RAM'i kullanmadığını fark etmenin hayal kırıklığını düşünün... İkna oldunuz mu?
+
+Başka bir şey daha var: Dosya yüklemesi gereken yapımlarımızda “assign” komutunu kullanmak iyi olur.
+Örneğin, 
+tek diskli bir oyun yaparsak ve diske “Cane” adını verirsek,
+dosyaları “Cane:file1”, “Cane:file2”, “Cane2/oggetti/ogg1” vb. ile yükleyebiliriz.
+Hard diske yüklemek isterseniz, bir dizin oluşturup
+diskin içeriğini kopyalayın ve startup-sequence'a şunu ekleyin:
+
+assign    Köpek: dh0:giococane    ; örneğin...
+
+Oyun birden fazla diskteyse, tüm diskleri dizine kopyalamanız
+ve her diski atamanız yeterlidir:
+
+assign    Köpek1: dh0:giococane
+assign    Köpek2: dh0:giococane
+assign	Cane3: dh0:giococane
+
+Oyun kurulumu sırasında, startup-sequence veya user-startup
+dosyasına gerekli atamaları “otomatik olarak” eklemek için, commodore veya diğer sistemlerin
+yükleyici seçeneklerini kullanabilirsiniz, ancak bu dersin kapsamı dışındadır.
+
+Peki, o zaman bir “path:xx” dosyasını bellekteki bir hedefe nasıl yükleyeceğimizi görelim.
+Bunun çeşitli yolları vardır. En basit olanı şudur:
+
+CaricaFile:
+move.l    #filename,d1    ; “dosya adı + yol” dizesi içeren adres
+MOVE.L	#$3ED,D2    ; AccessMode: MODE_OLDFILE -
+; zaten var olan ve bu nedenle okuyabileceğimiz dosya.
+MOVE.L    DosBase(PC),A6
+JSR    -$1E(A6)    ; LVOOpen - dosyayı “aç”
+MOVE.L    D0,FileHandle    ; Dosya tanıtıcısını kaydet
+BEQ.S	ErrorOpen    ; d0 = 0 ise hata var!
+
+MOVE.L    D0,D1        ; Okuma için d1'deki FileHandle
+MOVE.L    #buffer,D2    ; d2'deki Hedef adres
+MOVE.L    #42240,D3    ; Dosya uzunluğu (DOĞRU!)
+MOVE.L    DosBase(PC),A6
+JSR    -$2A(A6)    ; LVORead - dosyayı oku ve tampona kopyala
+
+MOVE.L    FileHandle(pc),D1 ; FileHandle d1'de
+MOVE.L    DosBase(PC),A6
+JSR    -$24(A6)    ; LVOClose - dosyayı kapat.
+ErrorOpen:
+rts
+
+
+FileHandle:
+dc.l    0
+
+; Metin dizesi, 0 ile bitmeli, d1 dos.lib'i
+; OPEN yapmadan önce buraya işaret etmelidir. Tüm yolu yazmak daha iyidir.
+
+Filename:
+dc.b	“Assembler3:sorgenti7/amiet.raw”,0    ; yol+dosyaadı
+even
+
+Bu, yüklenecek dosyanın tam uzunluğunu biliyorsanız mükemmeldir.
+Bu bizim programımız olduğu için, veri dosyalarımızın uzunluğunu bildiğimizi varsayıyoruz
+!
+
+Ders11o1.s'de bir örnek görelim
+
+Ancak bizim asıl ilgilendiğimiz, bir dosyayı
+kendi copperlist'imizi görüntülerken ve belki de bir müzik
+interrupt'u çalarken yüklemek. Tamamen devre dışı bırakılmış bir işletim sisteminde “yasal” bir yüklemeyi nasıl yapabiliriz
+? 
+Öncelikle, sistem kesintilerinin
+hepsinin yeniden etkinleştirilmesi gerektiğini, sistem bakır listesinin
+gerekli olmadığını ve kendiminkini tutabileceğimizi düşünelim. Öyleyse, yükleme gerçekleşirken müziği çalmaya
+devam etmek veya başka bir şey yapmak için ne yapabiliriz?
+Birçok sistem vardır. AddIntServer() ile sistem kesintisine “yasal” bir şekilde kendi rutinlerimizi ekleyebiliriz.
+Ya da kendi kesintimizi çalıştırıp, sistem kesintisini çalıştırmak için SALTI komutunu verebiliriz.
+Bu biraz daha saygısız bir yöntem, ancak işe yarıyor ve
+ben de CD32 oyunlarında kullanıldığını gördüğüm için tercih ediyorum.
+Pratikte yapmamız gerekenler şunlar: eski kesmeleri ve
+eski DMA/INTENA durumunu geri yüklemek, çoklu görev özelliğini yeniden etkinleştirmek vb.
+çıkışta yaptığımız gibi, ancak copperlist'imizi bırakıp
+sistem kesmesine ek olarak $6c kesmemizi “eklemek”. Ardından dosyayı yüklemek ve
+BİRAZ BEKLEYİN, DRIVE,
+HARD DISK VEYA CD-ROM IŞIĞININ SÖNDÜĞÜNDEN EMİN OLUN, ardından her şeyi kapatın ve
+merhamet göstermeden metalin üzerine vurmaya devam edin.
+Kısacası, yükleme öncesinde ve sonrasında işletim sistemini yeniden etkinleştirip devre dışı bırakmanız
+ve copperlist'inizi bırakmanız gerekir.
+Tek ayrıntı interrupt'tur: bizimkini nasıl çalıştırıp
+eski interrupt'a nasıl geçeceğiz? Size gerçek kaçakçılar gibi bir sistem önermek istiyorum
+, ancak bu, rutinin "ClearMyCache" olarak adlandırılması şartıyla,
+işlemcinin (68020+) komut önbelleğini sıfırlayan
+Aslında, ilk (ve son) kez, KENDİNİ DEĞİŞTİREN kod kullanacağız!
+Asla kullanılmamalıdır, ancak size bunun işe yaradığı ve yararlı olduğu birkaç durumdan birini göstermek istiyorum, sadece bilgi amaçlı.
+Her komutun derlendiğinde bir dizi onaltılık değer haline geldiğini biliyor musunuz? Örneğin RTS, $4e75 olur ve bu şekilde devam eder. Eski kesmeye atladıktan sonra, eski komutun adresine atlamamız gerekiyor.
+Her komutun derlendiğinde bir
+serisi onaltılık değerlere dönüştüğünü biliyor musunuz? Örneğin RTS, $4e75 olur ve bu şekilde devam eder.
+Bizim, bizimkini çalıştırdıktan sonra eski kesmeye JUMP yapmamız gerekiyor.
+Öyleyse, örneğin “JMP $12345”, “$49f900012345” olur, yani $4ef9,
+ardından atlanacak adres gelir, bu bir long'dur:
+
+dc.w    $4ef9        ; JMP'nin onaltılık değeri
+Crappyint:
+dc.l    0        ; Atlanacak adres, KENDİNİZ DEĞİŞTİRİN...
+
+Şimdi, CrappyInt'e sistem kesme adresini şu şekilde yazarsak:
+
+move.l    oldint6c(PC),crappyint    ; DOS LOAD için - oldint'e atlayacağız
+
+Aradığımız “JMP oldint6c” elde ederiz... o zaman son kesme şu şekilde olur:
+
+: ||| |.
+ |||| . oO\ .
+: ([oO]) (^) \O/<:
+|__\--/__ |\__> |
+- - - --+------ - ---- ----- - ---------- ------ ------- - - -----+- - -
+*****************************************************************************
+; Yükleme sırasında yerleştirilecek kesme rutini.
+; Bu kesmeye yerleştirilecek rutinler,
+; floppy disk, sabit disk veya CD ROM'dan yükleme sırasında da çalıştırılacaktır.
+; VBLANK DEĞİL, COPER KESİME KULLANIYORUZ,
+; BUNUN NEDENİ, DİSKTEN YÜKLEME SIRASINDA, ÖZELLİKLE KICK 1.3 ALTINDA,
+; VERTB KESİME KARARSIZ OLDUĞUNDAN, MÜZİK SALLANMAYA BAŞLAR.
+; Bunun yerine, copperlist'imize “$9c,$8010” yazarsak,
+; bu rutinin her kare için bir kez çalışacağından emin oluruz.
+*****************************************************************************
+
+myint6cLoad:
+btst.b    #4,$dff01f    ; INTREQR - bit 4, COPER, sıfırlanmış mı?
+beq.s    nointL		; Eğer öyleyse, “gerçek” bir int COPER değildir!
+move.w    #%10000,$dff09c    ; Eğer değilse, bu sefer doğru, req'i kaldıralım!
+movem.l    d0-d7/a0-a6,-(SP)
+bsr.w    mt_music    ; Müzik çalsın
+movem.l    (SP)+,d0-d7/a0-a6
+nointL:
+dc.w    $4ef9        ; JMP'nin onaltılık değeri
+Crappyint:
+dc.l    0        ; Atlama adresi, KENDİNİZ DEĞİŞTİRİN...
+; DİKKAT: otomatik değiştirme kodu
+; kullanılmamalıdır. Ancak, önce ve sonra
+; ClearMyCache çağrılırsa, çalışır!
+
+Gördüğünüz gibi, mt_music'i çalıştırmak için bu kesmeyi $6c+VBR'ye yöneltmeniz yeterlidir
+ve eski sistem kesmesi, müzik+yüklemeyi
+aynı anda
+
+Lezione11o2.s'de bir örnek görelim.
+
+Bu noktada, intuition girişini engelleyen rutinin ne işe yarayabileceğini tahmin edebilirsiniz
+: bir dosya yüklediğimizde, multitasking
+ve sistem kesintilerini yeniden etkinleştiririz, böylece
+çalışır ve hatta yükleme sırasında
+fareyi “kör” olarak hareket ettirirseniz, bazı
+menüleri çalıştırabilir, bazı simgelere tıklayabilir veya cli için klavye komutları verebilirsiniz.
+Yükleme sırasında sinirlenmemek için fareyi hareket ettirme ve tıklama alışkanlığı olan bir video oyuncusu düşünün
+: oyundan çıktığında
+Hard Disk simgesine tıkladığını ve yanlışlıkla
+WB menüsünden görmediği format seçeneğini seçtiğini fark edebilir ve belki de
+yanlışlıkla klavyeye basarak ona müstehcen bir isim bile vermiş olabilir.
+Bu nedenle, işletim sistemi devre dışı bırakıldıktan sonra InputOff rutinini çağırmak
+zorunlu olmasa da, dosyalar yüklenirse veya
+başka işlemler yaparsanız, zarar vermemek için bu işlemi yapmanız iyi olur!
+
+-    -    -
+
+Dersi bitirmek için, uzunluğunu önceden bilmediğimiz bir dosyayı nasıl yükleyeceğimizi
+görerek, AllocMem ve FreeMem rutinlerini de açıklayalım.
+Bir dosyanın uzunluğunu öğrenmek için, dosyayı kilitledikten sonra
+Examine adlı özel bir işlevi çalıştırmanız yeterlidir. Bu çok
+zor değildir,
+ sadece birkaç JSR daha yapmanız yeterlidir.
+Examine'in tek yaptığı, 104 bayt uzunluğundaki bir tamponu
+dosyanın çeşitli verileriyle doldurmaktır. İşte bir örnek:
+
+
+cnop    0,4    ; Dikkat! FileInfoBlock,
+longword ile hizalanmalıdır, adresin çift olması yeterli değildir!
+
+fib:
+dcb.b    $104,0    ; FileInfoBlock yapısı: ofsetler.
+; 0 = fib_DiskKey
+; 4 = fib_DirEntyType (<0 = dosya, >0 = dizin)
+; 8 = DosyaAdı (maks. 30 karakter, 0 ile biter)
+; $74 = fib_Protection, $78 = fib_EntryType
+; $7c = fib_Size, $80 = fib_NumBlocks
+; $84 = fib_Date (3 longs: Gün, Dakika, Tick)
+; $90 = yorum (0 ile biter)
+
+Gördüğünüz gibi, $7c ofsetinde uzunluğu buluyoruz. Diğer şeyler bizi
+ilgilendirmiyor... tarih veya yorum ne işimize yarar ki?
+Her neyse, dosya için bellek ayırmamız gerektiğinden,
+FileInfoBlock için de bellek ayıracağız, böylece bu “dcb.b $104,0”.
+Dosyanın uzunluğunu öğrendikten sonra, dosyayı yüklemek için
+dosya uzunluğu kadar bir tampon bellek oluşturmalıyız. Bu, AllocMem ile yapılır.
+Bu işlev, ayrılacak bayt sayısını ve bellek türünü
+(chip olup olmadığını) “_C” ile bölümlerde olduğu gibi giriş olarak ister.
+Ancak bölümlerden farklı olarak, programın sonunda
+FreeMem işleviyle ayrılan tüm blokları manuel olarak serbest bırakmamız gerekir.
+
+AllocMem
+--------
+
+Bu Exec rutini, amaçlarımız için kullanılacak bir bellek bloğu talep etmek için kullanılır.
+ İstenen bellek türünü (pratik olarak
+CHIP ram olup olmadığını) ve bu bloğun bayt cinsinden uzunluğunu belirtmeniz yeterlidir.
+Rutin, ram parçasını bizim özel kullanımımız için AYIRIR, çünkü
+işletim sistemi, freemem ile “geri verene” kadar
+o bellek parçasını kullanmayacaktır.
+Aslında Amiga çoklu görev sistemi şu şekilde çalışır: her
+program AllocMem aracılığıyla ihtiyaç duyduğu belleği talep eder, sistem
+işletim sistemi ona boş ram parçaları ayırır, ardından çoklu görevde yüklenen başka bir programa
+boş ram parçaları tahsis edilir.
+Şu ana kadar, ihtiyacımız olan sıfırlanmış bellek alanları için “SECTION BSS” kullandık
+çünkü başlangıçta bunların boyutunu biliyorduk.
+BSS'leri bit düzlemleri veya belirli büyüklükteki tamponlar için kullanmak daha iyidir, çünkü
+rutinleri çağırmak zorunda kalmamak ve
+etiketleri tamponun herhangi bir yerine koyabilmek gibi çeşitli nedenler vardır, buna karşılık ayrılmış belleğe
+blok başından ofsetler aracılığıyla erişmemiz gereken ayrılmış bellek.
+Listemizde, uzunluğunu bilmediğimiz bir dosyayı belleğe yüklüyoruz,
+ bu nedenle burada, dosyanın ne kadar yer kaplayacağını öğrendikten sonra
+AllocMem kullanmak zorunludur.
+Fonksiyonu ayrıntılı olarak inceleyelim:
+
+move.l    Boyut(PC),d0 ; Bloğun boyutu bayt cinsinden
+move.l    TypeOfMem(PC),d1 ; Bellek türü (çip, kamu...)
+move.l    4.w,a6
+jsr    -$c6(a6)    ; Allocmem
+move.l    d0,FileBuffer    ; Mem. allocated bloğunun başlangıç adresi
+beq.s    FineMem        ; d0=0? O zaman hata!
+...
+
+Chip mem tahsis etmek zorunlu değilse (yani tahsis edilen tamponda
+ne grafik ne de ses yer almayacaksa), her zaman “MEMF_PUBLIC” tahsis edin, bunun anlamı:
+“varsa hızlı bellek, yoksa chip”.
+Bir kez daha hatırlatmak isterim ki, yonga belleği tasarruf etmek iyidir ve FAST
+bellek yongadan daha hızlıdır.
+Çıkışta, d0'da istenen bellek bloğunun adresi olacaktır ve
+bu adres uzun kelimeye (yani 32 bit'e) hizalanacaktır.
+Bunun yerine d0=0 ise, bu tür bir blok tahsis edilememiştir!
+Bunu her zaman kontrol edin, aksi takdirde bellek dolduğunda her şeyi $0'a kopyalayabilirsiniz!!!
+
+İstenen belleğin sıfırlanmasını da talep edebiliriz, bunun için
+MEMF_CLEAR bitini, 16 ($10000) olarak ayarlamanız yeterlidir. Çeşitli bellek türlerini talep etmek için
+d1'e girilmesi gereken en yararlı parametreler şunlardır:
+
+MEMF_CHIP    =    2    ; Chip Ram talebi
+MEMF_FAST    =    4    ; Fast Ram talebi (kullanmayın)
+MEMF_PUBLIC    =    1    ; Hızlı talep, ancak yoksa çip de uygundur!
+
+Ve tabii ki, blokların sıfırlanmasını istiyorsanız:
+
+CHIP        =    $10002
+FAST        =    $10004    ; kullanmayın...
+PUBLIC        =    $10001
+
+MEMF_FAST talep etmemenizi tavsiye ederim, çünkü fast tüm makinelerde mevcut değildir.
+ Her zaman MEMF_PUBLIC kullanın, ancak ayrılan bellek
+bitplane, copperlist veya audio olarak kullanılması gerektiğinde, yani MEMF_CHIP.
+Girdiğimiz blok uzunluğunun işletim sistemi tarafından sistemdeki blokların (chunk) katlarına yuvarlanacağını unutmayın. Bu
+bizim için bir sorun değildir, çünkü 39 girdiğimizde muhtemelen 40 tahsis edilir,
+ancak istenen 39'un tamamı mevcuttur, bu nedenle bizim için önemli değildir.
+Programdan çıkarken bellek bloğunu boşaltmayı unutmayın!
+
+FreeMem
+-------
+
+Bu, ayrılmış bellek bloklarını boşaltmak için çağrılması gereken rutin.
+Blok adresi a1'de ve uzunluk d0'da bayt cinsinden belirtilmelidir.
+DİKKAT: Gerçekten ayrılmamış bir bloğu boşaltmaya çalışırsanız
+Guru Meditation/soft Failure ile büyük bir karışıklığa neden olursunuz!
+Önceki bellek bloğunu boşaltmak için yapmanız gerekenler:
+
+move.l    Boyut(PC),d0 ; Bloğun boyutu bayt cinsinden
+move.l    FileBuffer(PC),a1 ; Ayrılmış bellek bloğunun adresi
+move.l    4.w,a6
+jsr    -$d2(a6)    ; FreeMem
+
+/T /I
+/ |/ | .-~/
+T\ Y I |/ / _
+/T | \I | I Y.-~/
+I l /I T\ | | l | T /
+T\ | \ Y l /T | \I l \ ` l Y
+__ | \l \l \I l __l l \ ` _. |
+\ ~-l `\ `\ \ \\ ~\ \ `. .-~ |
+\ ~-. “-. ` \ ^._ ^. ”-. / \ |
+.--~-._ ~- ` _ ~-_.-“-.” ._ /._ .“ ./
+>--. ~-. ._ ~>-” “\\ 7 7 ]
+^.___~”--._ ~-{ .-~ . `\ Y . / |
+<__ ~"-. ~ /_/ \ \I Y : |
+^-.__ ~(_/ \ >._: | l______
+^--.,___.-~“ /_/ ! `-.~”--l_ / ~“-.
+(_/ . ~( /' ”~“--,Y -=b-. _)
+(_/ . \ : / l c”~o \
+\ / `. . .^ \_.-~“~--. )
+(_/ . ` / / ! )/
+/ / _. ‘. .’: / ‘
+~(_/ . / _ ` .-<_
+/_/ . ’ .-~” `. / \ \ ,z=.
+~( / ' : | K "-.~-.______//
+“-,. l I/ \_ __{--->._(==.
+//( \ < ~”~“ //
+/‘ /\ \ \ ,v=. ((
+.^. / /\ ” }__ //===- `
+/ / ’ ' "-.,__ {---(==-
+.^ ' : T ~“ ll
+/ . . . : | :! \\
+(_/ / | | j-” ~^
+~-<_(_.^-~"
+
+Bu noktada programı da görebiliriz: Lezione11o3.s

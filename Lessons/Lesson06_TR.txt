@@ -1,0 +1,602 @@
+
+ASEMBLER KURSU - DERS 6
+
+Bu derste, ekranda metinleri nasıl görüntüleyeceğimizi,
+video penceresinden daha büyük ekranları nasıl kaydıracağımızı ve
+önceden tanımlanmış değer tabloları kullanarak zıplama ve sallanma hareketlerini nasıl simüle edeceğimizi göreceğiz.
+
+Ekrana yazı görüntülemeyi öğrenmek çok önemlidir,
+bir oyunda veya grafik demoda karakter yazdırma rutininden vazgeçilemez
+: puan ve can sayısını, bir
+seviye ile diğer seviye arasında bir mesajı, karakterler arasındaki diyalogları,
+arkadaşlara selam yazan bir yazı vb. yazmak istediğimizde.
+320x256 boyutunda, yazılarla birlikte resimler görüntülenmeyeceği açıktır
+! Oyununuzun hikayesini tanıtmak için 5 sayfa metin görüntülemek istediğinizi düşünün
+: “Belirsiz bir tarihsel dönemde bir şövalye
+Kutsal Kase'yi aramaya karar verdi...” vb.
+İki çözüm vardır: ya çizim programıyla beş resim
+ve üzerine metni yazarsınız, bu durumda 40*256 = 51200 baytlık 5 resim
+kullanılmış olur ve bunlar disk ve bellek alanınızı kaplar, ya da 1k FONT
+karakter ve bu karakterleri yazdırmak için birkaç baytlık bir rutinle aynı işi yaparsınız
+ve 50k tasarruf edersiniz.
+İşletim sisteminin karakter FONT'larını biliyorsunuzdur: TOPAZ, DIAMOND
+vb. Hangisini seçersiniz?
+Bizim sistem FONT'ları ile ilgilenmiyoruz, çünkü kendimizinkileri kullanıyoruz.
+Sistem fontları da kullanılabilir, ancak bunlar sınırlıdır, oysa
+fontları ve o fontun karakterlerini yazdırma rutinini kendiniz yaparsanız
+her boyutta, hatta renkli yazılar görüntüleyebilirsiniz, fontu çizip
+doğru rutini yapmanız yeterlidir.
+Yazdırma sistemini, yani karakterlerin yazdırılmasını anladıktan sonra
+zorluk çekmeden değişiklikler yapabilirsiniz.
+Başlangıç olarak, 8 piksel genişliğinde ve 8 piksel yüksekliğinde, tek renkli küçük bir yazı tipini nasıl yazdıracağımızı görelim.
+Öncelikle, metni yazdırmak için bir BITPLANE ve
+kopyalanacak tüm karakterlerin çizildiği bir FONT CARATTERI gerekir.
+Bitplane için sorun yoktur, aslında listede bir bitplane boyutunda sıfırlanmış bir
+bellek parçası oluşturmanız ve onu “işaretlemeniz”, yani
+görüntülemeniz yeterlidir. Sıfırlanmış bir alan oluşturmak için
+DCB.B 40*256,0 komutunu kullanabilirsiniz, bu komut tam olarak doğru boyutta sıfırlanmış bir alan oluşturur
+; ancak sıfırlanmış “BUFFER” için özel bir BÖLÜM vardır:
+BSS bölümü, burada yalnızca DS.B/DS.w/DS.l yönergesi kullanılabilir ve
+sıfırlanacak bayt/kelime/uzun kelime sayısını belirler. Avantajı,
+ÇALIŞTIRILABİLİR DOSYANIN son uzunluğundadır: sıfırlanmış alanı
+ile oluştururken: "BITPLANE: dcb.b 40*256,0" ile sıfırlanmış alan oluştururken, 10240 bayt dosyanın 
+toplam uzunluğuna eklenir ve bir BSS Bölümü tanımlanır:
+
+SECTION    UnBitplaneQua,BSS_C    ; _C, CHIP RAM'e yüklenmesi gerektiği anlamına gelir
+; _C olmadan
+; rastgele bir yere, hatta FAST'a bile yüklenir!
+; ancak bitplane'ler CHIP'te olmalıdır.
+BITPLANE:
+ds.b    40*256        ; 10240 bayt sıfır
+
+Dosyaya, dosyayı belleğe yüklediğinizde 40*256 bayt “değerinde” olacak birkaç baytlık bir HUNK eklenecektir.
+ “dcb.b 40*256,0”
+100 lirelik madeni paralarla dolu büyük bir çanta gibi, “ds.b 40*256” ise
+100.000 lirelik küçük bir banknot gibidir. Sonuç aynıdır, ancak
+dosya daha küçüktür.
+
+“ds.b 40*256” nin ardından “DCB” de olduğu gibi “,0” gelmediğine dikkat edin, çünkü
+‘DS’ her zaman sıfırları gösterirken, DCB belleğe
+X kez tekrarlanan herhangi bir değeri kaydedebilir.
+
+Artık yazacaklarımızı yazabileceğimiz “KAĞIT PARÇASI” var, ancak
+yazdırmak için ne font ne de rutinimiz var.
+FONT nedir ve nasıl yapılır bir bakalım. Font, yazmak için gerekli
+kelimeleri ve sayıları içeren bir dosyadır ve çeşitli formatlarda olabilir.
+Font, birbirinin altında sıralanmış karakterlerden başka bir şey değildir, tam olarak
+sıralı TÜM karakterlerdir: "ABCDEFGHI...".
+Bazı fontlar .IFF formatında, yani karakterlerin bulunduğu bir ekran olarak tasarlanmıştır:
+
+------------
+|ABCDEFGHIJKL|
+|MNOPQRSTUVWX|
+|YZ1234567890|
+|     |
+|     |
+------------
+
+Tasarım daha sonra RAW formatına dönüştürülür ve karakterler bu
+şekilden alınarak bit düzlemine kopyalanır: “A” harfi yazdırılacaksa, FONT
+dosyasından RAW formatında BITPLANE'e kopyalanır ve ‘A’ harfi bit düzlemine görünür. Böylece
+“A” harfine ihtiyaç duyulduğunda, nerede olduğunu biliriz ve FONT dosyasından kopyalarız.
+Diğer harfler için de aynı işlem geçerlidir.
+Bu kursta kullanılan 8x8 font sisteminden bahsedelim: karakterler
+8 piksel*8 piksel yer kaplar, yani kickstart FONT'u kadar büyüktür. Aslında
+daha dardırlar çünkü bir kelime ile diğer kelime arasında bir piksel “boşluk” da içermeleri gerekir,
+ aksi takdirde yazı italik görünür!
+Karakterler daha sonra “doğru” sırayla, yani ASCII'ye uygun olarak yerleştirilir.
+ASCII şu şekildedir:
+
+dc.b    $1f,‘ !"#$%&’()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNò
+dc.b    ‘PQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~’,$7F
+
+Baştaki $1f ve sondaki $7f, ilk karakterin, yani BOŞLUK karakterinin
+$1f'den sonra geldiğini, yani $20 olduğunu, ardından “!” karakterinin geldiğini, yani $21 olduğunu vb. gösterir,
+son karakterlerden sonra $7f'ye ulaşılır. Bu, ASCII karakterlerinin
+düzenini anlamanız için bir örnek. Sayıların da ASCII karakterleri olabileceğinden
+bahsetmiştik, bunu “?$21” ile deneyerek, sonucun onaltılık ($), ondalık, ASCII “...!” ve
+ikili olarak verildiğini doğrulayabilirsiniz. Ayrıca şunu da gördük:
+
+dc.b    “CANE”
+
+şununla eşdeğerdir:
+
+dc.b    $63,$61,$6e,$65
+
+Aslında bellekte ‘C’ $63, “A” $61 vb.
+Her karakter bellekte bir bayt yer kaplar ve 5000 bayt uzunluğundaki bir metin
+5000 karakter içerir.
+Fontumuza geri dönersek, sadece 8 piksel genişliğinde ve
+tüm karakterleri alt alta sığacak kadar yüksek bir şekil hayal edin:
+
+!
+"
+#
+$
+%
+&
+'
+(
+)
+*
++
+,
+-
+.
+/
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+:
+;
+<
+=
+>
+?
+@
+A
+B
+C
+D
+E
+F
+G
+H
+I
+J
+K
+L
+M
+N
+O
+
+ECCETERA ECCETERA.....
+
+Kursumuzda kullandığımız 8x8 yazı tipi, RAW formatında bu tür bir figürden başka bir şey değildir.
+Aslında bu tür yazı tipi normalde özel bir EDİTÖR ile yapılır.
+Bu program, tek renkli 8x8 yazı tiplerini çizmek için tasarlanmıştır.
+Ancak daha büyük ve renkli fontlar için harfleri bir
+şekilde, normalde 320x256 boyutunda çizmek ve yazdırılacak karakterleri almak için kendi rutininizi kullanmak daha uygundur.
+ Ancak başlangıç olarak en basit fontun
+ekrana nasıl yazdırıldığını görelim: öncelikle yazdırılacak kelimeleri içeren bir metin dizesi hazırlamanız gerekir,
+ örneğin:
+
+dc.b	“İlk yazı!”    ; not: ‘’ veya “” kullanılabilir
+
+EVEN                ; yani ÇİFT adrese hizala
+
+EVEN yönergesi, dc.b altında bulunan komutlar veya
+veriler için tek adresleri önlemek için kullanılır. Metin dizileri baytlardan oluşur
+ve tek sayı olabilmektedir, bu durumda aşağıdaki etiket
+altındaki etiket tek bir adrese sahip olur ve bu da derleme hatalarına neden olabilir
+: aslında, 68000'de komutlar her zaman çift adreslerde olmalıdır
+ve veriler de yürütme sırasında GURU MEDITATION'ı önlemek için çift adreslerde olmalıdır,
+ çünkü tek bir adrese uygulanan bir MOVE.L veya MOVE.W
+tek bir adres üzerinde çalıştırıldığında GURU MEDITATION ve patlamalarla sonuçlanan ciddi bir çökmeye neden olur.
+Bu nedenle, bir metin dizisinin sonuna her zaman EVEN eklemeyi
+veya çift olduğundan emin olmayı unutmayın.
+Dizinin sonuna bir sıfır daha ekleyerek
+hesabı eşitleyebilirsiniz, GfxName için yaptığım gibi:
+
+GfxName:
+dc.b    “graphics.library”,0,0
+
+Şöyle de yazabilirsiniz:
+
+GfxName:
+dc.b    “graphics.library”,0
+even
+
+Aslında metnin sonuna bir sıfır eklemek yeterlidir, diğerini EVEN ekler.
+Görüntülenecek metin dizesi belirlendikten sonra,
+doğru karakterleri doğru yere nasıl kopyalayacağınızı görmeniz yeterlidir.
+Bir karakteri yazdırma rutinini size sunuyorum:
+
+PRINT:
+LEA    TESTO(PC),A0    ; Yazdırılacak metnin adresi a0'da
+LEA    BITPLANE,A3    ; Hedef bitplane adresi a3'te
+MOVEQ    #0,D2        ; d2'yi temizle
+MOVE.B    (A0),D2        ; d2'deki sonraki karakter
+SUB.B    #$20,D2        ; KARAKTERİN ASCII DEĞERİNDE 32 ÇIKARIN,
+; ÖRNEĞİN, BOŞLUK KARAKTERİNİ (ki bu $20'dir)
+; $00'a, YILDIZ KARAKTERİNİ ($21) $01'e dönüştürmek için...
+MULU.W    #8,D2
+MULU.W    #8,D2        ; ÖNCEKİ SAYIYI 8 İLE ÇARP,
+; karakterler 8 piksel yüksekliğinde olduğundan
+MOVE.L    D2,A2
+ADD.L    #FONT,A2    ; FONT'TA İSTENEN KARAKTERİ BUL...
+
+; KARAKTERİ SATIR SATIR YAZDIR
+MOVE.B    (A2)+,(A3)    ; karakterin 1. SATIRINI yazdır
+MOVE.B    (A2)+,40(A3)    ; 2. SATIRINI yazdır “ ”
+MOVE.B    (A2)+,40*2(A3)    ; 3. SATIRINI yazdır " “
+MOVE.B    (A2)+,40*3(A3)    ; SATIR 4'ü yazdır ”
+MOVE.B    (A2)+,40*4(A3)    ; SATIR 5'i yazdır " “
+MOVE.B    (A2)+,40*5(A3)    ; SATIR 6'YI yazdır ”
+MOVE.B    (A2)+,40*6(A3)    ; SATIR 7'YI yazdır " “
+MOVE.B    (A2)+,40*7(A3)    ; SATIR 8'i yazdır ”
+
+RTS
+
+Anladınız mı?
+Adım adım inceleyelim:
+
+LEA    TESTO(PC),A0    ; a0'da yazdırılacak metnin adresi
+LEA    BITPLANE,A3    ; Hedef bitplane adresi a3'te
+MOVEQ    #0,D2        ; d2'yi temizle
+MOVE.B    (A0),D2        ; d2'deki sonraki karakter
+
+Buraya kadar sorun yok, d2'de karakterin değeri var, eğer
+“A” olsaydı, o zaman d2'de $41 olurdu
+
+SUB.B    #$20,D2        ; KARAKTERİN ASCII DEĞERİNDE 32 ÇIKARIN,
+; ÖRNEĞİN, BOŞLUK KARAKTERİNİ (ki bu $20'dir)
+; $00'a, yani
+YILDIZIN ($21) DEĞERİNİ $01'E DÖNÜŞTÜRMEK İÇİN...
+
+Burada da ne olduğu açık, neden 32 çıkardığımızı görelim ($20) çıkarıyoruz:
+
+MULU.W    #8,D2        ; ÖNCEKİ SAYIYI 8 İLE ÇARP,
+; karakterler 8 piksel yüksekliğinde olduğu için
+MOVE.L    D2,A2
+ADD.L	#FONT,A2    ; FONT'TA İSTENEN KARAKTERİ BUL...
+
+Bu işlem, A2'de fontta bulunan “A” karakterinin adresini verir
+,
+ yani karakteri “almak” için gitmemiz gereken adresi,
+ görüntülediğimiz bitplane'e kopyalamak için.
+Ne olduğunu görelim: karakterlerin font'a
+ASCII standardında olduğu gibi aynı sırayla yerleştirildiğini hatırlıyor musunuz? Dolayısıyla, karakterin
+ASCII değerine sahip olduğumuzdan, bu durumda “A” için $41, “A”nın FONT'un başlangıcından
+RAW'da ne kadar uzakta olduğunu belirleyebiliriz! Her karakter
+8x8 piksel ise, bu karakterin 8 bit uzunluğunda olduğu anlamına gelir, yani bir satırda bir bayt * 8 satır,
+toplamda 8 bayt.
+Dolayısıyla boşluk (FONT'taki ilk karakter) FONT'un başında
+ve “!” (ikinci) başlangıcında 8. bayta kadar uzanır ve bu şekilde devam eder.
+ASCII değerinden $20 çıkardığımızda, boşluğun değeri $00 olur,
+sonraki karakter “!” $01 olur, vb. (“A” $21 olur), bu nedenle
+çıkarma işleminden sonra elde edilen sayıyı 8 ile çarparak
+FONT'un başlangıcından söz konusu karakterin uzaklığını elde etmek yeterlidir!!! Adımı tekrar gözden geçirelim
+:
+
+SUB.B    #$20,D2		; KARAKTERİN ASCII DEĞERİNDE 32 ÇIKAR,
+; ÖRNEĞİN, BOŞLUK
+; (ki bu $20'dir) DEĞERİNİ $00'A,
+; YILDIZ (ki bu $21'dir) DEĞERİNİ $01'E DÖNÜŞTÜRMEK İÇİN...
+MULU.W    #8,D2		; ÖNCEKİ SAYIYI 8 İLE ÇARP,
+; karakterler 8 piksel yüksekliğinde
+
+Şimdi D2'de karakterin başlangıcından FONT'un başlangıcına olan mesafeyi (ofset) bulduk
+! Şimdi karakterin gerçek adresini bulmak için, D2'de bulunan “başlangıçtan mesafeyi” FONT adresine ekleyelim:
+MOVE.L    D2,A2 ADD.L    #FONT,A2    ; İSTENEN KARAKTERİ FONT'TA BUL
+
+MOVE.L    D2,A2
+ADD.L    #FONT,A2    ; FONT'TA İSTENEN KARAKTERİ BUL...
+
+Şimdi a2'de kopyalamak istediğimiz karakterin adresi var,
+örneğin “A”. Şimdi bunu FONT'tan ekrana, yani
+BITPLANE 320x256'ya kopyalamak yeterlidir, burada her satır 40 bayt uzunluğundadır:
+
+; KARAKTERİ SATIR SATIR YAZDIR
+MOVE.B    (A2)+,(A3)    ; karakterin 1. SATIRINI yazdır
+MOVE.B    (A2)+,40(A3)    ; 2. SATIRINI yazdır “ ”
+MOVE.B    (A2)+,40*2(A3)    ; 3. SATIRINI yazdır " “
+MOVE.B    (A2)+,40*3(A3)    ; SATIR 4'ü yazdır ” “
+MOVE.B    (A2)+,40*4(A3)    ; SATIR 5'i yazdır ” “
+MOVE.B    (A2)+,40*5(A3)    ; SATIR 6'yı yazdır ” “
+MOVE.B    (A2)+,40*6(A3)    ; SATIR 7'Yİ yazdır ” “
+MOVE.B    (A2)+,40*7(A3)    ; SATIR 8'İ yazdır ” “
+
+Kopyalama ”satır"lar halinde gerçekleşir, çünkü karakter 8 satır yüksekliğindedir ve her biri
+8 bit (1 bayt) genişliğindedir:
+
+12345678
+
+...###.. satır    1 - 8 bit, 1 bayt
+..#...#. 2
+..#...#. 3
+..#####. 4
+..#...#. 5
+..#...#. 6
+..#...#. 7
+........ 8
+
+Dolayısıyla, bir satırı bir seferde kopyalamak için bir baytı bir seferde kopyalamak gerekir.
+Ancak hedef ekran satır başına 40 bayt genişliğindedir ve
+her satırın birbirinin altına hizalanması gerektiğini dikkate almalıyız, aksi takdirde her seferinde 40 bayt atlarsak
+karakter şu şekilde kopyalanır:
+
+...###....#...#...#...#...#####...#...#...#...#...#...#.........
+
+Bunun yerine bir bayt kopyalamalı, sonra 40 bayt atlayarak SATIR BAŞINA GİT ve
+başka bir bayt kopyalamalıyız:
+
+MOVE.B    (A2)+,(A3)    ; karakterin 1. SATIRINI yazdır
+
+Monitörde:
+
+...###..
+
+MOVE.B    (A2)+,40(A3)    ; 2. SATIRI (40 bayt sonra) yazdır
+
+Monitörde:
+
+...###..
+..#...#.
+
+
+MOVE.B    (A2)+,40*2(A3)    ; 3. SATIRI (80 bayt sonra) yazdır
+
+Monitörde:
+
+...###..
+..#...#.
+..#...#.
+
+Vb. 80 bayt genişliğinde bir ekran için (640x256 HIRES) aşağıdaki şekilde
+rutini değiştirmek yeterlidir:
+
+MOVE.B    (A2)+,(A3)    ; karakterin 1. SATIRINI yazdır
+MOVE.B    (A2)+,80(A3)    ; 2. SATIRINI yazdır " “
+MOVE.B    (A2)+,80*2(A3)    ; SATIR 3'ü yazdır ” “
+MOVE.B    (A2)+,80*3(A3)    ; SATIR 4'ü yazdır ” “
+MOVE.B    (A2)+,80*4(A3)    ; SATIR 5'i yazdır ” “
+MOVE.B    (A2)+,80*5(A3)    ; SATIR 6'YI yazdır ” “
+MOVE.B    (A2)+,80*6(A3)    ; SATIR 7'YI yazdır ” "
+MOVE.B    (A2)+,80*7(A3)    ; SATIR 8'YI yazdır “ ”
+
+Ders6a.s'de bu “A” harfinin bir bit düzlemine yazdırılmasını görelim.
+
+Şimdi Ders6b.s ile bir satırlık metni yazdırmaya geçelim.
+
+Son olarak Ders6c.s'de istediğimiz kadar satır yazdırıyoruz. Bu rutin
+KESİNLİKLE, ekrana bir şey yazmak istediğinizde kullanabileceğiniz rutin.
+
+Neden kendi yazı tipinizi çizmiyorsunuz? Ders6c2.s'de FONT
+dc.b listesinde şu örnekte olduğu gibi yer almaktadır:
+
+; “B”
+dc.b    %01111110
+dc.b    %01100011
+dc.b    %01100011
+dc.b    %01111110
+dc.b    %01100011
+dc.b    %01100011
+dc.b    %01111110
+dc.b    %00000000
+
+Karakterler dc.b % (ikili) ile belleğe kaydedilir.
+Her bir karakteri istediğiniz gibi değiştirebilirsiniz. Kendi fontunuzu oluşturursanız,
+formatlanmış bir diske veya HARD DISK'e kaydedin!
+
+
+Şimdi daha önce hiç yapmadığımız bir şeyi deneme fırsatımız var:
+aynı ekranda 8 renkli LOWRES bir şekil
+ve HIRES bir bitplane'i bir arada göstermeye çalışalım. Amiga, aynı anda
+farklı video çözünürlüklerini görüntüleyebilir (PC MSDOS'un bunu yapabildiğini sanmıyorum),
+bunun için copperlist'e bir WAIT koyup altında BPLCON0'ı yeniden tanımlamanız yeterlidir,
+tıpkı bir gradyan oluşturmak için renkleri tanımladığımız gibi!
+Örneğin, ilk satırdan $50 satırına kadar bir figürü
+LOWRES'te 4096 renkli HAM olarak, onun altında 16 renkli HIRES olarak,
+onun altında 32 renkli LOWRES olarak ve böyle devam ettirebiliriz. Bazı oyunlarda örneğin
+karakterlerin hareket ettiği ekran LOWRES'te,
+skor ve benzeri bilgilerin bulunduğu panel ise HIRES'te (bkz. AGONY).
+LESSON6D.S'de HIRES'te bir şeklin üzerine LOWRES'te bir şekil görüntüleyelim.
+
+Şimdi, yazdığımız kelimelere “RELIEF” efekti vermemizi sağlayan bir “püf noktası” görelim
+: Ders 6e.s'de 1 yerine 2 bitplane etkinleştiriyoruz ve
+ikincisini birinciye üst üste yerleştiriyoruz, ancak ikincisini bir satır aşağı kaydırıyoruz.
+ İki aynı görüntüyü birbirinin üzerine şeffaf olarak yerleştirirsek
+ne olur? Görüntü ikiye bölünür!!! Ve doğru renkleri seçerek,
+“üst”teki bölünmeyi daha açık, “ALT”daki bölünmeyi daha koyu yaparsak ne
+olur? Nasıl çalıştığını anladık. Ders6e.s
+
+Üst üste bindirmelerden bahsetmişken, bir şeklin “ÜSTÜNE” bir bit düzlemi etkinleştirip üzerine yazmaya ne dersiniz?
+Ders 6f.s'de ne olacağını görelim.
+
+Ders 6g.s'de, şeklin üzerindeki yazıyı hareket ettirerek “ŞEFFAFLIK” efekti vurgulanmaktadır.
+Ders 6h.s'de ise, iki metni iki bit düzlemine üst üste bindirerek 3 renkli metinler yazdırmanın bir yolunu bulacaksınız.
+
+Ders 6h.s'de ise, iki bit düzlemini üst üste bindirerek 3 renkli metinler yazdırmanın bir yolunu bulacaksınız.
+Ders 6h.s'de, iki bit düzlemini üst üste bindirerek 3 renkli metinler yazdırmanın bir yolunu bulacaksınız.
+
+Ders 6i.s'de, önceden tanımlanmış değerlerden oluşan bir TABLO kullanarak metnin 3 renginden birini yanıp sönüyor.
+TABLOLAR hakkında Ders 1'de konuşmuştuk, şimdi pratikte ne gibi avantajlar sağladıklarını görelim.
+Ders 6l.s'de, bir rengi değiştirmek için bir TAB'dan okuma rutininin bir varyasyonu kullanılıyor; değişiklik, tablonun başından sonuna kadar okumak ve yeniden
+
+Ders 6l.s'de, bir rengi değiştirmek için bir TAB'dan okuyan rutinin bir varyasyonu kullanılır
+; bu varyasyon, tablonun başından sonuna kadar okumak ve baştan başlamak yerine,
+ tabloyu geriye doğru, yani sondan başa doğru yeniden okumasından ibarettir.
+Tablolar birçok kullanım için yararlı veya vazgeçilmez olabilir, örneğin sıçrama veya salınım hareketlerini simüle etmek için.
+
+Tablolar birçok kullanım için yararlı veya vazgeçilmez olabilir, örneğin
+sıçrama veya salınım hareketlerini simüle etmek için.
+Tablo kullanımının, basit ADD ve SUB'lara göre
+bir şeklin hareketinde üstünlüğünü Ders 6m.s'de
+
+
+Hareket konusunda, şimdilik BPLCON1 ($dff102) ile yatay kaydırma gördük.
+Bu, maksimum 16 piksel kaydırma sağlar.
+Peki, ekranı istediğimiz kadar sağa ve sola kaydırmak için ne yapmalıyız?
+istediğimiz kadar kaydırabiliriz? Cevap oldukça basit: bit düzlemlerine işaretçileri de kullanmak yeterlidir
+! Aslında, bit düzlemlerine işaretçilerle yukarı ve aşağı kaydırabileceğimizi zaten gördük,
+ bir satırın uzunluğunu eklemek veya çıkarmak yeterlidir (düşük çözünürlükte 40 ve yüksek çözünürlükte 80). Ancak
+ileri ve geri de kaydırabiliriz, daha doğrusu 8 piksel “adımlarla”,
+ bit düzlem işaretçisinden 1 çıkarmak veya eklemek yeterlidir ve figürü bir bayt, yani 8 bit, yani 8 piksel sağa veya sola kaydırmış oluruz.
+bitplane işaretçisine 1 ekleyip veya çıkararak
+şekli bir bayt, yani 8 bit, yani 8 piksel sağa veya sola kaydırabiliriz.
+Bitplane Pointers ile 8 piksel ve $dff102 (BPLCON1) ile 1 piksel kaydırabiliyorsak,
+ $dff102 ile 8 piksel kaydırmak yeterlidir,
+ ardından bir ile 8 piksel ileri “atlamak” için:
+
+subq.l #1,BITPLANEPOINTER
+
+Aynı anda BPLCON1 ($dff102) sıfırlayarak dokuzuncu piksele gidin,
+ardından $dff102 ile bir pikseler halinde 8 piksel daha kaydırın,
+9+8= 11 pikseline ulaşın, ardından Bitplane
+Pointer vb. ile 8 piksel ileri atın. Ancak örneklerde, $dff102'nin
+maksimum $FF'ye, yani 0'dan 15'e kadar kayabileceğini ve sadece 0'dan 7'ye kadar değil,
+şu tekniği kullandım: 16 piksel kaydırmak için bitplane işaretçilerine 2 eklemek veya
+çıkarmak yeterlidir (1 ile PIC'yi 8 piksel kaydırdığımız için)
+Böylece $dff102 ile maksimum olana kadar, yani $00'dan $FF'ye, toplam 16 pozisyona kadar bir piksel kaydırıyorum, ardından bir ADDQ veya SUBQ #2,BITPLANEPOINTERS ile sonraki 16 piksele “kaydırıyorum”.
+, yani $00'dan $FF'ye, toplam 16 pozisyona kaydırıyorum, ardından bir ADDQ veya SUBQ #2,BITPLANEPOINTERS ile sonraki 16
+piksele “geçiş yapıyorum”.
+İşte bir bitplane'i bir pikseler halinde sağa doğru kaydıran bir rutin
+: MIOBPCON1'in $dff102'nin baytı olduğunu unutmayın
+
+
+Sağ:
+CMP.B    #$ff,MIOBPCON1    ; maksimum kaydırmaya ulaştık mı? (15)
+BNE.s    CON1ADDA	; henüz değilse, 1
+ ileri kaydırın
+; BPLCON1 ile
+
+;    Bit düzleminin adresini okur
+
+LEA    BPLPOINTERS,A1    ; Bu 4 komutla
+move.w    2(a1),d0    ; copperlist'ten işaret ettiği adresi alırız
+swap    d0        ; şu anda $dff0e0 ve bunu d0'a işaret ederiz
+move.w    6(a1),d0
+
+;    Bitplane işaretçisiyle 16 piksel sağa kaydır
+
+subq.l    #2,d0        ; 16 bit geriye işaret et (PIC
+; 16 piksel sağa kaydır)
+
+;    BPLCON1'i sıfırla
+
+clr.b    MIOBPCON1    ; BPLCON1 ($dff102) donanım kaydırmasını sıfırlar
+; aslında bitplane pointer ile 16 piksel "atladık
+; şimdi $dff102 ile sıfırdan başlamalıyız
+; bir piksel sağa kaydırmak için.
+move.w    d0,6(a1)    ; plane swap adresinin DÜŞÜK kelimesini kopyalar
+
+move.w    d0,6(a1)    ; düzlemin adresinin ALTI kelimesini kopyalar
+swap    d0        ; 2 kelimeyi değiştirir
+move.w    d0,2(a1)    ; düzlemin adresinin ÜSTÜ kelimesini kopyalar
+rts            ; rutinden çıkar
+
+CON1ADDA:
+add.b    #$11,MIOBPCON1    ; şekli 1 piksel sağa kaydır
+rts            ; rutinden çık
+
+
+Rutin, BPLCON1 ($dff102) değerini bir artırarak, 16
+olası konumdan geçer: 00,11,22,33,44,55,66,77,88,99,aa,bb,cc,dd,ee,ff ardından
+ff+1 pikseline atlayarak 2 işlem yapar:
+
+1) Bit düzlem işaretçilerini 2 bayt (1 kelime, 16 bit) geriye kaydırır,
+şekli 16 piksel sağa kaydırır (yani
+$FF konumundan 1 piksel sonra, yani $dff102'den önceki kareye ulaşır
+
+2) $dff102'yi sıfırlayın, çünkü 16 piksel “atladık”, aksi takdirde Bitplane İşaretçisi ile eklenen 16 piksel ve $dff102 (BPLCON1) ile ulaşılan 15 piksel
+toplanacaktır. ($FF)
+düşer. BPLCON1'i sıfırlayarak ise
+$00+16= on altıncı pikselden başlarız, ardından BPLCON1 ile
+bitplane işaretçisini değiştirmeden sonraki 15'e geçeriz.
+
+Hala net değilse, bu şemayı takip edin ve #'nin
+sağa doğru hareket ettirdiğimiz “şekil” olduğunu unutmayın:
+
+; VAL. BPLCON1    - BYTE SOTTRATTI AI PUNT. PLANE
+
+#                ;    $00    -    0    - toplam piksel:
+#                ;    $11    -    0    -	1
+#                ;    $22    -    0    -    2
+#                ;    $33    -    0    -    3
+#                ;    $44    -    0    -    4
+#                ;    $55    -    0    -    5
+#                ;    $66    -    0    -    6
+#            ;    $77    -    0    -    7
+#            ;    $88    -    0    -    8
+#            ;    $99    -    0    -    9
+#            ;    $aa    -    0    -    10
+#            ;    $bb    -    0    -    11
+#            ;    $cc    -    0    -    12
+#            ;    $dd    -    0    -    13
+#            ;    $ee    -    0    -    14
+#        ;    $ff    -    0    -    15
+#        ;    $00    -    2    -    16
+#        ;    $11    -	2    -    17
+#        ;    $22    -    2    -    18
+#        ;    $33    -    2    -    19
+#        ;    $44    -    2    -    20
+#        ;    $55    -    2    -    21
+#        ;    $66    -    2    -    22
+#    ;    $77    -    2    -    23
+
+vb....
+
+Bu şema kendinden anlaşılır: örneğin, bir bit düzlemini
+22 piksel sağa kaydırmak istiyorsak, bit düzlemi işaretçisinden 2 çıkar ve $66'yı
+BPLCON1 ($dff102)
+
+Sola kaydırmak için ise bitplane işaretçilerine 2 eklememiz
+ve her 16 pikselde bir $dff102 ile tersini yapmamız gerekir: $ff,$ee,$dd.....
+
+Ders 6'da bu rutinin nasıl çalıştığını görelim.
+Beklenmedik bir şey fark edeceksiniz: sol tarafta sarsıntılı bir bozukluk var; bu
+rutindeki bir hata değil, Amiga donanımının bir özelliğidir.
+ Bunu gidermek için, listeye önerilen değişikliklerde zaten bulunan küçük bir önlem yeterlidir
+.
+
+Yatay olarak istediğimiz kadar kaydırabildiğimize göre, neden
+video penceresinden daha büyük bir bitplane kaydırmayalım? Tam olarak
+640 piksel genişliğinde bir ekranı 320 piksel genişliğinde bir ekrana sağa ve
+sola kaydırarak kaydıralım, tüm bunları Lezione6o.s
+
+Tablolar için bir adresi işaret etmek üzere bir longword kullanıldığını daha önce görmüştük
+:
+
+POINTER:
+DC.L    TABELLA
+
+“POINTER” uzun kelimesinde tablo adresi birleştirilir, böylece
+tabloda nereye geldiğimizi “hesaplayabiliriz” tablonun bir öğesinin uzunluğunu ekleyerek
+veya çıkararak.
+Her seferinde geldiğimiz adresi kaydetmeliyiz çünkü
+rutin her kare için çalışır ve sürekli çalışmaz, bu nedenle
+bu rutin yeniden çalıştırılmadan önce başka rutinler de çalıştırılabilir.
+ Bu rutin yeniden çalıştırıldığında,
+tablodan bir önceki sefer kaldığı yerden değerleri almaya devam etmelidir ve bunu
+POINTER: adresindeki adresi basit bir
+
+MOVE.L	PUNTATORE(PC),d0    ; d0'da son ulaştığımız adres
+;.
+
+Rutinden çıkmadan önce son konumu kaydetmek yeterlidir.
+Bu yöntem birçok amaç için kullanılabilir, örneğin
+tüm metni yazdırmak yerine her karede tek bir karakter yazdırmak
+ve sonra görmek için. Bunu yapmak için PRINT rutinini değiştirmeniz ve iki
+işaretçi oluşturmanız yeterlidir: biri son yazdırılan karaktere, diğeri
+son karakteri yazdırdığımız bit düzlemindeki son adrese işaret etmelidir.
+Bu şekilde, bir karakter yazdırıp, tüm bir kare boyunca rutini dondurup, bir karakter yazdırmak için yeniden etkinleştirip, vb.
+bir kare boyunca dondurmuş, bir karakter yazdırmak için yeniden etkinleştirmiş, sonra
+tekrar dondurmuş gibi olur. Aslında, dondurmak yerine, tek bir karakter yazdırmak için
+çalıştırıyoruz, sonra geldiğimiz noktayı kaydediyoruz, rutin
+dışına çıkıyoruz, kare geçene kadar bekliyoruz, rutini
+tekrar çalıştırıyoruz, geldiğimiz noktadan devam ediyoruz, her şeyi kaydediyoruz, çıkarırız vb.
+Bu olasılığı uygulayan liste Lezione6p.s'dir
+
+
+Bir bit düzleminde metin yazdırmanın yanı sıra,
+satranç tahtası, desenler ve dokular gibi özel rutinlerle çizimler de oluşturabiliriz. Doğru bitleri 1'e ayarlamak yeterlidir
+!!! Lezione6q.s'de örnek rutinler bulunmaktadır.
+
+
+DERS 6'nın sonuna geldik, geriye sadece
+bu dersin listelerini ve “yeniliklerini” her zamanki son örnek listesine
+müzikle birlikte bir araya getirmek kaldı: Ders6r.s
+
+
+Şimdi sprite'ları inceleyeceğiz. Yapmanız gereken şey,
+LEZIONE7.TXT dosyasını yüklemek, ardından
+listelerinin incbin'lerini yüklemek için yolu “V DF0:SORGENTI3”
+ile değiştirmektir. Kaynaklar, aslında disk 1'in SORGENTI3 dizininde bulunur.

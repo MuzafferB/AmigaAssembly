@@ -1,0 +1,76 @@
+
+;By DeathBringer/MORBID VISIONS
+
+Shade Bobs
+
+The ShadeBob routine is essentially an implementation of the blitter's ability
+to perform additions. Just think of each pixel on the screen
+as an n-digit binary number, where n is the number of bitplanes. For example,
+with 5 bitplanes, the situation would be as follows:
+
+Plane5 0 0 0 0 0
+Plane4 0 0 1 0 1
+Plane3 0 1 0 1 0
+Plane2 0 1 1 0 1
+Plane1 1 0 1 0 0
+-----------------------------------------------------
+Number 1 6 11 4 10
+
+The routine adds 1 to this number using a simple technique used
+in binary counters, with sophisticated improvements also in the adder
+present in our ALU.
+
+To perform the Shade, we must add 1 to the number represented by all
+the bitplanes. Here's how to do it.
+
+Adding binary numbers greatly simplifies our life.
+First, we calculate whether there is a carry between one bitplane and another, as
+we do when calculating for digits in a normal addition, and then we
+perform the sum.
+ 
+
+Clearly, there will be a carry if both bits are equal to 1, and the sum
+will be 1 if the bits are different, 0 if the bits are equal (0+0, 1+1) as can be
+easily verified from the following table:
+
+Bitplane | Bits to be added | Sum | Carry
+--------------------------------------------
+0 | 0 | 0 | 0
+0 | 1 | 1 | 0
+1 | 0 | 1 | 0
+1 | 1 | 0 | 1
+--------------------------------------------- 
+
+Now we can see what functions Sum and Carry perform:
+
+Sum= Bitplane XOR Bit
+
+Carry= Bitplane AND Bit
+
+At this point, simply repeat the previous procedure for all bitplanes,
+adding the carry, and you're done!
+
+Example:
+Number of bits to be added Sum Carry
+------------------------------------------------------------------------
+plane1 1 + __1 = 0 1 ->\
+/ /---------------------<-------------|
+plane2 1 + / 1 <- = 0 1 ->\
+/ /-----------------------------------|
+plane3 0 + | 1 <- = 1 0 ->\
+| /-----------------------------------|
+plane4 0 + | 0 <- = 0 0
+^ | ^
+| | |
+3 + \_->1 = 4
+------------------------------------------------------------------------
+
+Our 1-bitplane bob represents the mask that indicates which pixels
+are affected by the addition in a given frame. First,
+take the bob and the affected screen area and perform an AND operation using
+an additional area called Carry (the carry) as the destination.
+Once this is done, take the bob and perform an XOR with the appropriate bitplane
+of the screen to obtain the sum.
+Then continue using the Carry area as if it were our bob for each
+bitplane. Clearly, 2 Carry areas are needed!!!
+

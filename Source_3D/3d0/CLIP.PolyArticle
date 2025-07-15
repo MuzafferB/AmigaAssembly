@@ -1,0 +1,160 @@
+TABSIZE = 8
+								Paul Kent
+								9 Pendean
+								Burgess Hill
+								West Sussex
+								RH15 ODW.
+
+POLGON CLIPPER
+~~~~~~~~~~~~~~
+As I said last month, I thought I'd show how to clip a polygon. Any vector
+based code, whether 3d,2d rotation to sizing has to ensure that only the
+visible parts of the vector graphics are displayed. EG To avoid screen
+corruption due to drawing lines off the side of one bitplane onto another...
+If you can guarantee that none of your graphics will go off-screen then
+you avoid clipping altogether - but there are only so many situations in 
+which you can guarantee this!
+
+The method I shall describe unbundles the problem into 2 distinct parts:
+1-only drawing lines within given limits, the viewing window.
+2-ensuring that the polygon doesnt decompose so much as to make it impossible
+  to fill using the blitter.
+
+PART 1
+~~~~~~ 
+For the first part, we step round the edges of the polygon, looking at the
+start/end points for the lines on each side. If these lines start or finish
+outside of our viewing window, we clip the line to the edge of the viewing 
+boundary.(See example lower down!). If a line is completely beyond the
+viewing window, we just skip it altogether.
+The standard equation for a line can be used to work out where it intersects
+the viewing window:
+
+			Y=MX+C where M = gradient of line
+				     C = y-intercept (y value when x=0)
+				   Y,X = coordinates
+This poses another problem: this formula is for an infinitely long line, not
+our 'short' line. So we obtain M,the gradient from our coordinates (change
+in Y divided by change in X), then use
+
+	  	    dY=MdX where dY,dX = Change of X,Y coords
+	  	    
+to chop away the offending part of the line, and obtain some new coords.
+
+Suppose our line has start coords x1,y1 & end coords x2,y2:
+
+Then,		     M=(y2-y1)/(x2-x1)	  		
+
+Suppose we are clipping to the righthand boundary, with x2 greater than
+the x value for the window boundary.(I'll call this RHSIDE).I will
+also assume that x1 is less than RHSIDE - else we would have skipped this
+line because it would be to the right of the viewing window.
+
+Then
+		dY=(x2-RHSIDE)(y2-y1)/(x2-x1)
+		
+	y3 = y2-dY = y2-(x2-RHSIDE)(y2-y1)/(x2-x1)
+	
+			     x3 = RHSIDE					
+
+This is repeated for the top/bottom/left of the viewing window as necessary.
+We then draw a line between points x1,y1 and x3,y3. We then repeat the whole
+process for the next side of the polygon.
+
+PART 2
+~~~~~~
+For the blitter to fill an object coorectly, it must be joined up!
+(Simple but true!). The polygon only needs to be joined up at side the
+blitter will be filling from however - the blitter fills right>left,
+and so it never 'sees' if an object is joined at the top and bootom.
+To join up the right hand side of the polygon, when some of it has been
+clipped away (PART 1) we just need to look for pairs of coordinates
+where the line cuts the window boundary on the right hand side, and draw
+a line between the two. For example in the example below, we would draw
+a line between points 3 & 4. This part can be integrated into PART 1
+by simply putting in some code around when we get coordinates 3 or 4
+from the line clipping code.
+
+EG.                      Window Boundary
+                                ^
+				|
+		1	       3|	    2			
+		x---------------+-----------x
+	       /		|	   /
+				|	  /
+				|	 /
+				|       /
+	 Rest of		|      /
+	Polygon.		|     /
+				|    /
+				|   /
+				|  /
+				| /
+			       4|/
+			       /|
+				
+When examining line 1,2, we see that it cuts the viewing window at 3.
+Consequently we then pass the coordinates  1,3 for the lines new start and
+end points, after clipping. We also note down point 3 as being on a 
+window boundary so that we can later seal the polygon for filling (as problem
+part 2).
+
+CODING IT
+~~~~~~~~~
+This isn't particualrly problematical - the most easy mistake to make
+is dividing values before the last possible moment - no decimal points
+in ASSEMBLY remember! - try to preserve accuracy.
+
+A rough outline of the code is given below:
+
+- For each pair of coordinates in each polygon:
+	- Check against right boundary
+		- If line all to right, skip line
+		  ELSE Clip line
+		- Save line colour & coordinates at rh intersection.
+		  (For sealing polygon PART 2!)
+	- Check against left boundary
+		- If line all to left, skip line	
+		  ELSE Clip line
+
+	- Repeat above for top, bottom boundaries
+
+	- Draw line between (now) clipped coords.
+
+- When all lines in all polys drawn:
+	- Get coordinate pair from saved coord list
+	  also get colour, ignoring secondary saved colour
+	- Draw line
+	- Repeat for all saved coord pairs
+
+When drawing polygons for filling,the only points to watch out for
+are to avoid drawing horizontal lines (will cause random results when
+filling), setting the SING bit so that only 1 pixel is set per line for
+each line (same reason as before), and the cunning trick to ensure
+that line endings meet/dont meet as necessary for a correct fill by
+subtracting 1 from a y coordinate in the line routine... (see source).
+
+The only problem I had, which you lot won't have is debugging the clipping
+code!
+The code is currently designed to print a list of polygons onto the
+screen, in order specified.A polygon at present consists of a list
+of words only in the form:
+
+POLY:	dc.w	1	;colour
+	dc.w	0,1	;First edge point no.s for start/end
+	dc.w	1,2	;2nd edge...
+	dc.w	2,6	;3rd edge.(Point no.s don't need to be sequential!)
+	dc.w	...
+	dc.w	POLYEND ;Constant used to terminate polygon ($8001 - unlikely
+			 coord)
+
+The code also just scales a polygon into & outof the screen at the moment.
+If you just want to clip a line, it should be easy to disect the polygon
+line clipping code for the single line case!
+
+If you have any problems with this code write to me and I'll try to
+help.(Address as top)
+
+Paul Kent.4/2/92.One step closer.
+		 
+

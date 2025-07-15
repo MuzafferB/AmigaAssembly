@@ -2,30 +2,30 @@
 ; Lesson 2c.s
 
 Start:
-LEA    DOG,a0
-MOVE.L    #DOG,a1
-MOVE.L    DOG,a2
-move.l    a0,CAT1
-move.l    a1,CAT2
-move.l    a2,CAT3
-rts
+	LEA    	  DOG,a0
+	MOVE.L    #DOG,a1
+	MOVE.L    DOG,a2
+	move.l    a0,CAT1
+	move.l    a1,CAT2
+	move.l    a2,CAT3
+	rts
 
 DOG:
-dc.l    $12345678
+	dc.l    $12345678
 
 CAT1:
-dc.l    0
+	dc.l    0
 
 CAT2:
-dc.l    0
+	dc.l    0
 
 CAT3:
-dc.l    0
+	dc.l    0
 
-END
+	END
 
-Assemble, press D Start to check which addresses the labels are allocated to,
- then execute with J. You will already see that after the J, the
+Assemble, press D Start to check which addresses the labels are allocated to, 
+then execute with J. You will already see that after the J, the
 register list shows negative numbers, specifically:
 
 D0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
@@ -38,14 +38,14 @@ row is a0, a1, a2, a3, a4, a5, a6, a7.
 Below are other registers that we will discuss later. The number in A7
 is the current SP, which is not important at this point. Instead, check the
 numbers in A0, A1 and A2: the first two are the same numbers, in this case
-the address of CANE:, in fact the two instructions:
+the address of DOG:, in fact the two instructions:
 
-LEA    CANE,a0        ; faster than MOVE.L #CANE,A1! do it like this!
-MOVE.L    #CANE,a1
+LEA    DOG,a0        ; faster than MOVE.L #DOG,A1! do it like this!
+MOVE.L    #DOG,a1
 
 They do the same thing, i.e. copy the address of the label into a register.
-In A3, on the other hand, we read 12345678, which is the content of the longword CANE:
-in fact, the instruction MOVE.L CANE,a2 puts the content of the long CANE in a2.
+In A2, on the other hand, we read 12345678, which is the content of the longword DOG:
+in fact, the instruction MOVE.L DOG,a2 puts the content of the long DOG in a2.
 As a further check, check after the J with an M DOG, and you will see
 that DOG is in the same location as it appears in a0 and a1; after that, you can
 also check with M CAT1 and M CAT2 that these two longwords contain
@@ -81,7 +81,6 @@ in data registers (d0, d1...) or data in address registers (a0, a1, a2...),
 depending on the situation. 
 In short, to give you an idea of how they are used,
 they are used like a notepad where you keep a certain number
-of phone numbers or where you write down how much you spent on ice cream,
- so they are useful and QUICK longwords that can
+of phone numbers or where you write down how much you spent on ice cream, 
+so they are useful and QUICK longwords that can
 be used at will, just remember what you put there!!!!!
-

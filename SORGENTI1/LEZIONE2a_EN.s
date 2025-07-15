@@ -5,23 +5,23 @@
 ; incremented; to exit, press the left key.
 
 Start:
-btst    #2,$dff016	; POTINP - right mouse button pressed?
-beq.s    add    ; if yes, go to ‘add’
-btst    #6,$bfe001    ; left mouse button pressed?
-bne.s    start        ; if no, go back to Start and repeat everything
-rts            ; if yes, EXIT!
+	btst    #2,$dff016	; POTINP - right mouse button pressed?
+	beq.s    add    ; if yes, go to ‘add’
+	btst    #6,$bfe001    ; left mouse button pressed?
+	bne.s    start        ; if no, go back to Start and repeat everything
+	rts            ; if yes, EXIT!
 
 add:
-move.b    counter,$dff180 ; put the value of COUNTER in COLOR0
-addq.b    #1,counter    ; Add 1 to the value of counter
-bra.s    start        ; go back to start and repeat
+	move.b    counter,$dff180 ; put the value of COUNTER in COLOR0
+	addq.b    #1,counter    ; Add 1 to the value of counter
+	bra.s    start        ; go back to start and repeat
 
 counter:
-dc.b    0        ; this is the byte that will keep count...
+	dc.b    0        ; this is the byte that will keep count...
 
 END    ; END determines the end of the listing; the words
-; below END are not considered, as if they were all
-; preceded by ; (semicolon)
+	   ; below END are not considered, as if they were all
+       ; preceded by ; (semicolon)
 
 ;NOTE: POTINP is the name of the register $dff016. The name in capital letters after
 ; the semicolon always refers to the name of the register $dffxxx
@@ -48,7 +48,7 @@ sow the seeds. To know where the different vegetables will start to grow, you
 ;
 ;
 ;STRAWBERRIES:    LETTUCE:    BASIL:    PARSLEY:
-; \/         \/         \/         \/
+\/         \/         \/         \/
 ; ................oooooooooooooooooo^^^^^^^^^^^^^^^^^^_-_-_-_-_-_-_-_-_-_-_-_
 ;
 ;
@@ -175,7 +175,7 @@ will start again from zero (if you continue to add). ($ff+1 = 0, $ff+2 = 1...)
 The advantage of this little program over the first one is that the structure
 of the conditional jumps is more complex (and please don't go on
 until you understand it!), and a byte is used as a variable.
-This byte, called CONTATORE, is not only written, but also read
+This byte, called COUNTER, is not only written, but also read
 to write its value in $dff180, i.e. COLOR0: From this, you can see how
 many VARIABLES can be managed, i.e. bytes, words or longwords in
 which numbers useful to the program are written and read, for example the number
@@ -196,8 +196,7 @@ opposite of what it does when assembling: it transforms BYTES into INSTRUCTIONS 
 press A (assemble), instructions are transformed from the format MOVE, ADD,
 BNE, BTST... into BYTES). As you read, you will immediately notice that the labels are replaced
 by the actual addresses where routines or variables are located.
-As a further check that the instructions become precise numbers,
- replace the line:
+As a further check that the instructions become precise numbers, replace the line:
 
 btst    #2,$dff016    ; POTINP - right mouse button pressed?
 
@@ -217,22 +216,21 @@ In all cases, the result is 0839000200dff016 in memory, which the 68000
 interprets as ‘btst #2,$dff016’, i.e. ‘is bit 2 of $dff016 zero?’.
 
 If the variable had been a WORD instead of a BYTE, the listing would have to be modified as follows:
-Start: btst    #2,$dff016    ; POTINP - right mouse button pressed?
 
 Start:
-btst    #2,$dff016    ; POTINP - right mouse button pressed?
-beq.s    add    ; if yes, go to ‘add’
-btst    #6,$bfe001    ; left mouse button pressed?
-bne.s    start        ; if not, go back to Start and repeat everything
-rts            ; if yes, EXIT!
+	btst    #2,$dff016    ; POTINP - right mouse button pressed?
+	beq.s    add    ; if yes, go to ‘add’
+	btst    #6,$bfe001    ; left mouse button pressed?
+	bne.s    start        ; if not, go back to Start and repeat everything
+	rts            ; if yes, EXIT!
 
 add:
-move.w    counter,$dff180 ; COLOR0 - Use .w instead of .b
-addq.W    #1,counter    ; use ADDQ.W instead of ADDQ.B!!!
-bra.s    start
+	move.w    counter,$dff180 ; COLOR0 - Use .w instead of .b
+	addq.W    #1,counter    ; use ADDQ.W instead of ADDQ.B!!!
+	bra.s    start
 
 counter:
-dc.W    0        ; dc.w instead of dc.b (the same as dc.b 0,0)
+	dc.W    0        ; dc.w instead of dc.b (the same as dc.b 0,0)
 
 In this case, the maximum number that can be contained by a word before it starts
 over again is $FFFF, i.e. 65535, i.e. %1111111111111111.
@@ -260,7 +258,7 @@ move.b $FF,$50000 so the maximum positive number would become:
 the programme is written, the numbers can be used as positive and negative numbers
 or as absolute numbers.
 
-Try changing the listing so that CONTATORE: is a word, as
+Try changing the listing so that COUNTER: is a word, as
 described above: You can use the ASMONE editor functions, the
 so-called CUT and PASTE: to ‘cut’ a piece of text and
 copy it to another place, press the right Amiga key + b
@@ -347,21 +345,21 @@ after beq.s or bne.s is too far away (more than 127 bytes), it is corrected
 by the assembler to .w. To check this, make the following change:
 
 Start:
-btst    #2,$dff016    ; POTINP - right mouse button pressed?
-beq.s    add    ; if yes, go to ‘add’
-btst    #6,$bfe001    ; left mouse button pressed?
-bne.s    start        ; if not, go back to Start and repeat everything
-rts            ; if yes, EXIT!
+	btst    #2,$dff016    ; POTINP - right mouse button pressed?
+	beq.s    add    	  ; if yes, go to ‘add’
+	btst    #6,$bfe001    ; left mouse button pressed?
+	bne.s    start        ; if not, go back to Start and repeat everything
+	rts                   ; if yes, EXIT!
 
-dcb.b    200,0        ; this directive will be explained
-; later, in this case it puts 200
-; bytes $00 in memory, increasing the distance
-; between the labels Start: and add:
+	dcb.b    200,0      ; this directive will be explained
+						; later, in this case it puts 200
+						; bytes $00 in memory, increasing the distance
+						; between the labels Start: and add:
 
 add:
-move.b    counter,$dff180 ; put the value of COUNTER in COLOR0
-addq.b    #1,counter    ; Add 1 to the value of counter
-bra.s    start        ; go back to start and repeat
+	move.b    counter,$dff180 ; put the value of COUNTER in COLOR0
+	addq.b    #1,counter    ; Add 1 to the value of counter
+	bra.s    start        ; go back to start and repeat
 
 When assembling, you will see that the assembler reports FORCED TO WORD SIZE,
 in fact it has FORCED TO WORD the bne.s, right in the listing, because the distance
@@ -372,4 +370,3 @@ and take up fewer bytes. To return to the concept of LABEL discussed earlier,
 this dcb.b 200,0 inserted is a clear example of the usefulness of
 LABEL, which saved us from rewriting the new position taken by
 add:, i.e. 200 bytes further on.
-

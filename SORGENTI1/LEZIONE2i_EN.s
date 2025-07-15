@@ -2,22 +2,22 @@
 ; Lesson 2i.s
 
 Start:
-lea    $dff000,a0    ; put $dff000 in a0
+	lea    $dff000,a0    ; put $dff000 in a0
 Waitmouse:
-move.w    6(a0),$180(a0)    ; put the .w value of $dff006 in colour 0
-; 6(a0)=$dff000+6, $180(a0)=$dff000+$180
-btst    #6,$bfe001    ; left mouse button pressed?
-bne.s    Waitmouse    ; if not, return to waitmouse and repeat everything
-rts            ; exit
+	move.w    6(a0),$180(a0)    ; put the .w value of $dff006 in colour 0
+								; 6(a0)=$dff000+6, $180(a0)=$dff000+$180
+	btst    #6,$bfe001    ; left mouse button pressed?
+	bne.s    Waitmouse    ; if not, return to waitmouse and repeat everything
+	rts            ; exit
 
-END
+	END
 
-In this variation of the first listing, there are addressing distances
-: the address $dff000 is placed in a0 (in this case, it is chosen because it is even and when addressing distances are made
+In this variation of the first listing, there are addressing distances: 
+the address $dff000 is placed in a0 (in this case, it is chosen because it is 
+even and when addressing distances are made
 it is possible to recognise which addresses are being referred to:
-for example, colour 0, i.e. $dff180, can be reached with $180(a0), and it is clear that this is $dff180. for example
-colour0, i.e. $dff180, can be reached with $180(a0), and it is
-clear that this is $dff180. If, for example, you had put
+for example, colour 0, i.e. $dff180, can be reached with $180(a0), and 
+it is clear that this is $dff180. If, for example, you had put
 the address $dff013 in a0 to indicate colour0, the correct addressing distance
 would have been $16d(a0), because $dff013+$16d=$dff180).
 Note that the a0 register is never changed, it always remains
@@ -26,7 +26,7 @@ by adding the addressing distance to the address in a0.
 In almost all programs that use graphics, the address $dff000 is
 placed in some register to make the addressing distance (or OFFSET),
 in fact, in this way, all CUSTOM registers can be reached
-(which end at $DFF1fe).
+(which end at $dff1fe).
 You can specify an offset from -32768 to +32767, i.e. from -$8000
 to $7FFF.
 
@@ -57,7 +57,8 @@ its CONTENTS for the length of a longword in a1.
 Instead, with LEA $100(a0),a1, we put the address of house $100 in a1 without
 entering it. The difference is that with MOVE in a1 we put the furniture,
 while with lea we put the address.
- By CONTENTS I mean what is in the addresses, in fact in every address (every house) there is always something: it can
+ By CONTENTS I mean what is in the addresses, in fact in every address 
+ (every house) there is always something: it can
 be a number (when there is furniture) or it can be empty (when the
 house is abandoned, but from which you can still take ZERO ($00)).
 

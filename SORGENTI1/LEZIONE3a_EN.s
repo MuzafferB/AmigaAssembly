@@ -2,18 +2,19 @@
 ; Lesson 3a.s    - HOW TO EXECUTE AN OPERATING SYSTEM ROUTINE
 
 Start:
-move.l    $4.w,a6        ; Execbase in a6
-jsr    -$78(a6)    ; Disable - stops multitasking
+	move.l  $4.w,a6    ; Execbase in a6
+	jsr    -$78(a6)    ; Disable - stops multitasking
+
 mouse:
-move.w    $dff006,$dff180    ; set VHPOSR to COLOR00 (flashing!!)
-btst    #6,$bfe001    ; left mouse button pressed?
-bne.s    mouse        ; if not, return to mouse:
+	move.w  $dff006,$dff180    ; set VHPOSR to COLOR00 (flashing!!)
+	btst    #6,$bfe001    ; left mouse button pressed?
+	bne.s   mouse         ; if not, return to mouse:
 
-move.l    4.w,a6        ; Execbase in a6
-jsr    -$7e(a6)    ; Enable - re-enable multitasking
-rts
+	move.l  4.w,a6     ; Execbase in a6
+	jsr    -$7e(a6)    ; Enable - re-enable multitasking
+	rts
 
-END
+	END
 
 This is the first listing in which we use an operating system routine!
 And, coincidentally, it is the one that disables the operating system itself!
@@ -85,22 +86,22 @@ END> put the final address, or $xxxxx+$80, where $xxxxx
 is the starting address: in this case you will get the disassembled code
 starting from address $xxxxx up to $80 bytes after.
 
-REMOVE UNUSED LABELS? (Y/N)    ; ENTER ‘Y’ HERE. If you do not enter this,
-; a label containing the address will be placed
-; on each line of code, instead of only where
-; the label is needed. Try doing an ‘ID’
-; of this listing to check the
-; difference.
+REMOVE UNUSED LABELS? (Y/N)     ; ENTER ‘Y’ HERE. If you do not enter this,
+								; a label containing the address will be placed
+								; on each line of code, instead of only where
+								; the label is needed. Try doing an ‘ID’
+								; of this listing to check the
+								; difference.
 
 Example: if the address was $32123
 
 ID
 
 BEG> $32123
-END> $32123+$80        ; NOTE: to get the old addresses back, press
-; the up arrow key several times.
-; (In fact, pressing the up arrow returns
-; the things you wrote before as in SHELL)
+END> $32123+$80     ; NOTE: to get the old addresses back, press
+					; the up arrow key several times.
+					; (In fact, pressing the up arrow returns
+					; the things you wrote before as in SHELL)
 
 and the requested disassembly will appear, starting from where you were last with the cursor in the
 text.
@@ -113,8 +114,8 @@ necessary.
 If you continue with DEBUG after JMP, you will find yourself in the ROM, i.e.
 at the JMP address: DISABLE is usually like this:
 
-MOVE.W    #$4000,$dff09a    ; INTENA - Stop interrupts
-ADDQ.B    #1,$126(a6)    ; Stop the operating system
+MOVE.W    #$4000,$dff09a  ; INTENA - Stop interrupts
+ADDQ.B    #1,$126(a6)     ; Stop the operating system
 RTS
 
 If you enter by pressing the right arrow, the instructions will be seen,

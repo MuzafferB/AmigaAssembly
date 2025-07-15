@@ -2,67 +2,64 @@
 ; Lesson 3b.s    ; THE FIRST COPPERLIST
 
 
-SECTION    PRIMOCOP,CODE    ; This command loads this part of the code from the operating system
-; into FAST RAM, if it is free, or if there is only CHIP, it loads it into CHIP.
-; Execbase in a6 jsr
--$78(a6)    ; Disable - stops multitasking
-
+	SECTION    FirstCopper,CODE ; This command loads this part of the code from the operating system
+								; into FAST RAM, if it is free, or if there is only CHIP, it loads it into CHIP.
 Start:
-move.l    4.w,a6        ; Execbase in a6
-jsr    -$78(a6)    ; Disable - stops multitasking
-lea    GfxName,a1    ; Address of the name of the lib to open in a1
-jsr    -$198(a6)    ; OpenLibrary, EXEC routine that opens
-; the libraries, and outputs the
-; base address of the library from which to calculate
-; the addressing distances (Offset)
-move.l    d0,GfxBase    ; save the GFX base address in GfxBase
-move.l    d0,a6
-move.l    $26(a6),OldCop    ; save the address of the system copperlist
-(always at $26 of GfxBase)
-move.l    #COPPERLIST,$dff080    ; COP1LC - Point to our COP
-move.w    d0,$dff088        ; COPJMP1 - Start the COP
+	move.l  4.w,a6      ; Execbase in a6
+	jsr    -$78(a6)    	; Disable - stops multitasking
+	lea    GfxName,a1   ; Address of the name of the lib to open in a1
+	jsr    -$198(a6)    ; OpenLibrary, EXEC routine that opens
+						; the libraries, and outputs the
+						; base address of the library from which to calculate
+						; the addressing distances (Offset)
+	move.l    d0,GfxBase    ; save the GFX base address in GfxBase
+	move.l    d0,a6
+	move.l    $26(a6),OldCop   		; save the address of the system copperlist
+									; (always at $26 of GfxBase)
+	move.l    #COPPERLIST,$dff080   ; COP1LC - Point to our COP
+	move.w    d0,$dff088        	; COPJMP1 - Start the COP
 mouse:
-btst    #6,$bfe001    ; left mouse button pressed?
-bne.s    mouse        ; if not, return to mouse:
+	btst    #6,$bfe001    ; left mouse button pressed?
+	bne.s    mouse        ; if not, return to mouse:
 
-move.l    OldCop(PC),$dff080    ; COP1LC - Point to the system COP
-move.w    d0,$dff088		; COPJMP1 - start the cop
+	move.l    OldCop(PC),$dff080  ; COP1LC - Point to the system COP
+	move.w    d0,$dff088		  ; COPJMP1 - start the cop
 
-move.l    4.w,a6
-jsr    -$7e(a6)    ; Enable - re-enable Multitasking
-move.l    gfxbase(PC),a1    ; Base of the library to close
-; (libraries must be opened and closed!!!)
-jsr    -$19e(a6)    ; Closelibrary - close the graphics library
-rts
+	move.l    4.w,a6
+	jsr    -$7e(a6)            ; Enable - re-enable Multitasking
+	move.l    gfxbase(PC),a1   ; Base of the library to close
+							   ; (libraries must be opened and closed!!!)
+	jsr    -$19e(a6)    	   ; Closelibrary - close the graphics library
+	rts
 
 GfxName:
-dc.b    ‘graphics.library’,0,0    ; NOTE: to store
-; characters in memory, always use dc.b
-; and place them between ‘’, or “”
-; ending with ,0
+	dc.b    ‘graphics.library’,0,0  ; NOTE: to store
+									; characters in memory, always use dc.b
+									; and place them between ‘’, or “”
+									; ending with ,0
 
 
 GfxBase:        ; This is where the base address for the Offsets goes
-dc.l    0    ; of the graphics.library
+	dc.l    0   ; of the graphics.library
 
 
 
 OldCop:            ; This is where the address of the old system COP goes
-dc.l    0
+	dc.l    0
 
-SECTION    GRAPHIC,DATA_C    ; This command loads this segment of data
-; from the operating system
-; into CHIP RAM, which is mandatory
-; The copperlists MUST be in CHIP RAM!
+	SECTION    GRAPHIC,DATA_C   ; This command loads this segment of data
+							; from the operating system
+							; into CHIP RAM, which is mandatory
+							; The copperlists MUST be in CHIP RAM!
 
 COPPERLIST:
-dc.w    $100,$200	; BPLCON0 - No image, only the background
-dc.w    $180,$000    ; Colour 0 BLACK
-dc.w    $7f07,$FFFE    ; WAIT - Wait for line $7f (127)
-dc.w    $180,$00F	; Colour 0 BLUE
-dc.w    $FFFF,$FFFE    ; END OF COPPERLIST
+	dc.w    $100,$200	 ; BPLCON0 - No image, only the background
+	dc.w    $180,$000    ; Colour 0 BLACK
+	dc.w    $7f07,$FFFE  ; WAIT - Wait for line $7f (127)
+	dc.w    $180,$00F	 ; Colour 0 BLUE
+	dc.w    $FFFF,$FFFE  ; END OF COPPERLIST
 
-end
+	END
 
 This program ‘points’ to one of our COPPERLISTS, and can be used
 to point to any COPPERLIST, so it is useful for experimenting
@@ -103,16 +100,15 @@ write the type of section you are defining: CODE or DATA, i.e. whether it is mad
 INSTRUCTIONS or DATA. However, this difference is not very important. In fact,
 the first section in this list is defined as a CODE section, which also has LABELS
 with texts (dc.b “graphics library”);
- then you decide the most important thing: whether it should be loaded into CHIP or whether it is also OK in FAST memory: to
-decide that it must be loaded into CHIP, simply add a _C
+then you decide the most important thing: whether it should be loaded into CHIP or whether it is also OK in FAST memory: to decide that it must be loaded into CHIP, simply add a _C
 to the DATA or CODE; if nothing is added, it means that the data or
 instructions in the section can be loaded into any type of memory.
 Some examples:
 
 SECTION FIGURE,DATA_C    ; data section to be loaded into CHIP
-SECTION    LISTANOMI,DATA    ; data section that can be loaded into CHIP or FAST
-SECTION Program,CODE_C    ; code section to be loaded into CHIP
-SECTION Program2,CODE	; code section loadable in CHIP or FAST
+SECTION LISTANOMI,DATA   ; data section that can be loaded into CHIP or FAST
+SECTION Program,CODE_C   ; code section to be loaded into CHIP
+SECTION Program2,CODE	 ; code section loadable in CHIP or FAST
 
 Always put the first SECTION as CODE or CODE_C, obviously starting with
 instructions, after which you can create DATA or DATA_C sections where there are no
@@ -125,13 +121,13 @@ move...
 
 SECTION    COPPER,DATA_C    ; Can only be assembled in CHIP
 
-dc.w    $100,$200....    ; $0100,$0200, but you can remove
-; the leading zeros, if, for example,
-; we need to write dc.l $00000001
-; it will be more convenient to write dc.l 1
-; in the same way dc.b $0a can be
-; written dc.b $a, in memory it will be
-; assembled $0a.
+dc.w    $100,$200....   ; $0100,$0200, but you can remove
+						; the leading zeros, if, for example,
+						; we need to write dc.l $00000001
+						; it will be more convenient to write dc.l 1
+						; in the same way dc.b $0a can be
+						; written dc.b $a, in memory it will be
+						; assembled $0a.
 
 SECTION    MUSICA,DATA_C    ; Assembled only in CHIP
 
@@ -150,6 +146,7 @@ Also consider that loading instructions into CHIP RAM is a waste
 because if they are loaded into FAST RAM, especially on an Amiga with a 68020+,
 they are executed faster, even up to 4 times faster than in CHIP memory.
 There are also BSS or BSS_C sections, which we will discuss when we use them.
+
 NOTE2: You may also have noticed the use of (PC) in the instruction:
 
 move.l    OldCop(PC),$dff080	; COP1LC - Point to the system cop
@@ -160,7 +157,7 @@ to change the FORM of the command. Try assembling and doing a
 D Mouse:...
 
             BTST    #$06,$00BFE001
-...            BNE.B    $xxxxxxxx
+...         BNE.B    $xxxxxxxx
 23FA003400DFF080    MOVE.L    $xxxxxx(PC),$00DFF080...
             MOVE.W    D0,$00DFF088
 

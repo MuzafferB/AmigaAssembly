@@ -1,112 +1,114 @@
 
-; Lezione2l.s
+; Lesson 2l.s
 
-Inizio:
-	lea	$dff000,a0	; metti $dff000 in a0
+Start:
+	lea    $dff000,a0      ; put $dff000 in a0
+
 Waitmouse:
-	move.w	#$20,$1dc(a0)	; BEAMCON0 (ECS+) Risoluzione video PAL
-	bsr.s	Lampeggio	; Fa lampeggiare lo schermo
-	bsr.s	ColorFreccia	; Fa lampeggiare la freccia
-	btst	#2,$16(a0)	; POTINP - Tasto destro del mouse premuto?
-				; (bit 2 del $dff016
-	bne.s	nonpremuto	; Se non e' premuto, salta FaiConfusione
-	bsr.s	FaiConfusione	; 
-nonpremuto:
-	btst	#6,$bfe001	; tasto sinistro del mouse premuto?
-	bne.s	Waitmouse	; se no ritorna a waitmouse e ripeti tutto
-	rts			; esci
+	move.w   #$20,$1dc(a0) ; BEAMCON0 (ECS+) PAL video resolution
+	bsr.s    Flashing      ; Flashes the screen
+	bsr.s    ColorArrow    ; Flashes the arrow
+	btst     #2,$16(a0)    ; POTINP - Right mouse button pressed?
+						   ; (bit 2 of $dff016
+	bne.s    Notpressed    ; If not pressed, skip MakeConfusion
+	bsr.s    MakeConfusion  
 
-ColorFreccia:
-	moveq	#-1,d1		; OSSIA moveq #$FFFFFFFF,d1
-	moveq	#20-1,d0	; numero di cicli colorfreccia
+Notpressed:
+	btst    #6,$bfe001    ; left mouse button pressed?
+	bne.s    Waitmouse    ; if not, return to waitmouse and repeat everything
+	rts            		  ; exit
+
+ColorArrow:
+	moveq    #-1,d1      ; THAT IS moveq #$FFFFFFFF,d1
+	moveq    #20-1,d0    ; number of arrow colour cycles
 flash:
-	subq.w	#8,d1		; cambia il colore da mettere in $dff1a4
-	move.w	d1,$1a4(a0)	; COLOR18 - metti il valore di d1 in $dff1a4
-				; (il colore della freccia del mouse!)
-	dbra	d0,flash
+	subq.w    #8,d1        ; change the colour to be put in $dff1a4
+	move.w    d1,$1a4(a0)  ; COLOR18 - put the value of d1 in $dff1a4
+						   ; (the colour of the mouse arrow!)
+	dbra    d0,flash
 	rts
 
-Lampeggio:
-	move.w	6(a0),$180(a0)	; metti il valore .w di $dff006 nel color 0
-	move.b	6(a0),$182(a0)	; metti il valore .b di $dff006 nel color 1
+Flashing:
+	move.w    6(a0),$180(a0)    ; put the .w value of $dff006 in colour 0
+	move.b    6(a0),$182(a0)    ; put the .b value of $dff006 in colour 1
 	rts
 
-FaiConfusione:
-	move.w	#0,$1dc(a0)	; BEAMCON0 (ECS+) Risuluzione video NTSC
+MakeConfusion:
+	move.w    #0,$1dc(a0)    ; BEAMCON0 (ECS+) NTSC video resolution
 	rts
 
 	END
 
-Questo programmino e' interessante solo per la sua struttura, infatti
-ha un programma principale, quello da Inizio all'RTS, il quale richiama
-delle subroutine (ovvero sottoprogrammi, che non sono altro che parti del
-programma denominati da una label (cioe' da un nome) e terminanti in un RTS.
-Con il debugger "AD" provate a seguire il corso del programma: per seguire
-tutte le subroutine andate avanti con il tasto con la freccia verso destra,
-e noterete tra l'altro nella routine ColorFreccia come il registro d0
-sia decrementato di 1 in 1.
+This little program is interesting only for its structure. In fact,
+it has a main program, the one from Start to RTS, which calls
+subroutines (i.e., subprograms, which are nothing more than parts of the
+program named by a label (i.e., a name) and ending in an RTS.
+With the ‘AD’ debugger, try to follow the course of the program: to follow
+all the subroutines, proceed with the right arrow key,
+and you will notice, among other things, in the ColorArrow routine how the d0 register
+is decremented by 1 at a time.
 
-Il problema fondamentale delle strutture BSR/BEQ/BNE/RTS sta nel fatto che
-tutto e' regolato da salti che possono determinare un ritorno tramite RTS al
-punto dove e' stato eseguito tale salto (BSR LABEL), e da salti che invece
-sono come i rami di un albero: una volta scelto se prendere la diramazione
-destra o sinistra si continua per quella e non si puo' piu' tornare indietro
+The fundamental problem with BSR/BEQ/BNE/RTS structures lies in the fact that
+everything is regulated by jumps that can cause a return via RTS to the
+point where the jump was executed (BSR LABEL), and by jumps that are
+like the branches of a tree: once you have chosen whether to take the right
+right or left, you continue along that branch and cannot go back
 
-		    ramo 1
-		   _______ _ _ eccetera _ _ _ RTS, uscita da questa parte
-    bivio beq/bne /
-    _____________/
-		 \ ramo 2
-		  \______ _ _ eccetera _ _ _ RTS, uscita da questa altra parte
-
-
-Un salto BEQ/BNE e' come decidere di andare a Milano o a Palermo, si passa da
-altre strade, e una volta arrivati alla destinazione si passa la notte in una
-di quelle due citta' (dove troviamo l'RTS), avendo percorso diverse autostrade.
-
-Invece se troviamo un BSR.w Milano, saltiamo a Milano, eseguiamo le istruzioni
-che troviamo a Milano, poi quando troviamo un RTS ci "teletrasportiamo" al
-punto dove avevamo imboccato la strada per Milano, miracolosamente, e' come
-se leggessimo un libro magico, in cui in ogni pagina c'e' la figura di un
-paesaggio, dunque con un AbraCadaBSR entriamo nel disegno della prima pagina,
-ci passiamo un po' di tempo, poi imbattendoci in un AmuletRTS torniamo seduti
-davanti al libro, pronti ad un AbraCadaBSR nella seconda pagina.
+branch 1
+_______ _ _ etc. _ _ _ RTS, exit from this side
+beq/bne fork /
+_____________/
+\ branch 2
+\______ _ _ etc. _ _ _ RTS, exit from this other side
 
 
-NOTA1: Premendo il tasto destro viene eseguita una routine che altrimenti
-viene saltata:
+A BEQ/BNE jump is like deciding to go to Milan or Palermo, you take
+different roads, and once you arrive at your destination, you spend the night in one
+of those two cities (where we find the RTS), having travelled along different motorways.
 
-	btst	#2,$16(a0)	; Tasto destro del mouse premuto?
-				; (bit 2 del $dff016 - POTINP)
-	bne.s	nonpremuto	; Se non e' premuto, salta FaiConfusione
-	bsr.s	FaiConfusione	; 
-nonpremuto:
+Instead, if we find a BSR.w Milan, we jump to Milan, follow the instructions
+we find in Milan, then when we find an RTS we “teleport” to
+the point where we took the road to Milan, miraculously, it's like
+reading a magic book, where on every page there is a picture of a
+landscape, so with an AbraCadaBSR we enter the drawing on the first page,
+we spend some time there, then when we come across an AmuletRTS we return to sitting
+in front of the book, ready for an AbraCadaBSR on the second page.
 
-ricordatevi bene questo metodo per eseguire una subroutine solo a patto
-che una certa condizione sia soddisfatta, in questo caso che il tasto
-destro del mouse sia premuto; programmando si fanno spesso di queste cose.
-Il registro usato per fare "Confusione" e' il $dff1dc, il cui bit 5 serve
-per scambiare la modalita' video tra PAL europea o NTSC americana; questo
-registro esiste solo nei computer fabbricati dopo il 1989, a qualcuno che
-ha un'Amiga vecchio potrebbe non funzionare. Se vi funziona noterete che
-premendo il tasto destro lo schermo oltre a lampeggiare sembrera' che
-esploda, infatti scambiando molto velocemente modalita' questo e' il
-risultato. Se volete fare 2 programmini richiamabili da AmigaDos che scambino
-il modo video, basta che facciate:
 
-	move.w	#0,$dff1dc	; BEAMCON0
-	rts
+NOTE1: Pressing the right mouse button executes a routine that would otherwise
+be skipped:
 
-assemblatelo, e salvatelo su un disco con WO (cioe' come file che potete
-eseguire) con il nome NTSC, poi assemblate quest'altro:
+btst    #2,$16(a0)    ; Right mouse button pressed?
+; (bit 2 of $dff016 - POTINP)
+bne.s    not pressed    ; If not pressed, skip MakeConfusion
+bsr.s    MakeConfusion  ;
+not pressed:
 
-	move.w	#$20,$dff1dc	; BEAMCON0
-	rts
+Remember this method for executing a subroutine only if
+a certain condition is met, in this case that the
+right mouse button is pressed; you often do things like this when programming.
+The register used to cause ‘Confusion’ is $dff1dc, whose bit 5 is used
+to switch the video mode between European PAL and American NTSC; this
+register only exists in computers manufactured after 1989, so it may not work for anyone
+who has an old Amiga. If it works, you will notice that
+when you press the right mouse button, the screen will flash and appear to
+explode, because switching modes very quickly produces this
+result. If you want to make two small programs that can be called from AmigaDos to switch
+the video mode, just do the following:
 
-E salvatelo come PAL. Da SHELL potrete cosi' cambiare modo video
-chiamando i 2 programmini PAL e NTSC.
+move.w    #0,$dff1dc    ; BEAMCON0
+rts
 
-Se non vi orientate in questo programma considerate che quelli VERI sono
-mille volte piu' complicati come BSR vari, quindi vedete di capirlo al 100%
-prima di cominciare la LEZIONE3, intitolata: "POTEVAMO STUPIRVI CON EFFETTI
-SPECIALI E COLORI ULTRAVIVACI, MA NON SAPPIAMO ANCORA FARE".
+Assemble it and save it to a disk with WO (i.e. as a file that you can
+execute) with the name NTSC, then assemble this other one:
+
+move.w    #$20,$dff1dc    ; BEAMCON0
+rts
+
+And save it as PAL. From SHELL you can then change the video mode
+by calling the two small programs PAL and NTSC.
+
+If you are not familiar with this program, bear in mind that the REAL ones are
+a thousand times more complicated, such as various BSRs, so make sure you understand it 100%
+before starting LESSON 3, entitled: ‘WE COULD HAVE IMPRESSED YOU WITH SPECIAL EFFECTS
+AND ULTRA-VIVID COLOURS, BUT WE DON'T KNOW HOW TO DO THAT YET’.

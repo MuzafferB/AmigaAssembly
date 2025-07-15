@@ -6,17 +6,17 @@
 
 
 beginning:
-move.l    #FFFFFF,d0
-ADDQ.W    #4,d0        ; Add .w 4 to d0, but only work on the word
-; because we are on a DATA register (the same
-; would be done on a label)
-lea    $FFFFFF,a0
-ADDQ.W	#4,a0        ; Add .w 4 to a0, but working on an
-; ADDRESS register, the add involves the entire
-; address, i.e. the longword.
-rts
+	move.l    #FFFFFF,d0
+	ADDQ.W    #4,d0     ; Add .w 4 to d0, but only work on the word
+						; because we are on a DATA register (the same
+						; would be done on a label)
+	lea       $FFFFFF,a0
+	ADDQ.W	  #4,a0     ; Add .w 4 to a0, but working on an
+						; ADDRESS register, the add involves the entire
+						; address, i.e. the longword.
+	rts
 
-end
+	end
 
 Try debugging this listing (AD) and step by step you will notice the
 main difference between an address register and a data register or any
@@ -40,5 +40,5 @@ $123456. Although this is not an error, always remember to use
 the code slightly faster.
 
 ADD.L    #$123,a0    ; optimisable to ADD.W #$123,a0
-ADD.L    #$12345,a0    ; not optimisable
+ADD.L    #$12345,a0  ; not optimisable
 

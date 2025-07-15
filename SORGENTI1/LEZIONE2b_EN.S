@@ -18,9 +18,9 @@ END
 ;Assemble with A, then press ‘D Start’ and you will notice the replacement with
 ;the addresses. After the rts, you will notice a couple of ORI.B and other instructions: in
 ;actually, these are an attempt to interpret the two longwords DOG and
-;GATTO. In fact, after the $4e75 of the rts, you will notice the $00123456, which is the first
-;longword named CANE by us, and $00000000, which is GATTO.
-;Now run it with J, then do an M GATTO, and you will see 00 12 34 56
+;CAT. In fact, after the $4e75 of the rts, you will notice the $00123456, which is the first
+;longword named DOG by us, and $00000000, which is CAT.
+;Now run it with J, then do an M CAT, and you will see 00 12 34 56
 ;in fact, the longword contained in DOG has been copied to CAT:
 ;Now modify the first line in MOVE.L #DOG,CAT, assemble and do
 ;‘D start’ ... you will see that this time too, the labels have been replaced
@@ -34,11 +34,11 @@ i.e. the address of DOG, i.e. $34200.
 Final summary:
 ;
 ;    MOVE.b	$10,$200    ; copies the value .b contained in the address
-;                ; $10 to the address $200
+;                		; $10 to the address $200
 ;
 ;    MOVE.b    #$10,$200    ; puts the number $10 in location $200
-;    MOVE.B    #16,$200    ; as above, in fact $10 = 16!!!
-;    MOVE.B    #%10000,$200    ; as above, in fact %10000 = 16!!!
+;    MOVE.B    #16,$200     ; as above, in fact $10 = 16!!!
+;    MOVE.B    #%10000,$200 ; as above, in fact %10000 = 16!!!
 ;
 ;NOTE: ASMONE allocates, i.e. positions the program each time at a different address
 ;the operating system does the same when you load a program,
@@ -50,8 +50,8 @@ because it can be assembled at any address.
 Try loading programs in multitasking before the asmone and you will notice less
 memory allocated to the initial selection (ALLOCATE Chip, fast...) and that
 by doing D Start, the location is higher, because the underlying memory
- is already occupied.
- Programming at FIXED addresses, i.e. always specifying the address instead of the label, should not be done for games or demos where you can exit by returning to the workbench, because if, for example, you define the game screen at $70000 and a program has already been loaded at that location, when you exit you will get a nice GURU MEDITATION, known as
+is already occupied.
+Programming at FIXED addresses, i.e. always specifying the address instead of the label, should not be done for games or demos where you can exit by returning to the workbench, because if, for example, you define the game screen at $70000 and a program has already been loaded at that location, when you exit you will get a nice GURU MEDITATION, known as
 COMA... so if you don't want the Amiga to go into a continuous coma, program as this course teaches. Fixed addresses are possible, or sometimes MUST be used if you are making games or demos, but they are not recommended for general use.
 ;
 ;

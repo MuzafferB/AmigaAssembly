@@ -2,52 +2,55 @@
 ; Lesson 2f.s
 
 Start:
-lea    START,a0    ; put the address where to start in a0
-; i.e. the address of START goes in a0, i.e.
-; WHERE START is located, not what it contains!
-lea    THEEND,a1    ; put the address where to end in a1
-; i.e. put the address of the end of the
-; 40 bytes, because it is BELOW 40 bytes.
-; Now, EVERYTHING BETWEEN the label
-; START: and the LABEL THEEND: will be cleared
-; by LOOP CLELOOP:, whether it is 40 bytes
-; or more, even if you put
-; instructions there.
+	lea    START,a0    ; put the address where to start in a0
+					   ; i.e. the address of START goes in a0, i.e.
+					   ; WHERE START is located, not what it contains!
+	
+	lea    THEEND,a1   ; put the address where to end in a1
+					   ; i.e. put the address of the end of the
+					   ; 40 bytes, because it is BELOW 40 bytes.
+					   ; Now, EVERYTHING BETWEEN the label
+					   ; START: and the LABEL THEEND: will be cleared
+					   ; by LOOP CLELOOP:, whether it is 40 bytes
+					   ; or more, even if you put
+					   ; instructions there.
 
 CLELOOP:
-clr.l    (a0)+    ; Reset the long in (a0), then add 4 to a0 (long!)
-; WARNING! This is indirect addressing,
-; in which the a0 register is not cleared, but the
-; contents of the address, i.e. 4 $FE at a time,
-; ($fe is a random number that I have put in just
-; as an example to distinguish it from the zeros! to show
-; that I am clearing an area filled with $FE;
-; since there is a + after the parentheses, each time
-; it is executed, the value of a0 increases by 4, i.e.
-; it moves to the next address to be cleared)
-; (In the first step, the first 4
-; $FE under start are cleared, in the second step the next 4
-; and so on). Note that only a0 increases,
-; while a1 remains at the address THEEND.
-cmp.l    a0,a1    ; Is a0 equal to a1? In other words, are we at the THEEND address?
-; (In fact, a0 increases by 4 each cycle, and we stop the
-; cycle when a0 reaches the THEEND address)
-bne.s    CLELOOP    ; If not, return to execute CLELOOP...
-rts        ; EXIT the program and return to ASMONE
+	clr.l    (a0)+    ; Reset the long in (a0), then add 4 to a0 (long!)
+					  ; WARNING! This is indirect addressing,
+					  ; in which the a0 register is not cleared, but the
+					  ; contents of the address, i.e. 4 $FE at a time,
+					  ; ($fe is a random number that I have put in just
+					  ; as an example to distinguish it from the zeros! to show
+					  ; that I am clearing an area filled with $FE;
+					  ; since there is a + after the parentheses, each time
+					  ; it is executed, the value of a0 increases by 4, i.e.
+					  ; it moves to the next address to be cleared)
+					  ; (In the first step, the first 4
+					  ; $FE under start are cleared, in the second step the next 4
+					  ; and so on). Note that only a0 increases,
+					  ; while a1 remains at the address THEEND.
+	
+	cmp.l    a0,a1    ; Is a0 equal to a1? In other words, are we at the THEEND address?
+					  ; (In fact, a0 increases by 4 each cycle, and we stop the
+					  ; cycle when a0 reaches the THEEND address)
+	
+	bne.s    CLELOOP    ; If not, return to execute CLELOOP...
+	rts        ; EXIT the program and return to ASMONE
 
 START:
-dcb.b    40,$fe    ; The DCB command is used to store a
-; defined number of bytes, words or longs that are equal to
-; each other: similar to the DC.B command, in which
-; in this case we would have had to do dc.b $fe,$fe,$fe...
-; putting 40 $fe. Instead, with the dcb command, we can
-; simply do dcb.b 40,$fe, i.e.
-; PUT 40 bytes $fe INTO MEMORY.
+	dcb.b    40,$fe    ; The DCB command is used to store a
+					   ; defined number of bytes, words or longs that are equal to
+					   ; each other: similar to the DC.B command, in which
+					   ; in this case we would have had to do dc.b $fe,$fe,$fe...
+					   ; putting 40 $fe. Instead, with the dcb command, we can
+					   ; simply do dcb.b 40,$fe, i.e.
+					   ; PUT 40 bytes $fe INTO MEMORY.
 THEEND:        ; this label marks the end of the 40 bytes...
 
-dcb.b    10,0    ; let's put 10 bytes here just for fun
+	dcb.b    10,0    ; let's put 10 bytes here just for fun
 
-end
+	end
 
 Warning! With LEA START,a0, a0 contains the address of the first of the 40 bytes
 $fe, and does not contain the 40 bytes!!! LABEL is a convention used in
@@ -120,9 +123,9 @@ and THEEND: labels is cleared, whether it is 40 bytes, 200 bytes or more, try
 making this change:
 
 START:
-dcb.b    80,$fe    ; PUT 80 bytes $fe IN MEMORY HERE.
+	dcb.b    80,$fe    ; PUT 80 bytes $fe IN MEMORY HERE.
 
-THEEND:        ; this label marks the end of the 80 bytes...
+THEEND:      ; this label marks the end of the 80 bytes...
 
 If you do the same steps with AD, you will notice that twice as many
 cycles are performed, because the distance between START and THEEND has doubled.

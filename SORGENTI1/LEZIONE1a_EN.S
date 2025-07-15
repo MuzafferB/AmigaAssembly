@@ -2,11 +2,11 @@
 ; by Fabio Ciucci - Assemble with ‘A’, execute with ‘J’
 
 Waitmouse:            ; this LABEL serves as a reference for the bne.
-move.w    $dff006,$dff180    ; put the value of $dff006 in $dff180
-; i.e. from VHPOSR to COLOR00
-btst    #6,$bfe001    ; left mouse button pressed?
-bne.s    Waitmouse    ; if not, return to waitmouse and repeat
-rts            ; exit
+	move.w    $dff006,$dff180    ; put the value of $dff006 in $dff180
+								 ; i.e. from VHPOSR to COLOR00
+	btst    #6,$bfe001    ; left mouse button pressed?
+	bne.s    Waitmouse    ; if not, return to waitmouse and repeat
+	rts            ; exit
 
 END
 
@@ -55,7 +55,7 @@ END
 ; The BTST command checks whether a BIT at a given address is =0...
 ; remember that the number of bits must be read from right to left and
 ; starting from 0, for example in a byte such as %01000000, the bit at 1 is 6:
-; 76543210          5432109876543210
+; 76543210         5432109876543210
 ; 01000000 a word: 0001000000000000 <= here bit 12 is 1!!!
 ;
 ; P.S:    The first bit is called bit 0 and not bit 1, so don't

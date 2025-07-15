@@ -1,5 +1,5 @@
 
-İKİ DİSKTE TAM ASSEMBLER PROGRAMLAMA KURSU
+İKİ DİSKTE TAM ASSEMBLY PROGRAMLAMA KURSU
 
 FABIO CIUCCI - 1994/95
 
@@ -10,25 +10,21 @@ başaramayanlar veya hiç denememiş ve nasıl yapıldığını merak edenler i�
 
 Bu iki disketin hazırlanmasına maddi veya manevi olarak katkıda bulunan herkese teşekkür ve selamlarımı sunarım, özellikle:
 - Luca Forlizzi (The Dark Coder)
-
 - Andrea Fasce (Executor/RAM JAM)
 - Sirio Zuelli (PROXIMA DESIGN)
-Sirio Zuelli (PROXIMA DESIGN)
-Alberto Longo (VIRTUAL DREAMS)
+- Sirio Zuelli (PROXIMA DESIGN)
+- Alberto Longo (VIRTUAL DREAMS)
 
 Ayrıca dersleri test ederek anladıklarını kontrol edenlere de teşekkür ederim:
-
 Andrea Scarafoni, Federico “GONZO” Stango ve diğerleri.
 
-Son olarak, bilgisayar başında
-olmam için çaba gösteren kız arkadaşım Kety'ye teşekkür etmek istiyorum.
+Son olarak, bilgisayar başında olmam için çaba gösteren kız arkadaşım Kety'ye teşekkür etmek istiyorum.
 
 Hobi olarak programcı olarak kariyerimde, BBS için birkaç demo/intro
 gerçekleştirdim, örneğin “AMILINK.EXE” AmigaLink veri tabanı için
 veya yeni “Amiga Expert Team” gibi kulüpler için. En önemli ‘eserlerim’
 AGA yonga seti için ilk demom “WORLD OF MANGA”
-“WORLD OF MANGA” ve
-NOVA ACIES grubu için programladığım “NAOS”dur.
+ve NOVA ACIES grubu için programladığım “NAOS”dur.
 
 Kursumu okumaya başlamadan önce en azından biraz DOS bilgisine sahip olmanızın iyi olacağını belirtmeliyim,
  en azından listeleri nasıl kaydedeceğinizi bilmek için! Amiga ile birlikte bir kılavuz bulmuş olmalısınız...
@@ -144,13 +140,11 @@ GODS VEYA PROJECT X GİBİ BİR OYUN PROGRAMLAMAYI ÖĞRENMEK İÇİN
 UÇUŞ SIMÜLATÖRÜ VEYA 3D OLMAYAN, YANİ
 DÖNEN KÜPLER, SINUSOIDAL TÜNELLER VEYA PERSPEKTİF BOZULMALARI
 FRACTALLAR VEYA TEXTURE MAPPING İÇERMEYEN BİR OYUN, ORTAÖĞRETİM MATEMATİK BİLGİSİ YETERLİDİR.
-ÜÇÜNCÜ ORTAOKUL MATEMATİK BİLGİSİ YETERLİDİR.
 
 Bununla, Amiga'nın assembler programlamasının
 matematikle dolu olduğu düşüncesini herkesin kafasından çıkarmak istiyorum. BEN BUNUN HİÇBİR İLGİSİ OLMADIĞINA İNANIYORUM.
 Matematik programı yapmak istiyorsanız, matematik bilmelisiniz,
  futbol oyunu yapmak istiyorsanız futbol bilmelisiniz.
-Önemli olan
 Önemli olan Amiga'nın nasıl çalıştığını, işlemcisini (Amiga'da
 Motorola 68000) ve özel yongalarını (yani grafik ve ses için kullanılanları)
 bilmek.
@@ -196,7 +190,6 @@ Tam isim, takma adın ardından ait olduğun grubun adı ile belirtilir,
 Ben, sahnede “RANDY/RAM JAM” olarak biliniyorum, ancak konuyu bilmeyenler
 için Fabio Ciucci olarak da bilinirim.
 Sahne, grupların demolarını getirdiği ve oylama ile ödüllerin dağıtıldığı bir tür parti-buluşma olan PARTY'ler düzenler
-.
 ve kazananlara milyonlarca ödül verilir.
 Bazı demo kodlayıcıları, konu hep aynı olduğu için
 oyun yapmaya geçerler. Örneğin, BANSHEE'nin programcısı HANNIBAL/LEMON,
@@ -211,8 +204,7 @@ karmaşık olanlardır, ben bile zor anlıyorum, programlama nedeniyle değil
 içerdikleri matematik formülleri nedeniyle.
 Ama dikkat! Matematik gerekmiyorsa
 elektronik bilgisi veya Amiga'nın elektrik şemalarını
-öğrenmek gerektiğini düşünmeyin! Bu, yalnızca bir grafik kartı veya video dijitalleştirici veya benzeri bir şeyi yönetmek için bir program yapmak istiyorsanız
-gerekli.
+öğrenmek gerektiğini düşünmeyin! Bu, yalnızca bir grafik kartı veya video dijitalleştirici veya benzeri bir şeyi yönetmek için bir program yapmak istiyorsanız gerekli.
 Örneğin, kabloların nereden geçtiğini bilmeden ekrana bir şekil
 getirebilir veya müzik çalabilirsiniz!
 12 yaşında assembler öğrenen insanlar tanıyorum, 30 veya 40 yaşında öğrenenler de var,
@@ -471,22 +463,22 @@ boşluklarla, tercihen bir TAB ile (tek seferde 8 boşluk yapar,
 CTRL tuşunun üstündeki tuş) önceden gelmesi ve ardından işlenenler gelmesi gereken komutlar vardır, örneğin:
 
 PIPPO:
-MOVE.L    $10,$20
+	MOVE.L    $10,$20
 
 Bu durumda MOVE.L komuttur, ilk operand $10 ve
 ikincisi $20'dir. Bazı komutlar tek bir operand gerektirirken, diğerleri
 hiç operand gerektirmez, örneğin:
 
-CLR.L    $10
+	CLR.L    $10
 
 Tek bir operand gerektirir. RTS gibi komutlar operand gerektirmez.
 Son olarak, komutlarla ne yapıldığını hatırlamak için yararlı olan bir yorum olabilir
 : yorum, noktalı virgül (;) sonra yazılabilir.
 
 PIPPO:                ; LABEL, MOVE.L adresini temsil eder
-MOVE.L    $10,$20        ; 2 işlenenli komut
-CLR.L    $10        ; 1 operandlı komut
-RTS            ; operand içermeyen komut
+	MOVE.L   $10,$20  ; 2 işlenenli komut
+	CLR.L    $10      ; 1 operandlı komut
+	RTS            	  ; operand içermeyen komut
 
 Yorumlar derleme sırasında yok sayılır, bu nedenle
 istediğiniz her şeyi yazabilirsiniz, yeter ki ; işaretinden sonra olsun.
@@ -495,7 +487,6 @@ derlenir. Programın yapması gerekeni yapıp yapmaması ise size bağlıdır!!!
 
 -EDITOR ise metinleri yazmak veya değiştirmek için kullanılan bir programdır.
 Bizim durumumuzda, listeleri yazmak için kullanılır. Listeler, anahtar kelimelerden (move, add...) ve programcının yorumlarından (; işaretinden sonra yazılır) oluşan metinlerden ibarettir.
-En güçlü editörler karakterleri arayabilir, bağlayabilir ve değiştirebilir.
 En güçlü editörler karakterleri arayabilir, bağlayabilir ve değiştirebilir.
 Genellikle listelere .ASM veya .S ile biten bir isim verilir, ben
 şahsen .S'yi tercih ederim, bu yüzden kurstakiler .S ile biterken
@@ -537,7 +528,7 @@ Neyse ki birçok assembler yerleşik bir linker içerir, bu nedenle
 bu adımı atlamak gerekmez.
 
 Bu kursta yer alan assembler, TRASH'M'ONE, bir EDİTÖR,
-bir ASSEMBLER, bir MONİTÖR/DEBUGGER ve bir LINKER içerir!!! Yani hepsi BİRDE!!!!
+bir ASSEMBLER, bir MONİTÖR/DEBUGGER ve bir LINKER içerir!!! Yani hepsi BİRDEN!!!!
 Asmone'nin PD (yani serbestçe kopyalanabilir) versiyonudur.
 
 Editörle ilgili olarak, bir metni aramak için
@@ -590,7 +581,6 @@ annenize bir mektup yazabilir veya bir diskin STARTUP-SEQUENCE'ını değiştire
 
 Şimdi, yanlış anlaşılmaları önlemek için, bilgisayarın nasıl çalıştığını kendi tarzımda açıklayarak devam edeceğim.
 Her şeyi organize eden, mikroişlemci 68000, CPU, yani
-
 Merkezi İşlem Birimi, kısacası Patron'dur.
 İşlemci, talimatları yerine getirir, çünkü yerine getirebileceği çok kesin bir talimat setine sahiptir ve bunları birbiri ardına (sırayla) yerine getirir, yolunda bir talimat bulmadıkça.. İşlemci
 komutları yerine getirir, aslında yerine getirebileceği çok kesin bir komut seti vardır
@@ -685,8 +675,8 @@ dalgalanmalar oluşturulur; aptalca bir örnek verelim:
 
 Ana:
 BSR CAMPANE        ; BSR, CAMPANE etiketinin altına atlar, ardından
-; buraya geri dönerek BSR'yi yürütür aspettamouse
-BSR aspettamouse    ; MOUSE'un basılmasını bekler
+				   ; buraya geri dönerek BSR'yi yürütür aspettamouse
+BSR aspettamouse   ; MOUSE'un basılmasını bekler
 BSR PAVAROTTI
 RTS     ; asmone veya workbench'e geri dön
 
@@ -865,6 +855,7 @@ anlamak için bir fikir vermektedir.
 Burada oraya zıplarken bir hata olduğunda, örneğin diskten yanlış yüklenmiş verilerin bulunduğu bir alana zıplarsa veya programcı bir hata yaparsa,
  o zaman efsanevi GURU MEDITATION veya SOFTWARE FAILURE
 (Yazılım Hatası) mesajı, rahatsız edici kırmızı yanıp sönen penceresinde belirir.
+
 Yeniden yazılabilir bellek (RAM) değiştirilebilir ve
 daha önce de belirtildiği gibi CHIP ram ve FAST ram olarak ikiye ayrılır.
 Aradaki fark, GRAFİK ve SESLERİN CHIP RAM'de olması gerekirken
@@ -1061,6 +1052,7 @@ bir listenin yürütülmesini hemen kontrol edebilir veya ders1'de hatırlamadı
 görüntüleyebilirsiniz vb.
 NOT: Sayfalar arasında gezinmek için imleçleri (oklar) ve SHIFT tuşunu kullanın.
 Yani, C64'ünüz yoksa, ALT tuşunun üzerindeki ok tuşunu kullanın.
+
 “A” tuşuna bastığınızda ne olduğunu açıklayayım: liste (veya kaynak)
 normal metin biçimindedir ve komutlar olan anahtar kelimelerden veya
 derleyici tarafından tanınan diğer sembollerden oluşur... Bir grup komutu

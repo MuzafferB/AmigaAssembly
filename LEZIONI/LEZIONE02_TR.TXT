@@ -14,12 +14,10 @@ ekranın rengini değiştirebilir veya bu konumları okuyarak
 elektronik fırçanın hangi satıra geldiğini veya fare düğmesinin
 basılı olup olmadığını öğrenebiliriz. Bir oyun veya demo yapmak için çok sayıda
 bu adresleri, yani KAYITLAR'ı kullanmak gerekir ve bu nedenle bunları
-en az 68000 dilini (MOVE,
-JSR, ADD, SUB vb.) kadar bilmek gerekir.
+en az 68000 dili (MOVE, JSR, ADD, SUB vb.) kadar bilmek gerekir.
 Bu tür programlama için, daha önce de belirttiğim gibi, ROM kickstart 1.2/1.3/2.0/3.0'daki KÜTÜPHANELER
 (yani, bir workbench penceresi açmaya veya bir dosyayı okumaya izin veren rutinler veya alt programlar)
- kullanılmaz
-yani çok az kullanılır: örneğin,
+ kullanılmaz yani çok az kullanılır: örneğin,
 workbench'in guru'ya girmesini önlemek veya çoklu görev özelliğini devre dışı bırakmak için.
 Bu nedenle, bu 2. derste,
 68000'in rolünü anladıktan sonra, onun kullanımını daha derinlemesine incelemek gerektiğini düşünüyorum.
@@ -158,7 +156,7 @@ bir bayt (8 bit içerir) 0'dan başlar ve 7'ye kadar gider. Örneğin bu sayı:
 
 4 ve 8 bitleri “açık” durumdadır. Bunları numaralandırmak için şöyle yapabilirsiniz:
 
-;5432109876543210    - ;
+	    ;5432109876543210    - ;
 move.w #%0011000000100100,$dffxxx
 
 Bu durumda WORD'ün 2,5,12 ve 13 bitleri “açık” durumdadır.
@@ -181,8 +179,7 @@ sağdan sola doğru 7'ye kadar devam eder (yani 8'e kadar, çünkü 1'den değil
 0'dan başlanır: 01234567, yani 8 bit); 
 bit 7, EN ÖNEMLİ BIT olarak adlandırılır.
 Daha önemlidir çünkü, yüz binlik banknotta en sağdaki sıfırlardan daha fazla sayıldığı gibi
-,
- daha fazla sayılır.
+, daha fazla sayılır.
 Bir bayt en fazla 255, yani %11111111 değerinde olabilir.
 
 Bir WORD ise 16 bitten, yani iki bayttan oluşur, aynı şekilde
@@ -209,65 +206,64 @@ ve bu değerin, o değerle belirtilen adreste bulunan değer değildir,
 sayı veya LABEL'in önünde hash işareti yoksa olduğu gibi.
 Örneğin, şu 2 durumu inceleyelim:
 
-1)    MOVE.L    $50000,$60000    ; adreslerdeki değerler
-; $50000,$50001,$50002,$50003
-; $60000'a kopyalanır,
-; $60001,$60002,$60003, yani bir longword
-; 4 baytlık bir uzunlukta bir adres
-; adresine kopyalanır.
+1)    MOVE.L    $50000,$60000   ; adreslerdeki değerler
+								; $50000,$50001,$50002,$50003
+								; $60000'a kopyalanır,
+								; $60001,$60002,$60003, yani bir longword
+								; 4 baytlık bir uzunlukta bir adres
+								; adresine kopyalanır.
 
-2)    MOVE.L    #$50000,$60000    ; Bu sefer $60000'e
-; hash işaretinden sonra belirtilen sayı,
-; yani $50000 yerleştirilir. Bu sefer
-; $50000 adresinin okunmadığı
-; ve bununla hiçbir ilgisi olmadığı,
-; sadece $60000'in kullanıldığı
+2)    MOVE.L    #$50000,$60000  ; Bu sefer $60000'e
+								; hash işaretinden sonra belirtilen sayı,
+								; yani $50000 yerleştirilir. Bu sefer
+								; $50000 adresinin okunmadığı
+								; ve bununla hiçbir ilgisi olmadığı,
+								; sadece $60000'in kullanıldığı
+								; Etiket kullanılırsa, herhangi bir değişiklik olmaz:
 
-Etiket kullanılırsa, herhangi bir değişiklik olmaz:
-
-1)    MOVE.L    CANE,GATTO    ; CANE uzun kelimesinin içeriği, yani
-; $00123456, GATTO uzun kelimesine kopyalanır
-; (aslında $123456, CANE etiketinin altında
-; ilk gelen şeydir)
+1)    MOVE.L    KÖPEK,KEDİ  ; KÖPEK uzun kelimesinin içeriği, yani
+							; $00123456, KEDİ uzun kelimesine kopyalanır
+							; (aslında $123456, KÖPEK etiketinin altında
+							; ilk gelen şeydir)
 
 komutundan önce:
 
 KÖPEK:
-dc.l    $123456
+	dc.l    $123456
 
 KEDİ:
-dc.l    0
+	dc.l    0
 
 komutundan sonra:
 
 KÖPEK:
-dc.l    $123456
+	dc.l    $123456
 
 KEDİ:
-dc.l    $123456
+	dc.l    $123456
 
-2)    MOVE.L    #KÖPEK,KEDİ    ; Bu sefer etiket
-; KÖPEK'in ADRESİ KEDİ etiketine kopyalanır
+2)    MOVE.L    #KÖPEK,KEDİ     ; Bu sefer etiket
+								; KÖPEK'in ADRESİ KEDİ etiketine kopyalanır
 
 komutundan önce:    ; ETİKET KÖPEK'in konumunun
-; $34500 konumunda olduğunu varsayalım, yani bir M KÖPEK komutu verdikten sonra
-; şunlar görünür:
-; 00034500 00 12 34 56 00 00 00 00 .....
-; (köpek) (kedi)
+					; $34500 konumunda olduğunu varsayalım, yani bir M KÖPEK komutu verdikten sonra
+					; şunlar görünür:
+					; 00034500 00 12 34 56 00 00 00 00 .....
+					; (köpek) (kedi)
 
 KÖPEK:
-dc.l    $123456
+	dc.l    $123456
 
 KEDİ:
-dc.l    0
+	dc.l    0
 
 komutundan sonra:
 
 KÖPEK:
-dc.l    $123456
+	dc.l    $123456
 
 KEDİ:
-dc.l    $34500    ; yani KÖPEK ETİKETİNİN BELEMİRDEKİ YERİ.
+	dc.l    $34500    ; yani KÖPEK ETİKETİNİN HAFIZADAKİ YERİ.
 
 MOVE.W #KÖPEK,KEDİ veya MOVE.B #KÖPEK,KEDİ
 komutunu vermiş olsaydınız, bir ADRES bir LONGWORD uzunluğunda olduğu için
@@ -291,8 +287,6 @@ longword veya word bazında çalışabilirsiniz. D0, D1 vb. veri kayıtları ile
 hem .b hem .w hem .l kullanılabilir. Adres kayıtları adresleri içermek için ayrılmıştır ve
 LEA (LOAD ENTIRE ADDRESS, tüm adresi kayda yükle) gibi özel komutlara sahiptir
 (bu komut lea.b, lea.w veya lea.l olamaz, çünkü L her zaman .L'dir).
-Örneğin, kayıtlara bir değer yüklemek için 2 yöntem kullanılabilir: 1)    MOVE.L    #$50000,A0    #$50000,A0
-l olamaz, sadece LEA olabilir, çünkü her zaman .L'dir)
 Örneğin, adres kayıtlarına bir değer girmek için
 2 yöntem kullanılabilir:
 
@@ -310,7 +304,7 @@ veya çirkin durumlar yaratabilirsiniz. LABEL için farklı bir açıklama yapı
 etiketler, listede bir noktada
 küçük harfle yazılmış olsa bile, başka bir noktada büyük harfle yazılmış olsa bile tanımlanabilir, ancak bu
 TRASH'M-ONE tercihlerinde bu seçeneğin ayarlanmış olması nedeniyle,
- “Assembler/Assemble..” menüsünde UCase=UCase, yani
+ “Assembler/Assemble..” menüsünde UCase=LCase, yani
 “Büyük Harf=Küçük Harf, yani büyük harfler=küçük harfler” anlamına gelir.
 Bu seçeneği kaldırırsanız, etiketlerin tanınmasında
 büyük/küçük harfler de dikkate alınacaktır, bu nedenle Cane:
@@ -322,11 +316,11 @@ a0,a1... kayıtlarına bir adres girmek istiyorsanız,
 LEA komutunu, ADRESİ HİÇBİR ŞEKİLDE SİLMEDEN ve ilgili kayıt ile birlikte kullanmanız gerektiğini unutmayın.
 Aşağıdaki 2 örneğe dikkat edin:
 
-1)    MOVE.L	$50000,a0    ; a0'a 
-; konumundaki $50000 (+$50001,$50002 ve $50003
-; değerini koyun; çünkü 1 konum 1 bayt uzunluğundadır ve
-; move.l 4 bayt = 4 konumu kopyalar
-; bu durumda $50000'den başlayarak
+1)    MOVE.L	$50000,a0   ; a0'a 
+							; konumundaki $50000 (+$50001,$50002 ve $50003
+							; değerini koyun; çünkü 1 konum 1 bayt uzunluğundadır ve
+							; move.l 4 bayt = 4 konumu kopyalar
+							; bu durumda $50000'den başlayarak
 
 2)    LEA    $50000,a0    ; $50000 sayısını a0'a koy
 
@@ -339,39 +333,34 @@ Adres kayıtlarıyla çeşitli adresleme türleri mümkündür:
 Başlangıç olarak şu 2 komutu inceleyelim:
 
 move.l    a0,d0    ; a0'da bulunan sayıyı d0 kaydına koyun
-move.l    (a0),d0 ; a0 adresinde bulunan uzun kelimeyi
-; d0 kayıt defterine
+move.l    (a0),d0  ; a0 adresinde bulunan uzun kelimeyi
+				   ; d0 kayıt defterine yazın.
 
-yazın. Parantez içindeki adresleme DOLAYLI olarak adlandırılır, çünkü
-DIREKT olarak kopyalanmak yerine a0 değerindeki değer kopyalanır
-a0 adresinde bulunan değer. Pratik bir örnek LEZIONE2d.s
+Parantez içindeki adresleme DOLAYLI olarak adlandırılır, çünkü
+DIREKT olarak kopyalanmak yerine a0 değerindeki değer kopyalanır. 
+Pratik bir örnek LEZIONE2d.s
 
 Dolaylı adresleme kullanılarak adresler ÜZERİNE dolaylı olarak etki edilebilir,
 örneğin fare tuşunun adresini ve renk 1'i kayıtlara koyarak
 ders 1'in listesini yeniden yazabilirsiniz. Bunu DERS2e.s'de yaptım.
 
-
-Dolaylı adreslemeyle ilgili olası şüpheleri gidermek için son örnekleri yapalım
-:
+Dolaylı adreslemeyle ilgili olası şüpheleri gidermek için son örnekleri yapalım:
 
 move.l a0,d0        ; A0'ın değerini d0 kaydına kopyalar
-move.b (a0),d0        ; adres
-; a0'da bulunan baytı d0 kaydına kopyalar
-move.w (a0),(a1)     ; adres
-; a0'da bulunan kelimeyi a1'de bulunan adrese kopyalar
-; (ve sonraki, bir kelime 2 bayt
-; yani 2 adres olduğundan!)
-clr.w    (a3)        ; a3 adresindeki kelimeyi (2 bayt) temizler (sıfırlar)
-; Daha kesin olarak,
-; a3 adresindeki bayt ve
-; sonraki adres sıfırlanır.
-clr.l    (a3)        ; Yukarıdaki gibi, ancak 4 adres sıfırlanır
-; (bir long = 4 bayt = 4 adres)
-move.l    d0,(a5)        ; d0 değerinin a5 adresine kopyalanır
-; (daha kesin olarak, a5 adresine ve sonraki 3 adrese
-; kopyalanır,
-; çünkü bir long 4 adres kaplar)
-move.l    d0,a5        ; d0'ın değeri a5'e kopyalanır
+move.b (a0),d0      ; a0'da bulunan baytı d0 kaydına kopyalar
+move.w (a0),(a1)    ; a0'da bulunan kelimeyi a1'de bulunan adrese kopyalar
+					; (ve sonraki, bir kelime 2 bayt
+					; yani 2 adres olduğundan!)
+clr.w    (a3)       ; a3 adresindeki kelimeyi (2 bayt) temizler (sıfırlar)
+					; Daha kesin olarak,
+					; a3 adresindeki bayt ve
+					; sonraki adres sıfırlanır.
+clr.l    (a3)       ; Yukarıdaki gibi, ancak 4 adres sıfırlanır
+					; (bir long = 4 bayt = 4 adres)
+move.l    d0,(a5)   ; d0 değerinin a5 adresine kopyalanır
+					; (daha kesin olarak, a5 adresine ve sonraki 3 adrese
+					; kopyalanır, çünkü bir long 4 adres kaplar)
+move.l    d0,a5     ; d0'ın değeri a5'e kopyalanır
 
 Unutmayın! Şimdiye kadar öğrendiğiniz adresleme konusunda tüm şüphelerinizi giderin,
 LEZIONE2e.s'ye kadar kaynakları da inceleyin, çünkü şimdi anlatacağım adresleme
@@ -415,8 +404,8 @@ MOVE.L    (a0)+,d0    ; d0'a a0 adresinde bulunan .L değerini koyalım
 ; 2 (bir kelime=2) eklenmiş olurdu,
 ; MOVE.B (a0)+,d0 durumunda ise
 ; 1 (bir bayt) eklenmiş olurdu,
-; yani bir sonraki adresi işaret ederdi
-; .
+; yani bir sonraki adresi işaret ederdi.
+
 MOVE.L    (a0)+,d1    ; aynı şey: a0 adresindeki .L
 ; değerini d1'e kopyalar, bu adres şimdi
 ; NONNO+bir uzun kelime adresini içerir,
@@ -437,14 +426,13 @@ Bu tür adreslemeyi 2 komutla çevirebiliriz:
 1b)    MOVE.L    (A0),LABEL    ; a0 adresindeki bir long'u
 ; etikete kopyalar
 ADDQ.W    #4,a0        ; a0'a 4 ekler (.L=4)
-; NOT: eğer
-; 9'dan küçük bir sayı eklenirse, ADD
+; NOT: eğer 9'dan küçük bir sayı eklenirse, ADD
 komutu yerine ADDQ komutu kullanılır
 ; çünkü bu komut bu tür sayılar için ayrılmıştır ve daha hızlıdır.
 Ayrıca, ADRES kayıtlarında, eklediğimiz veya çıkardığımız sayı
 ; $FFFF'den, yani bir kelimeden küçükse, .L yerine .W
 kullanılabilir ve yine de
-; adresin tüm uzun kelimesi üzerinde işlem yapılıradresinin tüm longword'ü üzerinde işlem yapılır.
+; adresin tüm uzun kelimesi üzerinde işlem yapılır.
 Aynı şekilde:
 
 2)    MOVE.W    (a0)+,LABEL
@@ -598,17 +586,16 @@ temizlemeyi istenen sayıda gerçekleştirecek bir DBRA döngüsü ile değişti
 :
 
 Başlangıç:
-lea    $60000,a0    ; Başlangıç
-move.l    #($2000/4)-1,d0    ; d0'a $2000 baytları silmek için gerekli döngü sayısını girin
-; yani
-; $2000/4 (yani 4'e BÖLÜN, çünkü her
-; clr.l 4 baytı temizler), hepsi -1,
-; çünkü döngü bir kez
-; daha fazla çalıştırılır.
+	lea    $60000,a0    ; Başlangıç
+	move.l    #($2000/4)-1,d0   ; d0'a $2000 baytı silmek için gerekli döngü sayısını girin
+								; yani $2000/4 (yani 4'e BÖLÜN, çünkü her
+								; clr.l 4 baytı temizler), hepsi -1,
+								; çünkü döngü bir kez
+								; daha fazla çalıştırılır.
 CLEARLOOP:
-CLR.L    (a0)+
-DBRA    d0,CLEARLOOP
-rts
+	CLR.L   (a0)+
+	DBRA    d0,CLEARLOOP
+	rts
 
 Bu rutin, önceki örnekte olduğu gibi $60000 ile $62000 arasında temizler.
 CMP komutuyla a0 ile a1 karşılaştırılır, yani a1'de bulunan
@@ -622,7 +609,6 @@ Döngülerin sayısı, ilk seferinde döngü d0'u azaltmadan
 
 Son örnek olarak, BSR ve DBRA döngüsü ile çağrılan alt rutinler içeren Ders 2l.s'yi inceleyin.
 Bu, karmaşık bir programın yapısını anlamak için yararlıdır.
-Son olarak, BSR ve BEQ/BNE arasındaki farkı belirtmek isterim: BSR etiketi durumunda, işlemci etiket altındaki rutini yürütür ve etiket bulunana kadar devam eder.
 
 Son olarak, BSR ve BEQ/BNE arasındaki farkı belirtmek isterim:
 BSR etiketi durumunda, işlemci RTS'yi bulana kadar

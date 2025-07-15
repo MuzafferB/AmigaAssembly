@@ -13,8 +13,7 @@ Bu derste, ekranda bir şeyler görüntülenmeye başlanacak:
 Bunu yapmak için, grafiklerle ilgilenen COPPER yongası için bir COPPERLIST, yani bir program yazmamız gerekiyor
 .
  Bu programı daha önce ekranın rengini değiştirmek için kullanmıştık
-($dff180, COLOR00 adlı bir copper kaydıdır
-).
+($dff180, COLOR00 adlı bir copper kaydıdır).
 Ancak şimdilik sadece işlemciyle
 kayıtlarda doğrudan değişiklikler yaptık ve AD ile listeleri
 tek tek komutlar halinde çalıştırdığınızda fark edebileceğiniz gibi, COLOR00'a (yani
@@ -41,8 +40,7 @@ Daha önce de belirttiğim gibi, copperlist, COPPER kayıtlarına, yani $dffxxx 
 işleminden ibarettir.
 Ancak bunlar işlemci tarafından yapılan hareketler değil, copper
 tarafından yapılan hareketlerdir ve tesadüfen değil, işlemci
-ile başka şeyler yaparken bu COPPERLIST'i bağımsız olarak yürütür... Bu, PC'lerde Amiga'nın LIONHEARTH veya PROJECT X'inin
-olmamasının nedenlerinden biridir.
+ile başka şeyler yaparken bu COPPERLIST'i bağımsız olarak yürütür... Bu, PC'lerde Amiga'nın LIONHEARTH veya PROJECT X'inin olmamasının nedenlerinden biridir.
 Bu nedenle, 68000 için yaptığımız gibi, ona bir LISTATO yazmamız gerekecek
 daha sonra COPPER'a bizimkinin nerede olduğunu bildirerek
 WorkBench'inkinin yerine okumasını ve çalıştırmasını sağlamalıyız.
@@ -137,15 +135,15 @@ sadece gölgelendirmelerden oluşan copperlist'imizi yapmak için BITPLANE'leri,
 Bunu yapmak için DC.W $100,$200 satırını eklemek yeterlidir, yani
 bitplane kontrol kaydı olan $dff100'e $200 değerini koyarız.
 
-ARTIK VİDEOYUN YARISINDA BEKLEYEN VE RENK DEĞİŞTİREN
-KOPPERLIST'İ TAMAMEN YAPABİLİRİZ!
+ARTIK VİDEONUN YARISINDA BEKLEYEN VE RENK DEĞİŞTİREN
+COPPERLIST'İ TAMAMEN YAPABİLİRİZ!
 
-KOPERLIST:
+COPERLIST:
 dc.w    $100,$200    ; BPLCON0 Şekil yok, sadece arka plan
-dc.w    $180,0        ; Renk 0 SİYAH
-dc.w    $7f07,$FFFE	; WAIT - $7f (127) satırını bekle
+dc.w    $180,0       ; Renk 0 SİYAH
+dc.w    $7f07,$FFFE	 ; WAIT - $7f (127) satırını bekle
 dc.w    $180,$00F    ; Renk 0 MAVİ
-dc.w    $FFFF,$FFFE    ; COPPERLIST'İN SONU
+dc.w    $FFFF,$FFFE  ; COPPERLIST'İN SONU
 
 Copperlist'lerin çalışıp çalışmadığını kontrol etmek için
 renk tonları oluşturmanız gerekeceğini göz önünde bulundurarak,
@@ -217,7 +215,7 @@ $999    =    Orta gri
 $000    =    Siyah
 
 
-Şimdi sorun, bakırın dikkatini WorkBench'ten uzaklaştırarak
+Şimdi sorun, copper'ın dikkatini WorkBench'ten uzaklaştırarak
 COPPERLIST'imizden emirleri yerine getirmesini sağlamak; ancak
 başka bir sorun daha var: bizimkini yerine getirttikten sonra,
 çıkıp sisteminkini yeniden okumasını nasıl sağlayacağız???
@@ -230,17 +228,17 @@ rutinleri çalıştırmamız gerekir!!! Bunu yapmak için her zaman
 kickstart tarafından yazılan ve önceden belirlenmiş adresleme mesafelerini hesaplamak için kullanılan
 $4 adresinde bulunan adresi referans almalıyız.
 Bunu daha sonra anlatacağız.
-$4 adresindeki long'u toplamak için şunu yapmanız yeterlidir:
+$4 adresindeki long'u almak için şunu yapmanız yeterlidir:
 
 MOVE.L    $4,a6    ; a6'da şimdi ExecBAse var
 
 Daha iyi
 
 MOVE.L    4.w,a6    ; Aslında 4 küçük bir sayıdır ve
-; 4.w olarak yazılabilir, bu da yer tasarrufu sağlar. (komutu
-; $00000004 ile yazmak yerine $0004 ile yazar, burada
-; ilk sıfırlar gereksizdir. YİNE DE TAŞINIR
-; BİR LONGWORD! 4,5,6,7 baytlarında bulunan long.
+					; 4.w olarak yazılabilir, bu da yer tasarrufu sağlar. (komutu
+					; $00000004 ile yazmak yerine $0004 ile yazar, burada
+					; ilk sıfırlar gereksizdir. YİNE DE TAŞINIR
+					; BİR LONGWORD! 4,5,6,7 baytlarında bulunan long.
 
 4'te bulunan adresi a6'ya koyduktan sonra,
 doğru adresleme mesafesiyle JSR yaparak kickstart rutinlerini çalıştırabiliriz.
@@ -266,10 +264,9 @@ belleğin herhangi bir yerinde rutinleri çalıştırabilir, bsr ise
 Ve onlar da bunu yaptılar! Örneğin, işletim sistemini devre dışı bırakan Disable komutunu tüm kickstart'larda çalıştırmak için şunu yapmanız yeterlidir:
 
 move.l    4.w,a6        ; Exec adresi a6'da
-jsr    -$78(a6)    ; Disable - multitask'ı engeller
-bsr.w    mioprogramma
-jsr    -$7e
-(a6)    ; Etkinleştir - çoklu görevi etkinleştirir
+jsr    -$78(a6)    ; Engelle - multitask'ı engeller
+bsr.w    myprogram
+jsr    -$7e(a6)    ; Etkinleştir - çoklu görevi etkinleştirir
 
 Her kickstart'ta rutin farklı bir adreste olacaktır, ancak bu şekilde
 her zaman o rutini çalıştırdığımızdan emin oluruz.
@@ -281,48 +278,46 @@ graphics.library'ye başvurmamız gerekir, yani GRAFİK ile ilgilenen rutin, sad
 işletim sistemi düzeyinde, donanım düzeyinde değil.
 Grafik kütüphanesine erişmek için APERTA'yı açmalıyız, yani şöyle yapmalıyız:
 
-move.l    4.w,a6        ; Execbase in a6
-lea    GfxName,a1    ; Açılacak lib adının adresi a1'de
+move.l    4.w,a6    ; Execbase a6'ya
+lea    GfxName,a1   ; Açılacak kütüphane adının adresi a1'de
 jsr    -$198(a6)	; OpenLibrary, EXEC'in
-; kütüphaneleri açan ve çıkışta
-; adresleme mesafelerini (Ofset)
-; hesaplamak için kullanılacak kütüphanenin temel adresini veren
+					; kütüphaneleri açan ve çıkışta
+					; adresleme mesafelerini (Ofset)
+					; hesaplamak için kullanılacak kütüphanenin temel adresini veren
 move.l    d0,GfxBase    ; GFX temel adresini GfxBase'e kaydeder
 ....
 
 GfxName:
 dc.b    “graphics.library”,0,0	; NOT: karakterleri belleğe
-; kaydetmek için her zaman dc.b
-GfxBase:                ; kullanın ve bunları “” veya ‘’
-dc.l    0
+								; kaydetmek için her zaman dc.b
+GfxBase:                		; kullanın ve bunları “” veya ‘’
+dc.l    0						; arasına yazın.
 
 Bu durumda, Exec OpenLibrary rutinini kullandık. Bu rutin,
 açılacak kütüphanenin adını içeren metnin adresinin A1'e
 yerleştirilmesini gerektirir. Örneğin,
 dosyalar veya benzerlerini yüklemek için “dos.library” gibi başka kütüphaneler açabilir, pencereleri açmak için “intuition.library” gibi kütüphaneler açabiliriz.
-D0'dan döndükten sonra, söz konusu kütüphanenin adresi,
- yani JSR
+D0'dan döndükten sonra, söz konusu kütüphanenin adresi, yani JSR
 grafiklerle ilgili ofsetlerle JSR yapmak için kullanılacak GfxBase gibi bir adres. JSR'lerin yanı sıra,
 örneğin, mevcut sistem COPPERLIST adresinin
 GfxBase'den 26 bayt sonra yer aldığını biliyoruz, bu nedenle
 programımıza bu adresi OldCop etiketine kaydederek devam edeceğiz:
 
-move.l    4.w,a6        ; Execbase in a6
-lea    GfxName,a1    ; a1'de açılacak lib adının adresi
+move.l    4.w,a6    ; Execbase in a6
+lea    GfxName,a1   ; a1'de açılacak lib adının adresi
 jsr    -$198(a6)    ; OpenLibrary, kütüphaneleri açan EXEC rutini
-; ve adresleme mesafelerini hesaplamak için
-; o kütüphanenin temel adresini verir
-; (Ofset)
+					; ve adresleme mesafelerini hesaplamak için
+					; o kütüphanenin temel adresini verir
+					; (Ofset)
 move.l    d0,GfxBase    ; GFX temel adresini GfxBase'de kaydeder
 move.l    d0,a6
 move.l    $26(a6),OldCop    ; sistemin copperlist adresini kaydeder....
-            ;
-
+            
 GfxName:
-dc.b    “graphics.library”,0,0    ; NOT: karakterleri belleğe kaydetmek için
-; her zaman dc.b
-GfxBase:                ; kullanın ve bunları “” veya ‘’
-dc.l    0
+dc.b    “graphics.library”,0,0  ; NOT: karakterleri belleğe kaydetmek için
+								; her zaman dc.b
+GfxBase:                		; kullanın ve bunları “” veya ‘’
+dc.l    0						; arasına yazın.
 
 OldCop:
 dc.l    0
@@ -333,63 +328,57 @@ copperlist'imizin adresini COP1LC kaydına, yani $dff080'e koymaktır, bu
 copperlist'e işaret eder, yani copper, adresi $dff080'de bulunan copperlist'i çalıştırır
 : bu nedenle adresi
 $dff080 adresine koymak yeterlidir, ardından copperlist'i başlatmak için
-$dff088 (COPJMP1) kaydına herhangi bir şey yazmak yeterlidir, copperlist'i
-başlatacak bir şey yazmak veya okumak yeterlidir, bu kayıt STROBE olarak adlandırılır, sanki bir düğme gibi
-dokunmak yeterlidir (ANCAK CLR.W $dff088 KULLANMAYIN, sorunlara neden olur).
+$dff088 (COPJMP1) kaydına herhangi bir şey yazmak yeterlidir,  bu kayıt STROBE olarak adlandırılır, sanki bir düğme gibi dokunmak yeterlidir (ANCAK CLR.W $dff088 KULLANMAYIN, sorunlara neden olur).
 Böylece, $dff080 (COP1LC) içine başka bir liste girilene kadar, copperlist'imiz her kare için tekrar tekrar çalıştırılacaktır.
-Bir sorun, $dff080'in yazma için olduğu, yani “=c 080” yapmaya çalışırsanız WRITE'ın W'sini göreceksiniz. Copperlist'i geri
 Bir sorun, $dff080'in sadece yazma modunda olmasıdır, aslında
 “=c 080” yapmaya çalışırsanız WRITE'ın W'sini göreceksiniz.
 Sistem copperlistini, yani asmone veya workbench'i görüntüleyen copperlistini geri koymak için, adresini $dff080'den okuyamayacağımızdan,
-işletim sistemine onu nereye koyduğunu sormalıyız,
- ve bunu
+işletim sistemine onu nereye koyduğunu sormalıyız, ve bunu
 kickstart rutinleriyle yapabilirsiniz: o
 copperlist'in adresini aldıktan sonra, onu programımızın bir LONGWORD'üne kaydedeceğiz, sonra
-copperlist'imizi işaret edeceğiz ve programın çıkışında eskisini geri koyacağız
-.
+copperlist'imizi işaret edeceğiz ve programın çıkışında eskisini geri koyacağız.
 
-move.l    4.w,a6        ; Execbase in a6
-jsr    -$78(a6)    ; Disable - multitasking'i durdur
-lea    GfxName,a1    ; Açılacak lib'in adının adresi a1'de
-jsr    -$198(a6)	; OpenLibrary, EXEC'in
-; kütüphaneleri açan ve çıkışta
-; adresleme mesafelerinin (Ofset)
-; yapılacağı kütüphanenin temel adresini veren
-move.l    d0,GfxBase    ; GFX temel adresini GfxBase'e kaydeder
-move.l    d0,a6
-move.l    $26(a6),OldCop    ; sistemin copperlist adresini kaydeder
-;
-move.l    #COPPERLIST,$dff080    ; COP1LC - COP'umuzu işaretler
-move.w    d0,$dff088		; COPJMP1 - COP'u başlatıyoruz
-fare:
-btst    #6,$bfe001
-bne.s    fare
+	move.l    4.w,a6    ; Execbase in a6
+	jsr    -$78(a6)     ; Disable - multitasking'i durdur
+	lea    GfxName,a1   ; Açılacak lib'in adının adresi a1'de
+	jsr    -$198(a6)    ; OpenLibrary, EXEC'in
+						; kütüphaneleri açan ve çıkışta
+						; adresleme mesafelerinin (Ofset)
+						; yapılacağı kütüphanenin temel adresini veren
+	move.l    d0,GfxBase    ; GFX temel adresini GfxBase'e kaydeder
+	move.l    d0,a6
+	move.l    $26(a6),OldCop       ; sistemin copperlist adresini kaydeder
+	move.l    #COPPERLIST,$dff080  ; COP1LC - COP'umuzu işaretler
+	move.w    d0,$dff088		   ; COPJMP1 - COP'u başlatıyoruz
+mouse:
+	btst    #6,$bfe001
+	bne.s    mouse
 
-move.l    OldCop(PC),$dff080    ; COP1LC - Sistem COP'unu işaret ediyoruz
-move.w    d0,$dff088        ; COPJMP1 - COP'u başlatıyoruz
+	move.l    OldCop(PC),$dff080 ; COP1LC - Sistem COP'unu işaret ediyoruz
+	move.w    d0,$dff088         ; COPJMP1 - COP'u başlatıyoruz
 
-move.l    4.w,a6
-jsr    -$7e(a6)    ; Etkinleştir - Çoklu görev özelliğini etkinleştir
-move.l    gfxbase(PC),a1    ; Kapatılacak kütüphanenin tabanı
-; (kütüphaneler açılmalı ve kapatılmalıdır!!!)
-jsr    -$19e(a6)    ; Closelibrary - grafik kütüphanesini kapat
-rts
+	move.l    4.w,a6
+	jsr    -$7e(a6)             ; Etkinleştir - Çoklu görev özelliğini etkinleştir
+	move.l    gfxbase(PC),a1    ; Kapatılacak kütüphanenin tabanı
+								; (kütüphaneler açılmalı ve kapatılmalıdır!!!)
+	jsr    -$19e(a6)    	    ; Closelibrary - grafik kütüphanesini kapat
+	rts
 
 GfxName:
-dc.b    “graphics.library”,0,0    ; NOT: karakterleri belleğe kaydetmek için
-; her zaman dc.b kullanın
-GfxBase:                ; ve bunları “” veya ‘’ içine alın
-dc.l    0
+	dc.b    “graphics.library”,0,0  ; NOT: karakterleri belleğe kaydetmek için
+									; her zaman dc.b kullanın
+GfxBase:                			; ve bunları “” veya ‘’ içine alın
+	dc.l    0
 
 OldCop:
-dc.l    0
+	dc.l    0
 
 COPPERLIST:
-dc.w    $100,$200    ; BPLCON0 - Şekil yok, sadece arka plan
-dc.w    $180,0        ; Renk 0 SİYAH
-dc.w    $7f07,$FFFE    ; WAIT - $7f (127) satırını bekle
-dc.w    $180,$00F    ; Renk 0 MAVİ
-dc.w    $FFFF,$FFFE    ; COPPERLIST SONU
+	dc.w    $100,$200    ; BPLCON0 - Şekil yok, sadece arka plan
+	dc.w    $180,0       ; Renk 0 SİYAH
+	dc.w    $7f07,$FFFE  ; WAIT - $7f (127) satırını bekle
+	dc.w    $180,$00F    ; Renk 0 MAVİ
+	dc.w    $FFFF,$FFFE  ; COPPERLIST SONU
 
 Bu örneği, öneriler ve değişikliklerle birlikte Ders 3b.s'de bulabilirsiniz.
 F2 tamponuna veya başka bir tampona yükleyin ve Amiga'nın CHIP'lerinin “METALİ ÇALAN” ilk

@@ -1,0 +1,233 @@
+
+ASSEMBLER COURSE - LESSON 2
+
+Do you understand exactly how the source code in LESSON1a.s works?
+If you don't, then you need to see a neurologist and quit the course.
+
+Now let's take a closer look at the 68000 language. I wanted to anticipate
+with the first source code that the processor is roughly used to
+organise everything, but that on its own it only changes values
+in its memory; by placing certain values in particular areas of memory
+such as $dffxxx or $bfexxx, power is supplied to the pins of the graphics chips,
+sound and ports, and as a result, as in the previous example, you can change the colour of the screen, or by reading these locations,
+ know which line the electronic brush has reached or whether the mouse button
+is pressed.
+ To make a game or demo, you need to use a large
+number of these addresses, called REGISTERS, and therefore you need to know
+them at least as well as the 68000 language (MOVE, JSR, ADD, SUB, etc.) with which they are
+set.
+For this type of programming, as I have already mentioned, the LIBRARIES
+of the kickstart 1.2/1.3/2.0/3.0 ROM (i.e. its routines, or subprogrammes
+that allow you to open a workbench window or read a file, for example)
+are used very little: for example, to avoid crashing the
+workbench or to disable multitasking.
+I therefore consider it necessary in this lesson no. 2 to explore the use of the
+68000 in more detail, once its role has been understood.
+
+The most important thing to learn is how the processor addresses,
+ rather than the commands themselves. Once you have learned that,
+every command uses the same syntax for addressing, and you just need to know
+what the command does. We have already said that the processor operates on
+memory, which is divided into locations or addresses, the unit of measurement
+of which
+ the byte, and the address is usually in hexadecimal format, i.e. in a numerical format different from the decimal one, as it has a base of 16.
+This is not a problem at all: while with decimal numbers, a
+sequence of 30 numbers, for example, is: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 etc,
+in esadecimale fa 1,2,3,4,5,6,7,8,9,a,b,c,d,e,f,10,11,12,13,14,15,16,17,18,
+19,1a,1b,1c,1d,1e etc., i.e. in hexadecimal numbers you also find the first
+6 letters of the alphabet as if a were a 10, b an 11, etc.; to convert
+a number from hexadecimal to decimal or vice versa, just use the ‘?’
+in the ASM: for example, typing ‘?10000’ will give you $2710, the corresponding
+hexadecimal value (hexadecimal numbers begin with $, decimal numbers
+are not preceded by anything and binary numbers are preceded by a %). Hexadecimal numbers
+are used because they are closer to the way computers think, which is
+obviously BINARY, i.e. composed of only 0 and 1.
+As an example to begin to understand the various addressing modes of the 68000,
+ we will use the CLR command, which clears the specified memory location:
+
+CLR.B    $40000        ; remember the difference between .B, .W and .L?
+
+This instruction will ‘clear’, i.e. reset byte no. $40000, i.e.
+address $40000. This is the simplest case, called ABSOLUTE; that is,
+you indicate directly the address where the CLR is to be performed; in the assembler,
+LABELS are used to identify a point in the program where
+there may be, for example, a byte to be indicated: in this case, instead of
+writing the address, you write the name of the LABEL; the assembler then
+write the actual address of the byte in question: for example, if
+we modify our first listing as follows:
+
+Waitmouse:
+move.w    $dff006,$dff180    ; put the value of $dff106 in $dff180
+; i.e. the VHPOSR in COLOR0
+btst	#6,$bfe001    ; left mouse button pressed?
+bne.s    Waitmouse    ; if not, return to waitmouse and repeat
+; (.s is equivalent to .b for this
+; type of command: bne.s = bne.b)
+clr.b    data1		; RESET DATA1
+rts            ; exit
+
+data1:
+dc.b    $30    ; dc.b means STORE THE FOLLOWING BYTE IN MEMORY
+; in this case, a $30 is placed under data1:
+
+Before exiting with RTS, the byte marked with the label
+data1: would be reset, which would be allocated during the assembly (or compilation) phase
+to a specific absolute address, for example, if the program
+was assembled by ASMONE starting from $50000, a CLR.B $5001c would be found in memory
+after assembly, i.e. the real address of dato1: ,
+certainly not CLR.B DATO1, since dato1: is a name given by the programmer to
+mark the dc.b $30; From this, we can also see the usefulness of labels.
+In fact, if we were to write the listing indicating the numerical address
+every time, if a routine were added in the middle of the
+program, all the addresses would have to be rewritten. To see at which
+address the labels are assembled, just use the ASMONE command D:
+for example, after assembling LESSON1a.s by typing ‘D waitmouse’, you will obtain the
+disassembled memory starting from waitmouse, and the labels will not appear in the listing,
+ but only the actual addresses.
+
+In the course example sources, you will notice that numerical addresses are never indicated,
+ only LABELS, apart from special addresses such as $dffxxx or $bfexxx.
+In the last example, I used a dc.b, which is an assembler command
+used to insert defined bytes; for example, to insert $12345678 at
+a given point in the program, I would use the DC command, which can be used
+in three forms: .B (BYTE), .W (WORD) and .L (LONGWORD):
+
+dc.b    $12,$34,$56,$78    ; in bytes
+
+dc.w    $1234,$5678    ; in words
+
+dc.l    $12345678    ; in longwords
+
+This command is also used to put phrases in memory, for example
+to put in the listing the text that will be printed on the screen by a
+PRINT routine that prints what is at the label TEXT:
+
+TEXT:
+dc.b    ‘best regards’
+
+or
+dc.b    “best regards”
+
+The text is usually terminated with a zero:
+
+dc.b    ‘best regards’,0
+
+Remember to put the text in quotation marks and use dc.b,
+not dc.w or dc.l!! The characters are one byte long each, and
+correspond to a certain byte: for example, try ?"a‘, and you will see
+that it corresponds to $61, so writing dc.b “a” will be equivalent to
+writing dc.b $61. Be careful that capital letters have different values!
+An ’A", for example, is $41. The most common use of dc.b is to define
+bytes, words, or larger areas where data will be stored. For example,
+ if you wanted to write a program that records the number of times a certain key is pressed,
+ you would need to define a label followed by a zeroed byte,
+ and each time you would add 1 to that label with the ADD command.
+i.e. to that byte under the label, and at the end you just need to read the value
+of the byte:
+
+; if the key is pressed then ADDQ.B #1,NUMPREMUTO, i.e.
+; add one to the byte under the label numpremuto.
+
+NUMPREMUTO:
+dc.b    0
+
+At the end of the program, the initial 0 will be changed to the number of times
+the key has been pressed. A similar example is in LESSON2a.s, which
+also contains extensive comments. I recommend loading it into another
+text buffer: to select one of the 10 available, just press a
+key from F1 to F10. For example, if you have LESSON2.TXT in the F1 buffer,
+press F2 and load LESSON2a.s with the command ‘R’. You can then
+load LESSON2b.s and the following ones into buffers F3, F4, etc., so that you always have them
+available by pressing a single key; however, it is better if you follow
+the LESSON.TXT, and as you find the example source code,
+continue loading it into another buffer, executing it and checking it,
+then go back and read the LESSON from where you left off: I think this
+is the best way to learn, because you do a bit of theory and
+check it straight away.
+
+Have you read the comments in LESSON2a.S?
+
+You will have seen the importance of bytes, words and longwords:
+as far as binary is concerned, to count bits, you start from the right and
+go to the left, in other words “backwards”, and you start from 0, not 1, so
+a byte (which has 8 bits) starts at 0 and goes up to 7. For example, in this number:
+
+%000100010000
+
+Bits 4 and 8 are “on”. To help you number them, you can do this:
+
+;5432109876543210    - a clever use of ;
+move.w #%0011000000100100,$dffxxx
+
+In this case, bits 2, 5, 12 and 13 of the WORD are “on”.
+Remember that a byte has 8 bits, a word has 16 (from 0 to 15) and a longword has
+32 (from 0 to 31).
+In the instruction
+
+BTST #6,$bfe001
+
+The instruction checks whether bit 6 of byte $bfe001 is zero: if it is:
+
+;76543210
+%0100000
+
+Bit 6 is instead set to 1, so the mouse is not pressed!!!
+
+To recap, a BYTE is made up of 8 bits: to indicate them, the first on the right
+is bit 0, also called the LEAST SIGNIFICANT BIT. The numbering proceeds from
+right to left up to 7 (i.e. the eighth because we start from 0 instead of
+1: 01234567, i.e. 8 bits); bit 7 is called the MOST SIGNIFICANT BIT.
+It is more significant because it counts more in the same way that
+in a hundred thousand banknote, the one to the left of the zeros to the
+right.
+A byte can have a maximum value of 255, i.e. %11111111.
+
+A WORD, on the other hand, is made up of 16 bits, or two bytes, in the same way, starting
+from the right with bit 0, always the least significant, up to bit 15 on the
+left, the most significant. It can contain a maximum of 65535.
+
+A LongWord is made up of 32 bits, from 0 to 31, i.e. 4 bytes, or 2 words, or if
+you prefer, one word and 2 bytes, in short, always 32 bits attached to each other
+which can contain a maximum of 4294967299 (4 billion!! like the lottery!).
+
+Now we will proceed with different ways of addressing: we have seen that if
+we do, for example, a CLR.W $100, we will reset locations $100 and $101,
+i.e. a word starting from $100 (since a word is 2 bytes, and locations
+are divided into bytes, we will clear 2 bytes!!). Similarly, a MOVE.B $100,$200
+ will copy the contents of $100 to $200. This can also be indicated with
+LABEL instead of specifying the address, for example MOVE.B LABEL1,LABEL2,
+which copies the byte from LABEL1 to LABEL2. However, there are also different ways
+of addressing. In fact, I can do a MOVE.L #$50000,LABEL2, which puts
+a FIXED value in LABEL2. If, for example, LABEL2 were at address $60000,
+we would move the value $00050000 to $60000, i.e. the bytes, by doing M $60000:
+00 05 00 00. In fact, when there is a hash symbol (#) before
+a number or a label, it means that a set value is being moved,
+and not the value contained in the address indicated by that value, as
+happens if there are no hash symbols before the number or LABEL. For
+example, let's analyse these two cases:
+
+1)    MOVE.L	$50000,$60000    ; the value contained in the addresses
+; of memory $50000,$50001,$50002,$50003
+; is copied to $60000,
+; $60001,$60002,$60003, i.e. a longword
+; consisting of 4 bytes is copied from one
+; address to another.
+
+2)    MOVE.L    #$50000,$60000    ; This time, the number indicated after the hash sign is placed in $60000
+;, i.e. $50000.
+; Note that this
+; time the address $50000 is not read
+; and has nothing to do with it, only
+; $60000 is involved.
+
+If labels are used, there are no changes:
+
+1)	MOVE.L    DOG,CAT    ; The content of the longword dog, i.e.
+; $00123456, is copied to the longword
+; CAT (in fact, $123456 is the first thing
+; under the label DOG)
+
+before the instruction:
+
+DOG:
+dc.l    $123456

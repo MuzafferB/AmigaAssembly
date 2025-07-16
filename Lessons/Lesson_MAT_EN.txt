@@ -31,27 +31,30 @@ hides something very simple:
  two common straight lines (a line with no beginning and no end is called a STRAIGHT LINE, a line with a beginning but no end is called a SEMI-STRAIGHT LINE, and a line with a beginning and an end is called a SEGMENT)
 arranged so that, when crossed, they form four 90-degree angles,
 which are conventionally named X and Y.
-In practice, they are arranged as follows: ^ Y | | | | | | -------------+--------------------> O| X | | | | | | The point O corresponds to the intersection of the axes and is called the ORIGIN.
-In practice, they are arranged as follows:
+In practice, they are arranged as follows: 
+The point O corresponds to the intersection of the axes and is called the ORIGIN.
 
 
-^
-Y | 
-|
-|
-|
-|
-|
-|
--------------+-------------------->
-O| X
-|
-|
-|
-|
-|
-|
 
+
+                           ^
+                         Y | 
+                           |
+                           |
+                           |
+                           |
+                           |
+                           |
+              -------------+-------------------->
+                          O|                   X
+                           |
+                           |
+                           |
+                           |
+                           |
+                           |
+                           
+                        
 
 
 
@@ -68,24 +71,24 @@ a point P :
 
 
 
-^
-Y |
-|
-| x1
-|-----.P
-| |
-| |y1
-| |
---------------+------------------>
-O| X
-|
-|
-|
-|
-|
-|
-|
-
+                              ^     
+                            Y |
+                              |
+                              |  x1  
+                              |-----.P
+                              |     |
+                              |     |y1
+                              |     |
+                --------------+------------------>
+                             O|                 X
+                              |
+                              |
+                              |
+                              |
+                              |
+                              |
+                              |
+                              
 
 
 
@@ -104,29 +107,29 @@ We therefore need a third dimension, namely depth, which allows us to relate eve
 point to space. A graph that gives us a complete picture of an
 object in space will therefore look like this:
 
-
-^
-Y    |
-|
-|
-| 
-| /
-| P / z1
-x1 ___|_____./
-| |
-| |
-| |y1
-| |
-O+-----+---------------------->
-/ |             X
-/     |
-/     |
-/
-/
-/
-/
-Z /
-
+		
+				^
+			  Y	|
+				|
+				|
+				|         
+				|        /
+       			|     P / z1
+		  x1 ___|_____./
+		    	|     |
+		    	|     |
+		    	|     |y1
+		    	|     | 
+		       O+-----+---------------------->   
+ 		       /      |			    X                       
+ 		      /	      |	 
+		     /	      |
+		    /                                
+		   /
+		  /
+		 /
+	  Z /
+	       	
 
 The new axis, Z, indicates the new dimension.It should be noted that, in 
 space, the angle between the X axis and the Z axis and that between the Y axis and the 
@@ -195,11 +198,11 @@ raised: in this case, read the distance is equal to the square root
 of the difference of the abscissas raised to the square added to the difference
 of the ordinates raised to the square, in symbols:
 
-_________________________________________
-/
-/ (P2x-P1x)*(P2x-P1x)+(P2y-P1y)*(P2y-P1y)
-\ /
-\/
+                         _________________________________________
+                        /
+                       / (P2x-P1x)*(P2x-P1x)+(P2y-P1y)*(P2y-P1y)
+                   \  /
+                    \/
 
 Try to understand Sqr and ^ well because we will use them often later on) 
 
@@ -225,25 +228,23 @@ flat figure or a solid)
 To rotate a point, we need to use trigonometry, introducing cosine
 and sine. These two are simply the abscissa and ordinate of a point that
 has the characteristic of being on a circle with the origin as its centre
-.
 
-^
-Y |
-|
-|
-|
-___|___
-/ | \.P
-|     | |
----------+----+----+-------->
-|     O| | X
-\___|___/
-|
-|
-|
-|
-	
-
+               ^ 
+   			 Y |
+   			   |
+   			   |
+   			   |
+   			___|___
+   	       /   |   \.P
+   	      |	   |    |
+ ---------+----+----+-------->
+	      |	  O|    |       X
+	       \___|___/
+   			   | 
+   			   |
+   			   |
+   			   |	
+				
 Even though what I have drawn is an irregular octagon (but what can you do
 with ASCII characters, I couldn't do any better), with a little imagination
 you should have an idea of what I mean. In short, the cosine is the
@@ -266,20 +267,19 @@ given a right-angled triangle (i.e. with an angle of 90 degrees), knowing the
 length of the two legs (which are the shorter sides), we can find the
 hypotenuse (the longest side), knowing that this is equal to the square root
 of the sum of the squares of the two legs.
- 
 
 
-|\
-| \
-| \
-| \ c
-a | \ 
-| \
-| \
-| \
-|________\
-
-b
+                |\
+                | \
+                |  \
+                |   \  c
+              a |    \ 
+                |     \
+                |      \
+                |       \
+                |________\
+                    
+                    b 
 
 
 In this case, a and b are the legs. To find c, we need to calculate the square root
@@ -293,28 +293,28 @@ absence of a right-angled triangle with the abscissa and ordinate of point P as 
 and the segment OP as the hypotenuse, which is practically equal to the radius, and
 therefore to 1.
 In the previous example, where we knew the sine of 30 degrees, we can find the corresponding cosine (which would be the abscissa):
-
-^
-Y |
-|
-|
-|
-|
-___|___
-/ |___\.P
-| | b |a
--------------+----+----+-------------->
-| O| | X
-\___|___/
-|
-|
-|
-|
-|
-|
-|
-
-
+  
+                 ^
+               Y |
+ 			     |
+ 			     |
+ 			     |
+ 			     |
+ 			  ___|___
+ 			 /   |___\.P 
+ 			|    | b  |a 
+ 	   -------------+----+----+-------------->
+ 			|   O|    |             X
+ 			 \___|___/ 
+ 			     |
+ 			     |
+ 			     |
+ 			     |
+ 			     |
+ 			     |
+ 			     |
+ 			     
+ 			  
 In this case, a = 0.5 and OP (which I have not drawn for graphic reasons) is
 equal to 1. Since the angle between a and b is 90 degrees, substituting the known terms
 in the previous equation, we have:

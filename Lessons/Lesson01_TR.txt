@@ -26,35 +26,32 @@ veya yeni “Amiga Expert Team” gibi kulüpler için. En önemli ‘eserlerim�
 AGA yonga seti için ilk demom “WORLD OF MANGA”
 ve NOVA ACIES grubu için programladığım “NAOS”dur.
 
-Kursumu okumaya başlamadan önce en azından biraz DOS bilgisine sahip olmanızın iyi olacağını belirtmeliyim,
- en azından listeleri nasıl kaydedeceğinizi bilmek için! Amiga ile birlikte bir kılavuz bulmuş olmalısınız...
+Kursumu okumaya başlamadan önce en azından biraz DOS bilgisine sahip olmanızın iyi olacağını belirtmeliyim, 
+en azından listeleri nasıl kaydedeceğinizi bilmek için! Amiga ile birlikte bir kılavuz bulmuş olmalısınız...
 Kısacası, disklerde (hem sabit hem de disketlerde) veriler
 “dosya” olarak saklanır, yani bir dizi sayıdan oluşur ve bu sayılar bir araya gelerek
 grafik, müzik, çalıştırılabilir, liste vb. dosyalar oluşturabilir.
 Boş bir disketin kullanılabilmesi için
 FORMATLANMASI gerektiğini, aksi takdirde üzerine yazmanın imkansız olduğunu unutmayın.
-Biçimlendirildikten sonra, grafik programlarıyla resimler, metinler (şu anda okuduğunuz gibi) ve diğer her türlü dosyayı kaydedebilirsiniz.
+Formatladıktan sonra, grafik programlarıyla resimler, metinler (şu anda okuduğunuz gibi) ve diğer her türlü dosyayı kaydedebilirsiniz.
 Bir dosya bir diskten diğerine kopyalanabilir, silinebilir veya
 adı değiştirilebilir vb. Bir diskte çok sayıda dosya bulunabilir,
-yaklaşık 880 Kb dolana kadar, örneğin 2 adet 400 Kb'lık dosya veya otuz kadar daha küçük dosya ile. Bir diskin içinde, bir dosya içinde ise, bir dosya içinde 
-yaklaşık 880Kb dolana kadar, örneğin 400Kb'lık 2 dosya veya
-otuz kadar daha küçük dosya ile. Bir diskin içinde,
-biraz düzen sağlamak için, çeşitli “alt dizinler”, yani
+yaklaşık 880 Kb dolana kadar, örneğin 2 adet 400 Kb'lık dosya veya otuz kadar daha küçük dosya ile. 
+Bir diskin içinde, biraz düzen sağlamak için, çeşitli “alt dizinler”, yani
 daha küçük “çekmeceler”, dosyaları koymak için bölümler oluşturabilirsiniz.
-Örneğin, DISEGNI (ÇİZİM) ve TESTI (METİN) alt dizinleri oluşturulabilir ve bu dizinlere
+Örneğin, ÇİZİM ve METİN alt dizinleri oluşturulabilir ve bu dizinlere
 kız arkadaşımız için çizimler ve mektuplar kaydedilebilir,
- böylece çizimler ve metinler ana dizinde karışık bir şekilde bulunmaz.
-Bu, diskin bir dolap, alt dizinlerin ise bu dolabın çekmeceleri gibi olduğunu düşünün.
+böylece çizimler ve metinler ana dizinde karışık bir şekilde bulunmaz.
+Diskin bir dolap, alt dizinlerin ise bu dolabın çekmeceleri gibi olduğunu düşünün.
 Alt dizinlerin içinde alt dizinler oluşturulabileceğinden, bu çekmecelerin her biri tek başına dosyalar veya içinde dosyalar veya daha küçük “kutular” içeren “kutular” içerebilir.
 Dolayısıyla, mobilyalara benzer bir sistem!
-Dosyalar arasında işlem yapmak için CLI/SHELL'i kullanabilirsiniz. Burada aşağıdaki gibi komutlar yazmanız gerekir:
 Dosyalar arasında işlem yapmak için CLI/SHELL'i kullanabilirsiniz.
 Burada aşağıdaki gibi komutlar yazmanız gerekir:
 
 Dir        = Bir diskteki dosyaları ve alt dizinleri listeler
-Copy        = Dosyaları kopyalar
-Delete        = Bir dosyayı siler (BU KOMUTU KULLANIRKEN DİKKAT EDİN!!!)
-Makedir        = Bir “çekmece” (veya alt dizin) oluşturur
+Copy       = Dosyaları kopyalar
+Delete     = Bir dosyayı siler (BU KOMUTU KULLANIRKEN DİKKAT EDİN!!!)
+Makedir    = Bir “çekmece” (veya alt dizin) oluşturur
 
 Veya WorkBench'ten fare ile işlem yapabilirsiniz, burada dosyalar “simgeler”
 ve alt dizinler çekmeceler olarak gösterilir.
@@ -64,17 +61,16 @@ Daha hızlı bir yöntem, DiskMaster veya DirOpus gibi yardımcı programları k
 Böylece, birkaç liste yazdıktan sonra, bunları
 biçimlendirilmiş bir diske veya sabit diskin hangi alt dizine kaydedeceğinizi belirlemelisiniz.
 Bilmeniz gereken başka bir şey de, “otomatik önyükleme” yapan bir disk nasıl yapılır, yani
-bilgisayarı açtığınızda veya sıfırladığınızda sürücüye takıldığında otomatik olarak başlar.
+bilgisayarı açtığınızda veya resetlediğinizde sürücüye takıldığında otomatik olarak başlar.
 Çalıştırılabilir programımızı bir disket üzerine
-‘mioprogramma’ adıyla kaydettiğimizi varsayalım. “S” adında bir alt dizin oluşturmanız ve
-“startup-sequence” adlı bir metin dosyası oluşturun ve bu dosyaya otomatik olarak yüklenecek programın adını yazın
-:
+‘myprogram’ adıyla kaydettiğimizi varsayalım. “S” adında bir alt dizin oluşturmanız ve
+“startup-sequence” adlı bir metin dosyası oluşturun ve bu dosyaya otomatik olarak yüklenecek programın adını yazın:
 
-mioprogramma
+myprogram
 
-Startup-sequence, okuduğunuz programla da yazılabilir (düzenlenebilir),
- bu program aynı zamanda metin editörü görevi de görür. Son olarak, söz konusu diski “yüklemeniz” gerekir,
- bunun için cli/shell'den şu komutu yazın:
+Startup-sequence, okuduğunuz programla da yazılabilir (düzenlenebilir), 
+bu program aynı zamanda metin editörü görevi de görür. Son olarak, söz konusu diski “yüklemeniz” gerekir, 
+bunun için cli/shell'den şu komutu yazın:
 
 Install df0:
 
@@ -83,53 +79,49 @@ Veya disketi harici sürücüye takarsanız “install df1:” komutunu girin.
 Bunu yaptıktan sonra notlara devam edebilirsiniz.
 
 NOT: Kursu sabit diske yüklemek istiyorsanız,
-dosyasını s dizinine kopyalayın: "TRASH'M-ONE16.
-pref“ dosyasını kopyalamayı unutmayın.
+dosyaları S dizinine kopyalayın: "TRASH'M-ONE16.pref“ dosyasını kopyalamayı da unutmayın.
 
-NOT 2: Listeleri yazdırmak istiyorsanız, bunların
-powerpacker ile sıkıştırılmış olduğunu ve bu nedenle bu kursta kullanılan PowerPacker Patcher'a ihtiyacınız olduğunu unutmayın.
- (dosya, ‘C’ dizininde ”PP" adıyla bulunur).
+NOT 2: Kodları yazdırmak istiyorsanız, bunların
+powerpacker ile sıkıştırılmış olduğunu ve bu nedenle bu kursta kullanılan PowerPacker Patcher'a ihtiyacınız olduğunu unutmayın. (dosya, ‘C’ dizininde ”PP" adıyla bulunur).
 Yüklemek için LIBS'de “powerpacker.library” dosyasının olması ve
 “PP” komutunun çalıştırılması yeterlidir. Listeler yüklendiğinde otomatik olarak açılacaktır.
 
 Bu kursta, COPPER, SPRITE, BLITTER gibi çeşitli programlama konuları ile
 yeni AGA yonga seti ve PICASSO II ekran kartının programlanması ele alınacaktır.
-Disk 1'de konular şunlardır: 68000, bakır, oyun alanları ve sprite'lar. Blitter, AGA ve geri kalanlar disk 2 ve 3'te yer almaktadır, disk 1'de değildir.
 Disk 1'de konular şunlardır: 68000, copper, playfields ve sprites.
 Blitter, AGA ve geri kalanlar disk 2 ve 3'te bulunur, ancak henüz tamamlanmamıştır.
 
 Bu kursun dağıtımı ve kopyalanması ile ilgili olarak, şunu bilmeniz gerekir
 : Bu kurs GiftWare/Shareware'dir ve kamu malı değildir.
-Bununla demek istediğim, bu kursu arkadaşlarınıza sorunsuz bir şekilde kopyalayabilirsiniz,
- ancak PARA KARŞILIĞINDA SATAMAZSINIZ, çünkü bu kursun hakları
+Bununla demek istediğim, bu kursu arkadaşlarınıza sorunsuz bir şekilde kopyalayabilirsiniz, 
+ancak PARA KARŞILIĞINDA SATAMAZSINIZ, çünkü bu kursun hakları
 yazara, yani bana aittir ve başkalarının emeği üzerinden
 spekülasyon yapmak isteyen ilk kurnaz kişiye ait değildir. Öte yandan, bu kursu
 SADECE BOŞ DISKETLERİN FİYATINA kopyalayabileceğiniz doğruysa,
-çeşitli dersleri başarıyla takip edip bir şeyler programlamayı başarırsanız,
- benim çalışmamdan faydalanmış olursunuz, bu nedenle bana bir şekilde teşekkür etmelisiniz,
- özellikle de dünyanın en zengin programcıları olursanız
+çeşitli dersleri başarıyla takip edip bir şeyler programlamayı başarırsanız, 
+benim çalışmamdan faydalanmış olursunuz, bu nedenle bana bir şekilde teşekkür etmelisiniz,
+özellikle de dünyanın en zengin programcıları olursanız 
 (tabii, eğer olursa...). Bu teşekkür, sizin isteğinize göre ölçülebilir,
- ben 10.000'lik banknotları tercih ederim.
+ben 10.000'lik banknotları tercih ederim.
 Küçük hediyeler veya daha iyisi, aşağılık para akışı, Amiga programlama hobimi
-sürdürmem ve kursun yeni bölümlerini
-hazırlamam için beni cesaretlendirecektir. Adresim:
+sürdürmem ve kursun yeni bölümlerini hazırlamam için beni cesaretlendirecektir. Adresim:
 
 Fabio Ciucci
 Via S.Leonardo, 13
 55100 LUCCA
 
 Bu kursun 1. diskini tüm arkadaşlarınıza kopyalarsanız bana büyük bir iyilik yapmış olursunuz,
- kişisel olarak ilgilenmeseniz bile, çünkü
+kişisel olarak ilgilenmeseniz bile, çünkü
 başkalarının da bu diski edinip programlamayı öğrenme şansı olacak.
-10.000 kişi benden istediği için bir ASM (assembler) kursu yazmaya karar verdim
+10.000 kişi benden istediği için bir ASM (assembly) kursu yazmaya karar verdim
 ve bunu eğlence için yaptığım için
 çok tartışmalı bir şekilde yazdım, ancak bence
 başlangıçta daha net olacak ve bir kez anlamaya başladıklarında daha
-derinlemesine devam edebilecekler. ASM konusunda zaten uzman olanlar dersleri eğlenceli bulacaklar
- hatalar bulabilirler, bu yüzden
+derinlemesine devam edebilecekler. ASM konusunda zaten uzman olanlar dersleri eğlenceli bulacaklar, 
+hatalar bulabilirler, bu yüzden
 örnek listelere doğrudan bakmalarını tavsiye ederim: bu kurs sıfırdan
 başlayanlar içindir. Aslında, kişisel deneyimlerime ve
-“CODER” (programcıların jargonunda KÖTÜ anlamına gelir) adaylarının söylediklerine göre, sorun
+“CODER” (programcıların jargonunda KÖTÜ programcı anlamına gelir) adaylarının söylediklerine göre, sorun
 her şeyi anlamak ve ilk iki veya üç programı yazmaktır, sonrasında
 kendi başlarına devam edebilecek hale gelmektir. Bu nedenle,
 68000'in ne olduğunu bile bilmeyenlere ekranda toplar döndürmeyi veya bir yazı zıplatmayı
@@ -139,12 +131,12 @@ devam etmeleri yeterli olacaktır.
 GODS VEYA PROJECT X GİBİ BİR OYUN PROGRAMLAMAYI ÖĞRENMEK İÇİN
 UÇUŞ SIMÜLATÖRÜ VEYA 3D OLMAYAN, YANİ
 DÖNEN KÜPLER, SINUSOIDAL TÜNELLER VEYA PERSPEKTİF BOZULMALARI
-FRACTALLAR VEYA TEXTURE MAPPING İÇERMEYEN BİR OYUN, ORTAÖĞRETİM MATEMATİK BİLGİSİ YETERLİDİR.
+FRAKTALLAR VEYA TEXTURE MAPPING İÇERMEYEN BİR OYUN, ORTAÖĞRETİM MATEMATİK BİLGİSİ YETERLİDİR.
 
 Bununla, Amiga'nın assembler programlamasının
 matematikle dolu olduğu düşüncesini herkesin kafasından çıkarmak istiyorum. BEN BUNUN HİÇBİR İLGİSİ OLMADIĞINA İNANIYORUM.
-Matematik programı yapmak istiyorsanız, matematik bilmelisiniz,
- futbol oyunu yapmak istiyorsanız futbol bilmelisiniz.
+Matematik programı yapmak istiyorsanız, matematik bilmelisiniz, 
+futbol oyunu yapmak istiyorsanız futbol bilmelisiniz.
 Önemli olan Amiga'nın nasıl çalıştığını, işlemcisini (Amiga'da
 Motorola 68000) ve özel yongalarını (yani grafik ve ses için kullanılanları)
 bilmek.
@@ -168,9 +160,7 @@ ile). Müzik sahnesini hayal edin: çeşitli gruplar
 vokalistler, davulcular vb. Amiga için ise çeşitli gruplar
 CODER (programcılar), GFX ARTIST (grafikçiler), MUSICIANS (müzisyenler)
 var ve bunlar, müzik sahnesindeki grupların yaptığı gibi bir “VİDEO” yapmak yerine
-katkı olarak, farklı zaman ve yerlerde
-diğer gruplar tarafından yapılanlara eklenen bir “DEMO” yapıyorlar. Ayrıca, “SWAPPER” ve
-“TRADER”lar da vardır. Bunlar sırasıyla demoları posta veya modem yoluyla
+katkı olarak, farklı zaman ve yerlerde diğer gruplar tarafından yapılanlara eklenen bir “DEMO” yapıyorlar. Ayrıca, “SWAPPER” ve “TRADER”lar da vardır. Bunlar sırasıyla demoları posta veya modem yoluyla
 takas eden ve dağıtan kişilerdir... Bunlar hiçbir şey üretmezler, ancak
 sahne için önemlidirler, çünkü dolaşımda olmayan bir şey sanki yokmuş gibi
 olur. Öte yandan, bunlar CODER, GRAFICI veya MUSICISTI olmak
@@ -189,16 +179,16 @@ Tam isim, takma adın ardından ait olduğun grubun adı ile belirtilir,
 örneğin CHAOS/SANITY, DWEEZIL/STELLAR, DAK/MAD ELKS, vb.
 Ben, sahnede “RANDY/RAM JAM” olarak biliniyorum, ancak konuyu bilmeyenler
 için Fabio Ciucci olarak da bilinirim.
-Sahne, grupların demolarını getirdiği ve oylama ile ödüllerin dağıtıldığı bir tür parti-buluşma olan PARTY'ler düzenler
-ve kazananlara milyonlarca ödül verilir.
+Sahne, grupların demolarını getirdiği ve oylama ile ödüllerin dağıtıldığı bir tür parti-buluşma 
+olan PARTY'ler düzenler ve kazananlara milyonlarca ödül verilir.
 Bazı demo kodlayıcıları, konu hep aynı olduğu için
 oyun yapmaya geçerler. Örneğin, BANSHEE'nin programcısı HANNIBAL/LEMON,
 ELFMANIA'nın programcısı SAVIOUR/COMPLEX, STARDUST'un programcıları DESTOP/CNCD ve
 SCY/CNCD ve liste uzayıp gider....
-Ancak disk 2'de sadece SCENA hakkında bir ders bulunmaktadır.
+Ancak disk 2'de sadece SCENE hakkında bir ders bulunmaktadır.
 
 Assembler programlamaya geri dönersek, ister demo ister oyun yapmak isteyin,
-3d rutin listelerini inceleyerek öğrenmeye başlamanızı tavsiye etmiyorum
+3D rutin listelerini inceleyerek öğrenmeye başlamanızı tavsiye etmiyorum
 (rutin=bir liste veya programın parçası), çünkü bunlar en
 karmaşık olanlardır, ben bile zor anlıyorum, programlama nedeniyle değil
 içerdikleri matematik formülleri nedeniyle.
@@ -212,42 +202,35 @@ getirebilir veya müzik çalabilirsiniz!
 İngilizce bilmeyenler. Yani yaş da denememek için kabul edilebilir bir mazeret değil!
 EVET! ÇÜNKÜ İNGİLİZCE BİLMENİN ZORUNLU OLDUĞUNU DA KAFANIZDAN ÇIKARMALISINIZ!
 İngilizce bilmenin her şeyi kolaylaştırdığını kabul etmeliyim, çünkü ASM komutları İngilizce kelimelerin kısaltmalarıdır, örneğin SUB ve ADD, ÇIKAR ve EKLE anlamına gelir.
-Ancak, İngilizce bilmenin her şeyi kolaylaştırabileceğini de itiraf etmeliyim
-çünkü ASM komutları İngilizce kelimelerin kısaltmalarıdır, örneğin SUB
-ve ADD, ÇIKAR ve EKLE anlamına gelir.
 WorkBench ve Amigados bilgisi, programlama için
 size yardımcı olmayacaktır, çünkü bilgisayar aslında çok
-farklı çalışır. Daha basit bir şekilde, bu “üst yapılar”
-, kickstart çipinde bulunan işletim sistemidir ve
-bu sistem olmadan, bilgisayarı açtığınızda disketi takmanızı isteyen ekran bile görünmez.
- Gördüğünüz ve hareket ettirdiğiniz pencereler, kickstart'ta bulunan
+farklı çalışır. Daha basit bir şekilde, bu “üst yapılar”, kickstart 
+çipinde bulunan işletim sistemidir ve
+bu sistem olmadan, bilgisayarı açtığınızda disketi takmanızı isteyen ekran bile görünmez. 
+Gördüğünüz ve hareket ettirdiğiniz pencereler, kickstart'ta bulunan
 binlerce ASM kod satırının sonucudur, kickstart'ta bulunur, aslında
 kick 1.3 ve kick 2.0 arasındaki pencerelerin farkını görmek yeterlidir, bu fark
 takılan disklerin farklılığından değil, kick'in kendisindeki farklılıklardan kaynaklanmaktadır.
 DeLuxe Paint, Ev Yönetimi, word
 işlemci veya gadget'ları ve açılır menüleri seçebileceğiniz küçük pencereler açan
 workbench yardımcı programları yazmak istiyorsanız, ASM yerine C dilini öğrenmenizi tavsiye ederim, çünkü bu daha uygundur ve bir kez öğrendikten sonra
-listelerinizi MS-DOS ve WINDOWS ortamına kolayca dönüştürebilirsiniz,
- Amiga'yı terk etmek isterseniz.
+listelerinizi MS-DOS ve WINDOWS ortamına kolayca dönüştürebilirsiniz, Amiga'yı terk etmek isterseniz.
 Bunun yerine, zıplayan toplar ve metalik yazılar içeren grafik demolarından etkileniyorsanız
-ve AGONY,
-LIONHEART, SHADOW OF THE BEAST, TURRICAN, APYDIA, PROJECT X, SUPERFROG,
+ve AGONY, LIONHEART, SHADOW OF THE BEAST, TURRICAN, APYDIA, PROJECT X, SUPERFROG,
 ZOOL, GODS, CHAOS ENGINE, XENON II, LOTUS ESPRIT ve hatta
 SENSIBLE SOCCER gibi oyunları programlamak istiyorsanız, bunların sadece SAF ASSEMBLER ile yapılabileceğini ve
 özel matematik bilgisi gerektirmediğini, klasik
 toplama, çıkarma, çarpma ve bölme işlemleri ile birkaç
-SENI ve COSENI tabloları yeterlidir, örneğin, parabolik bir yörünge ile düşen topları
+SINUS ve COSINUS tabloları yeterlidir, örneğin, parabolik bir yörünge ile düşen topları
 veya bir eğriyi takip eden topları yapmak için: bu tablolar,
 1,2,3,5,8,10,13,15,18,23 gibi bellekteki bir dizi sayıdan ibarettir ve bunlar,
 örneğin, yatay konumun ilerlemesi ve dikey konumun ilerlemesini temsil eden başka bir dizi sayıdır; bu “tablolar” veya SINUSTAB, yani bir eğrinin koordinatlarını tanımlayan bir dizi sayı, özel bir komutla oluşturulabilir, CS
 dikey konumun ilerleyişini temsil eden bir dizi sayıdır; bu dizi
-“tablolar” veya SINUSTAB, yani bir eğrinin koordinatlarını tanımlayan bir dizi sayı,
- ASMONE'de bulunan CS komutuyla oluşturulabilir,
- trigonometriyi tam olarak bilmeseniz bile
+“tablolar” veya SINUSTAB, yani bir eğrinin koordinatlarını tanımlayan bir dizi sayı, 
+ASMONE'de bulunan CS komutuyla oluşturulabilir, trigonometriyi tam olarak bilmeseniz bile
 geçirilecek parametreleri bilmek ve
-denemeler yapmak yeterli olabilir. Bu SINUSTAB veya TABELLER oyunlarda ve demolarında çok sayıda bulunur,
-çünkü birçok dalgalı hareket tamamen yerinde hesaplanmaz
-. Bunun yerine, MONKEY ISLAND gibi MACERA oyunları veya
+denemeler yapmak yeterli olabilir. Bu SINUSTAB veya TABLOLAR oyunlarda ve demolarda çok sayıda bulunur,
+çünkü birçok dalgalı hareket tamamen yerinde hesaplanmaz. Bunun yerine, MONKEY ISLAND gibi MACERA oyunları veya
 yönetim oyunları yapmak istiyorsanız, yani sadece sabit grafik ekranlar
 ve içinde yavaşça hareket eden birkaç küçük adamın olduğu, oyunun
 fare ile nesneleri veya yazıları seçmekten ibaret olduğu oyunlar, o zaman
@@ -260,15 +243,8 @@ NOT: Amiga assemblerini bilmek, daha sonra aynı mikroişlemciye sahip başka bi
 programlamaya geçerseniz yararlı olabilir.
 Örneğin, Motorola 68000, Apple MacIntosh ve Atari ST gibi bilgisayarlarda kullanılır.
 Ancak bu bilgisayarlar farklı işletim sistemlerine sahiptir (Amiga kickstart'tan farklı) ve grafik ve ses için farklı yongalara sahiptir, bu nedenle 68000 komutlarının bilgisine ihtiyacınız olacaktır.
-Ancak bu bilgisayarlar farklı işletim sistemlerine (Amiga kickstart'tan farklı) ve
-grafik ve ses için farklı yongalara sahiptir, bu nedenle
-68000 komutlarını bilmeniz gerekir, ancak Amiga işletim sistemi ve grafik yongaları hakkında bilgi sahibi olmanız gerekmez, bunları baştan öğrenmeniz gerekir;
-ayrıca C gibi dillerle bile yeni işletim sistemini öğrenmeniz gerekir
-.
+Ancak Amiga işletim sistemi ve grafik yongaları hakkında bilgi sahibi olmanız gerekmez, bunları baştan öğrenmeniz gerekir; ayrıca C gibi dillerle bile yeni işletim sistemini öğrenmeniz gerekir.
 Örneğin, C dilini kullanarak WorkBench için pencereleri açan ve belki de küçük dağlar gibi çizimler yapan bir program yazarsanız, bir MSDOS PC satın alıp bunu yeniden yapmak isterseniz,
-Örneğin, C dilini kullanıyorsanız ve WorkBench için
-pencereleri açan ve belki de dağlar gibi çizimler yapan bir program yazıyorsanız,
-bir MSDOS PC satın alıp bunu WINDOWS'ta yeniden yapmak isterseniz, 
 programınızın dağları yapmak için gerekli hesaplamalarla ilgili kısımlarını ve
 genel yapısını yeniden kullanabilirsiniz, ancak
 Workbench pencerelerini ve seçim araçlarını açmakla ilgili tüm kısmı
@@ -278,16 +254,13 @@ aylar hatta yıllar sürer.
 NOT: 68000 assembler ile yazılmış bir program, bazı hususlar göz önünde bulundurulduğu takdirde, diğer
 daha güçlü işlemcilerde de mükemmel çalışır.
 
-Hala okuyorsanız, demektir ki yılmadınız. O halde assembler'ın yardımcı programlarının listesini tamamlayayım... (dilinin adı ASSEMBLY,
-onu derleyen programın adı ASSEMBLER, ancak dilin de ASSEMBLER olarak adlandırılması yaygındır).
- Öncelikle assembler en hızlı dildir, özellikle iyi biliyorsanız, ve aynı şey başka bir dil ile yapıldığında, assembler ile yapılan her zaman daha yavaş olacaktır.
-ASSEMBLER olarak adlandırılması yaygındır). Her şeyden önce, assembler en hızlı dil olmaya devam etmektedir,
- özellikle de iyi biliyorsanız, ve aynı şey başka bir dil ile yapıldığında
-her zaman assembler ile yapılanlardan daha yavaş olacaktır.
+Hala okuyorsanız, demektir ki yılmadınız. O halde assembler'ın yardımcı programlarının listesini tamamlayayım... (dilinin adı ASSEMBLY, onu derleyen programın adı ASSEMBLER, ancak dilin de 
+ASSEMBLER olarak adlandırılması yaygındır).
+Öncelikle assembler en hızlı dildir, özellikle iyi biliyorsanız, ve aynı şey başka bir dil ile yapıldığında, assembler ile yapılan her zaman daha yavaş olacaktır.
 Ayrıca, daha önce hiç görülmemiş özel GRAFİK efektler yaratmanın tek yolu da budur
 : bir başlık oluşturucu ile de özel efektler elde edebilirsiniz, ancak
 sadece program tarafından tanımlananları yapabilirsiniz.
- Aslında, bir başlık veya özel efektin hangi programla yapıldığını bulmak zor değildir;
+Aslında, bir başlık veya özel efektin hangi programla yapıldığını bulmak zor değildir;
 aynı şey DEMO MAKER için de geçerlidir. En iyisi TRSI DEMOMAKER'dır ve
 ilginç efektlere sahiptir, ancak artık çocuklar bile demomaker ile yapılmış bir şeyi tanır
 çünkü üstünde ve altında her zaman altın yazılar
@@ -301,11 +274,9 @@ SPACEBALLS “state of the art” DEMO'yu verebilirim, bu
 en tanınmışlardan biridir, programlaması zor değildir ve
 özel efektlerin arasında dans eden stilize kadın figürleriyle hayranlık uyandırır;
 
-Daha sabırlı bir programcı, önce
-oynamak, hayallerindeki oyunu yapmak, Amiga'nın gerçek sınırlarını denemek, ekranı yavaşlatmadan kaç tane adam hareket ettirebileceğini görmek için
-bir oyun programlayabilir
- 
-daha sonra bir ticari oyun yapmayı denemek için hiçbir engel yoktur,
+Daha sabırlı bir programcı, önce oynamak, hayallerindeki oyunu yapmak, Amiga'nın 
+gerçek sınırlarını denemek, ekranı yavaşlatmadan kaç tane adam hareket ettirebileceğini görmek için
+bir oyun programlayabilir, daha sonra bir ticari oyun yapmayı denemek için hiçbir engel yoktur,
 bu da grafikçilerin ve müzisyenlerin işbirliğini ve
 pazarlama ile ilgili tüm kısımları gerektirir, bu kısım genellikle
 oyunun reklamının, oyunun gerçek değerinden daha fazla ödüllendirilir, ancak
@@ -313,7 +284,7 @@ oyunun değeri o kadar yüksekse, başarı yine de gelir.
 Neden CD32 için bir oyun yapmaya başlamayalım? CD'nin 600 MB kapasitesini kullanan bir AGA oyunu yapmanız yeterlidir
 : örneğin, arka planı gerçek zamanlı olarak yüklenen bir “FİLM” olan ve üzerinde RAMBO
 herkesi öldüren bir karakterin veya bir uzay gemisinin döndüğü bir oyun.
-Zorluk, yeni AGA yonga setini öğrenmek veya CD'ye uyarlama yapmakta değil, aslında normal yonga setine çok benzeyen AGA yonga setinde birkaç yeni kayıt defteri öğrenmek ve CD'ye uyarlama yapmakta değil, Zorluk,
+Zorluk, yeni AGA yonga setini öğrenmek veya CD'ye uyarlama yapmakta değil, aslında normal yonga setine çok benzeyen 
 yeni AGA yonga setini öğrenmekte ya da CD'ye uyarlamakta değil, çünkü AGA yonga seti
 normal yonga setine çok benziyor, sadece birkaç yeni kayıt öğrenmek yeterli ve
 işlemci aynı şekilde çalışıyor, CD yönetimi ise
@@ -322,7 +293,7 @@ daha da kolay, çünkü programcılar arasında dolaşan 2 diski
 hala öncü olabilir, tabii ki belirli
 görevler için, ve 2000 yılında teknoloji tamamen CD'ye geçerse,
 CD'deki oyunları oynamak veya sık sık çıplak kadınları görmek için PC satın alanların umduğu gibi,
- MDDOS PC'lerdeki CD'lerin çoğu
+MSDOS PC'lerdeki CD'lerin çoğu
 seksi slayt gösterileri olduğu için, Amiga da CD'de yazılımına sahip olacak ve bu yazılım
 bir gün bir programlama kursu okuyarak macerasına başlayan
 birisi tarafından geliştirilebilir... Her şeyin nasıl çalıştığını bilerek,
@@ -332,64 +303,60 @@ bazı programların veya oyunların nasıl çalıştığını da anlayabilir ve 
 programlarda bazı değişiklikler yapabiliriz, örneğin ben bir yardımcı programı
 Amiga 4000'de disk üzerindeki sanal belleği kullanacak şekilde değiştirdim,
 diğer zamanlarda PD programlarını hızlandırdım, bunların en önemli kısımlarını “çaldım” ve hızlandırdım
-. Son olarak, sözde eğitmenler,
-sonsuz canlar yapılabilir, yani
-zavallı PLAYER 1'in canını azaltan liste parçaları bulunur ve her şey değiştirilir, belki de öldürüldüğünüzde canlarınız artacak şekilde
-... bir oyun veya bir
+. Son olarak, sözde eğitmenler, sonsuz canlar yapılabilir, yani
+zavallı PLAYER 1'in canını azaltan liste parçaları bulunur ve her şey değiştirilir, belki de öldürüldüğünüzde canlarınız artacak şekilde... Bir oyun veya bir
 programın nasıl çalıştığını görmek ve anlamak için ASM'yi GERÇEKTEN iyi bilmek ve
-bir L.M monitörü veya daha iyisi bir ACTION REPLAY tipi kartuşa sahip olmak gerekir (L.M monitörü,
+bir M.L. monitörü veya daha iyisi bir ACTION REPLAY tipi kartuşa sahip olmak gerekir (M.L. monitörü,
  bir bellek bölümünde bulunan komutları ayrıştırmaya, yani görüntülemeyi sağlayan bir yardımcı programdır
 ve bellekte hangi noktada bulunduğunu bulursanız
 hayat alan komutların yerini bulursanız, her şeyi değiştirebilirsiniz...
-L.M, Makine Dili anlamına gelir, yani mikroişlemcinin dili,
+(M.L. Makine Dili anlamına gelir, yani mikroişlemcinin dili,
 derleyici tarafından üretilen dil). Ancak bu işlemler
 zor bir iştir ve bir oyunda mavi bir adamı yeşile çevirmeye çalışarak
 başlamak kesinlikle yararlı değildir. Birçok gencin
-zamanını L.M. monitörleri ve kartuşlarla rastgele uğraşarak
+zamanını M.L. monitörleri ve kartuşlarla rastgele uğraşarak
 ne olduğunu bilmedikleri şeyleri yapmaya çalışarak, programlardaki veya listelerdeki yazıları anlamadan değiştirerek,
- bunları kendilerinin yaptığını veya önemli değişiklikler yaptığını söyleyerek
+bunları kendilerinin yaptığını veya önemli değişiklikler yaptığını söyleyerek
 harcadığını gördüm. Bu insanlar bugün bile
 bir görüntüyü assembler'da görüntüleyemiyorlar; jargonda bu şarlatanlara LAMER denir.
 
 Durumu özetleyelim: Eğer siz de o klasik 18 yaşındaki
-solgun, kambur, kadınlardan uzak gençlerden biriyseniz ve zavallı Amiga'nızın belleği için LM monitörlerle rastgele uğraşıyorsanız
-ve büyük bir hacker olduğunuzu övünüyorsanız,
- monitörü bırakıp beni doğru yola takip etmenizi tavsiye ederim.
+solgun, kambur, kadınlardan uzak gençlerden biriyseniz ve zavallı Amiga'nızın belleği için M.L. monitörlerle rastgele uğraşıyorsanız ve büyük bir hacker olduğunuzu övünüyorsanız,
+monitörü bırakıp beni doğru yola takip etmenizi tavsiye ederim.
 Ben de o saçma şekilde başladım (ama 8 yaşında, 18 değil!),
 ama sonra akıllandım ve sayfaları atlamadan kitap okumaya başladım.
- İşte size faydalı olabilecek bir kitap:
+İşte size faydalı olabilecek bir kitap:
 
-AMIGA DONANIM KILAVUZU, IHT: Bu kılavuz
+AMIGA DONANIM KILAVUZU: Bu kılavuz
 Amiga'nın grafik ve sesini sağlayan ÖZEL ÇİPLERİN
-nasıl çalıştığını ve DISK SÜRÜCÜSÜNÜ nasıl kullanacağınızı vb.
+nasıl çalıştığını ve DISK SÜRÜCÜSÜNÜ nasıl kullanacağınızı vb. anlatır.
 Bu kitap vazgeçilmezdir, ancak tek bir görüntüyü bile görüntülemek için
 68000'i de bilmeniz gerekir, çünkü 68000
 grafik çiplerini yönetir. Ayrıca, her şey soyut kalır, bir tür
 özet referans tabloları dizisi gibidir ve geçerli örnekler yoktur.
 Ancak, dersimde birçok örnek bulabilirsiniz!!!! İngilizce biliyorsanız,
- yeni ECS çipleriyle güncellenen en son HARDWARE REFERENCE MANUAL'ı arayın.
- Ancak, dersimin süresi boyunca buna gerek yoktur
+yeni ECS çipleriyle güncellenen en son HARDWARE REFERENCE MANUAL'ı arayın.
+Ancak, dersimin süresi boyunca buna gerek yoktur
 çünkü temel bilgiler, Amiga 1200'ün AGA çiplerinde de mevcuttur.
 Ayrıca ASMONE'de, tüm $DFFXXX kayıtlarının genel ve özel açıklamalarını veren bir komut, =C, bulunmaktadır.
 Örneğin:
 =C 100, grafik çözünürlüğü ile ilgili BLTCON0 kaydının açıklamasını verir.
 Aynı şekilde =C 040, BLITTER
-kayıtlarının özetini verir. ($dff040) hakkında bir özet verir.
+kayıtları ($dff040) hakkında bir özet verir.
 
 ROM KERNEL MANUAL ve PROGRAMMARE L'AMIGA cilt 1 ve 2 gibi kitaplar,
 donanımla doğrudan programlama için yararlı değildir, bu kursda öğretmeye çalışacağım şey budur, ancak
 workbench veya amigados için programlar yapmak isteyenler için yararlıdır, bunlar
 kickstart ve workbench disklerinde bulunan işletim sistemini kullanır...
- pencereli programlar
-yani, ekranlarda toplar ve ekolayzırlarla veya alevler arasında zıplayan adamcıklar
+Pencereli programlar yani, ekranlarda toplar ve ekolayzırlarla veya alevler arasında zıplayan adamcıklar
 olmayan programlar... bu nedenle C programcıları için daha yararlıdır.
 TAVSİYE ETMİYORUM... bu şekilde programlama ÇOK SIKICI.
 
-NOT: Eğer rastgele LM monitör kullanıcıları değil de
+NOT: Eğer rastgele M.L. monitör kullanıcısı değil de
 kopyalamak ve bitirmek için yeni oyunlar arayan hevesli araştırmacılarsanız, saatlerinizi
 telefonda en son haberleri öğrenmek için geçiriyorsanız ve kalan saatlerinizi
 XCOPY ile kopyalamak ve oynamak için geçiriyorsanız, belki de daha çabuk bitirmek için her zaman eğitmenle
-oynuyorsanız, o zaman LM monitörle kambur olmak daha iyidir: ya bu
+oynuyorsanız, o zaman M.L. monitörle kambur olmak daha iyidir: ya bu
 araştırma ve kopyalama telaşını bırakın ya da
 ekranda adamcıkların neden hareket ettiğini hiç bilmeyen
 hipertansif insanlar olarak kalacaksınız ve
@@ -400,24 +367,19 @@ boyun eğmiş ve aptal halk ile onları yöneten rejim liderleri arasındaki far
 Rejim liderleri, (eğitmenle ya da eğitmen olmadan) sayısız oyunu bitirmek için uykusuz geceler geçirir,
 oyunların ne olduğu önemli değildir, yeter ki çok ve yeni olsunlar, XCOPY ile kopyalanmış olsunlar (ki
 bu arada XCOPY dünyadaki en kötü kopyalama programıdır! DCOPY kullanın daha iyi!).
-P.S: Kadınlardan bahsetmişken, ASM'DE KADIN TARAFINDAN PROGRAMLANMIŞ HİÇBİR ŞEY GÖRMEDİM
-!!!! Eğer bir kadın okuyorsa, bence
-bu ilk olan olmak için bir neden daha!!! 
+P.S: Kadınlardan bahsetmişken, ASM'DE KADIN TARAFINDAN PROGRAMLANMIŞ HİÇBİR ŞEY GÖRMEDİM!!!! 
+Eğer bir kadın okuyorsa, bence bu ilk olan olmak için bir neden daha!!! 
 Tanımadıkları insanlar hakkında dedikodu yapmak veya
 vitrinlere bakmak yerine, etek giyip çılgın şeyler programlayan bir kız, bence
 kendilerini zeki sanan bir sürü çocuk
 (az sayıdaki) tanıdıkları kızlara fareyi veya workbench pencerelerini ne kadar iyi kullandıklarını göstererek, onların hiçbir şey anlamadıklarını ve kendilerini dahi olarak tanıtabileceklerini
 ve NASA ile bağlantıları olduğunu söyleyebileceklerini düşünerek. Oysa onlar bir disketi bile formatlayamıyorlar.
-LEZIONE1.TXT
-'nin ardından okuyacağınız örnek kaynak koduyla birlikte, en ZOR, en ÖNEMLİ olan
-LEZIONE2.TXT, bir disketi formatlamayı bile bilmeyen
 
-Şimdiden söyleyeyim, bu DERS1.TXT'nin ardından okuyacağınız DERS2.TXT, en ZOR, yani KADER DERSidir.
-Yani, bu dersi geçerseniz, işiniz bitmiştir, çünkü ders 3'ten itibaren
+Lesson01.TXT'nin ardından okuyacağınız örnek kaynak koduyla birlikte, en ZOR, en ÖNEMLİ olan
+Lesson02.TXT'e gecin. Şimdiden söyleyeyim, bu DERS1.TXT'nin ardından okuyacağınız Lesson02.TXT, en ZOR, yani KADER DERSidir.Yani, bu dersi geçerseniz, işiniz bitmiştir, çünkü ders 3'ten itibaren
 copper ile ilk özel efektleri yapmaya başlayacaksınız ve sonuna kadar
-hızla ilerleyeceksiniz.
- Bu nedenle, sabırla ve özenle
-DERS 2.TXT'yi atlamadan geçmenizi rica ediyorum.
+hızla ilerleyeceksiniz. Bu nedenle, sabırla ve özenle
+Lesson02.TXT'yi atlamadan geçmenizi rica ediyorum.
 
 Şimdi, assembler ile programlama için kullanılan programları inceleyelim:
 

@@ -105,12 +105,12 @@ punto allo spazio.Un grafico quindi che ci voglia dare un completo quadro di un
 oggetto nello spazio sara` di questo genere:
 
 		
-			^
-		      Y	|
-			|
-			|
-			|         
-			|        /
+				^
+			  Y	|
+				|
+				|
+				|         
+				|        /
        			|     P / z1
 		  x1 ___|_____./
 		    	|     |
@@ -125,7 +125,7 @@ oggetto nello spazio sara` di questo genere:
 		   /
 		  /
 		 /
-	      Z /
+	  Z /
 	       	
 
 Il nuovo asse, Z, indica la nuova dimensione.è da tener presente che, nello 
@@ -291,8 +291,8 @@ punto P, e come ipotenusa il segmento OP, che in pratica è uguale al raggio, e
 quindi ad 1.Nell'esempio di prima, dove conoscevamo il seno di 30 gradi, possia
 mo trovare il corrispondente coseno (che sarebbe in pratica l'ascissa):
   
-                             ^
-                           Y |
+                 ^
+               Y |
  			     |
  			     |
  			     |

@@ -156,10 +156,10 @@ command; in fact, if you remove the (PC), the same thing happens. Rather, it ser
 to change the FORM of the command. Try assembling and doing a
 D Mouse:...
 
-            BTST    #$06,$00BFE001
-...         BNE.B    $xxxxxxxx
+					BTST    #$06,$00BFE001
+...         		BNE.B    $xxxxxxxx
 23FA003400DFF080    MOVE.L    $xxxxxx(PC),$00DFF080...
-            MOVE.W    D0,$00DFF088
+					MOVE.W    D0,$00DFF088
 
 You will notice that move.l Oldcop(PC),$dff080 is assembled as $23fa....
 
@@ -168,8 +168,8 @@ Now try removing (PC), assemble and redo D MOUSE:
 23F900xxxxxx00DFF080    MOVE.L    $xxxxxx,$00DFF080
 
 This time the instruction is assembled in 10 bytes instead of 8, and
-can be clearly read after $23f9, which means MOVE.L, the address of Oldcop,
-while in the case of move.l with PC, the command starts with $23fa and can be seen in $34
+can be clearly read after $23F9, which means MOVE.L, the address of Oldcop,
+while in the case of move.l with PC, the command starts with $23FA and can be seen in $34
 instead of the address of OldCop!The difference is that when there is no
 PC, the instruction refers to a DEFINED ADDRESS, in fact it is assembled,
 while an instruction with (PC) instead of writing the address writes the distance
@@ -188,13 +188,13 @@ assemble ASMONE, you get a RELATIVE MODE ERROR, while removing the (PC)
 the instruction is assembled. I recommend always putting (PC) at the
 labels whenever possible:
 
-LEA    LABEL(PC),a0
-MOVE.L    LABEL(PC),d0
-MOVE.L    LABEL1(PC),LABEL2    ; only the first label can be
-; followed by PC, the second NEVER.
-MOVE.L    #LABEL1,LABEL2        ; in this case, in fact, you cannot
-; put the (PC) in either the
-; first or second operand.
+LEA     LABEL(PC),a0
+MOVE.L  LABEL(PC),d0
+MOVE.L  LABEL1(PC),LABEL2   ; Only the first label can be
+							; followed by PC, the second NEVER.
+MOVE.L  #LABEL1,LABEL2      ; On this case, in fact, you cannot
+							; put the (PC) in either the
+							; first or second operand.
 
 CHANGES: Now you can make any copperlist! Start by changing the 2
 colours, bearing in mind that the format is as follows: $0RGB, where only 3
@@ -219,48 +219,48 @@ everything, or to create background gradients for your first game!!!
 COPPERLIST:
 dc.w    $100,$200    ; BPLCON0 - background only
 dc.w    $180,$000    ; COLOR0 - Start the cop with the colour BLACK
-dc.w    $4907,$FFFE    ; WAIT - Wait for line $49 (73)
+dc.w    $4907,$FFFE  ; WAIT - Wait for line $49 (73)
 dc.w    $180,$001    ; COLOR0 - very dark blue
-dc.w    $4a07,$FFFE    ; WAIT - line 74 ($4a)
+dc.w    $4a07,$FFFE  ; WAIT - line 74 ($4a)
 dc.w    $180,$002    ; COLOR0 - slightly darker blue
-dc.w    $4b07,$FFFE    ; WAIT - line 75 ($4b)
+dc.w    $4b07,$FFFE  ; WAIT - line 75 ($4b)
 dc.w    $180,$003    ; COLOR0 - lighter blue
-dc.w    $4c07,$FFFE    ; WAIT - next line
+dc.w    $4c07,$FFFE  ; WAIT - next line
 dc.w    $180,$004    ; COLOR0 - lighter blue
-dc.w    $4d07,$FFFE	; WAIT - next line
+dc.w    $4d07,$FFFE	 ; WAIT - next line
 dc.w    $180,$005    ; COLOR0 - lighter blue
-dc.w    $4e07,$FFFE    ; WAIT - next line
+dc.w    $4e07,$FFFE  ; WAIT - next line
 dc.w    $180,$006    ; COLOR0 - blue at 6
-dc.w    $5007,$FFFE	; WAIT - jump 2 lines: from $4e to $50, i.e. from 78 to 80
+dc.w    $5007,$FFFE	 ; WAIT - jump 2 lines: from $4e to $50, i.e. from 78 to 80
 dc.w    $180,$007    ; COLOR0 - blue at 7
-dc.w    $5207,$FFFE    ; WAIT - jump 2 lines
+dc.w    $5207,$FFFE  ; WAIT - jump 2 lines
 dc.w    $180,$008    ; COLOR0 - blue at 8
-dc.w    $5507,$FFFE    ; WAIT - jump 3 lines
+dc.w    $5507,$FFFE  ; WAIT - jump 3 lines
 dc.w    $180,$009    ; COLOR0 - blue at 9
-dc.w    $5807,$FFFE	; WAIT - jump 3 lines
+dc.w    $5807,$FFFE	 ; WAIT - jump 3 lines
 dc.w    $180,$00a    ; COLOR0 - blue at 10
-dc.w    $5b07,$FFFE    ; WAIT - jump 3 lines
+dc.w    $5b07,$FFFE  ; WAIT - jump 3 lines
 dc.w    $180,$00b    ; COLOR0 - blue at 11
-dc.w    $5e07,$FFFE	; WAIT - jump 3 lines
+dc.w    $5e07,$FFFE	 ; WAIT - jump 3 lines
 dc.w    $180,$00c    ; COLOR0 - blue at 12
-dc.w    $6207,$FFFE    ; WAIT - jump 4 lines
+dc.w    $6207,$FFFE  ; WAIT - jump 4 lines
 dc.w    $180,$00d    ; COLOR0 - blue at 13
-dc.w    $6707,$FFFE    ; WAIT - jump 5 lines
+dc.w    $6707,$FFFE  ; WAIT - jump 5 lines
 dc.w    $180,$00e    ; COLOR0 - blue at 14
-dc.w    $6d07,$FFFE    ; WAIT - jump 6 lines
+dc.w    $6d07,$FFFE  ; WAIT - jump 6 lines
 dc.w    $180,$00f    ; COLOR0 - blue at 15
-dc.w    $7907,$FFFE    ; WAIT - wait for line $79
+dc.w    $7907,$FFFE  ; WAIT - wait for line $79
 dc.w    $180,$300    ; COLOR0 - start red bar: red at 3
-dc.w    $7a07,$FFFE    ; WAIT - next line
+dc.w    $7a07,$FFFE  ; WAIT - next line
 dc.w    $180,$600    ; COLOR0 - red at 6
-dc.w    $7b07,$FFFE	; WAIT - 
+dc.w    $7b07,$FFFE	 ; WAIT - 
 dc.w    $180,$900    ; COLOR0 - red at 9
-dc.w    $7c07,$FFFE    ; WAIT - 
-dc.w    $180,$c00	; COLOR0 - red at 12
+dc.w    $7c07,$FFFE  ; WAIT - 
+dc.w    $180,$c00	 ; COLOR0 - red at 12
 dc.w    $7d07,$FFFE
 dc.w    $180,$f00    ; red at 15 (maximum)
 dc.w    $7e07,$FFFE
-dc.w    $180,$c00	; red at 12
+dc.w    $180,$c00	 ; red at 12
 dc.w    $7f07,$FFFE
 dc.w    $180,$900    ; red at 9
 dc.w    $8007,$FFFE
@@ -269,11 +269,11 @@ dc.w    $8107,$FFFE
 dc.w    $180,$300    ; red at 3
 dc.w    $8207,$FFFE
 dc.w    $180,$000    ; colour BLACK
-dc.w    $fd07,$FFFE	; wait for line $FD
+dc.w    $fd07,$FFFE	 ; wait for line $FD
 dc.w    $180,$00a    ; blue intensity 10
-dc.w    $fe07,$FFFE    ; next line
+dc.w    $fe07,$FFFE  ; next line
 dc.w    $180,$00f    ; blue maximum intensity (15)
-dc.w    $FFFF,$FFFE    ; END OF COPPERLIST
+dc.w    $FFFF,$FFFE  ; END OF COPPERLIST
 
 In summary, if, for example, you set colour 0 as green at line $50, lines
 $50 and following will be green until the colour is changed again
@@ -281,17 +281,17 @@ after a wait, for example a wait $6007.
 A tip: to make this copperlist, I OBVIOUSLY did not write all the
 times dc.w $180,$... dc.w $xx07,$FFFE!!!! Just take the two instructions:
 
-dc.w    $xx07,$FFFE    ; WAIT
+dc.w    $xx07,$FFFE  ; WAIT
 dc.w    $180,$000    ; COLOR0
 
 Select them with Amiga+B and Amiga+C, then make a long line by pressing
 Amiga+i several times:
 
-dc.w    $xx07,$FFFE    ; WAIT
+dc.w    $xx07,$FFFE  ; WAIT
 dc.w    $180,$000    ; COLOR0
-dc.w    $xx07,$FFFE    ; WAIT
+dc.w    $xx07,$FFFE  ; WAIT
 dc.w    $180,$000    ; COLOR0
-dc.w    $xx07,$FFFE    ; WAIT
+dc.w    $xx07,$FFFE  ; WAIT
 dc.w    $180,$000    ; COLOR0
 .....
 

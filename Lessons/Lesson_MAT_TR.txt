@@ -34,25 +34,27 @@ Bu nedenle sıfırdan başlayacağım (tamamen sıfırdan değil, çünkü dört
 geleneksel olarak X ve Y olarak adlandırılan. Pratikte şu şekilde düzenlenmiştir:
 
 
-^
-Y |
-|
-|
-|
-|
-|
-|
--------------+-------------------->
-O| X
-|
-|
-|
-|
-|
-|
 
 
+                           ^
+                         Y | 
+                           |
+                           |
+                           |
+                           |
+                           |
+                           |
+              -------------+-------------------->
+                          O|                   X
+                           |
+                           |
+                           |
+                           |
+                           |
+                           |
+                           
 
+                           
 
 O noktası eksenlerin kesiştiği noktaya karşılık gelir ve ODAK noktası olarak adlandırılır.
 X ve Y eksenleri sırasıyla x ekseni ve y ekseni olarak adlandırılır
@@ -67,24 +69,24 @@ P noktası olduğunu düşünelim:
 
 
 
-^
-Y |
-|
-| x1
-|-----.P
-| |
-| |y1
-| |
---------------+------------------>
-O| X
-|
-|
-|
-|
-|
-|
-|
-
+                              ^     
+                            Y |
+                              |
+                              |  x1  
+                              |-----.P
+                              |     |
+                              |     |y1
+                              |     |
+                --------------+------------------>
+                             O|                 X
+                              |
+                              |
+                              |
+                              |
+                              |
+                              |
+                              |
+                              
 
 
 
@@ -101,30 +103,30 @@ fark ederiz, çünkü tüm nesneler genişlik ve
 uzunluğun yanı sıra derinlik de sahiptir.
 Bu nedenle, tek bir noktayı uzaya da ilişkilendirmemizi sağlayan üçüncü bir boyuta, yani derinliğe ihtiyacımız vardır .
  Dolayısıyla, uzayda bir nesnenin tam bir resmini vermek isteyen bir grafik şu şekilde olacaktır:
-^
 
-
-Y    |
-|
-|
-|
-| /
-| P / z1
-x1 ___|_____./
-| |
-| |
-| |y1
-| |
-O+-----+---------------------->
-/ |             X
-/     |
-/     |
-/
-/
-/
-/
-Z
-
+		
+				^
+			  Y	|
+				|
+				|
+				|         
+				|        /
+       			|     P / z1
+		  x1 ___|_____./
+		    	|     |
+		    	|     |
+		    	|     |y1
+		    	|     | 
+		       O+-----+---------------------->   
+ 		       /      |			    X                       
+ 		      /	      |	 
+		     /	      |
+		    /                                
+		   /
+		  /
+		 /
+	  Z /
+	       	
 
 Yeni eksen Z, yeni boyutu gösterir. Uzayda, X ekseni ile Z ekseni arasındaki açı ile Y ekseni ile Z ekseni arasındaki açının dik, yani 90 derece olduğunu unutmamak gerekir.
 Ne yazık ki bu açılar, izometrik projeksiyonda (tüm grafiklerin temsil edildiği projeksiyon) deforme olur
@@ -191,13 +193,12 @@ mesafe = sqr((P2x-P1x)^2+(P2y-P1y)^2)
 kare kökü belirtmek için kullanılan komuttur, ^ sembolü ise e- 
 yükseltmek anlamına gelir: bu durumda, mesafe, karesine yükseltilmiş eksen farkının
 kareye yükseltilmiş ordinat farkının toplamına eşittir, sembollerle ifade edersek:
-_________________________________________ / / (P2x-P1x)*(P2x-P1x)+(P2y-P1y)*(P2y-P1y) \ / \/
 
-_________________________________________
-/
-/ (P2x-P1x)*(P2x-P1x)+(P2y-P1y)*(P2y-P1y)
-\ /
-\/
+                         _________________________________________
+                        /
+                       / (P2x-P1x)*(P2x-P1x)+(P2y-P1y)*(P2y-P1y)
+                   \  /
+                    \/
 
 Sqr ve ^'yi iyi anlayın, çünkü daha sonra sık sık kullanacağız) 
 
@@ -225,22 +226,22 @@ Bir noktayı döndürmek için trigonometriye girip kosinüs
 ve sinüs kavramlarını tanıtmamız gerekir.Bu ikisi,
 merkezinde orijin bulunan bir daire üzerinde bulunan bir noktanın
 
-^
-Y |
-|
-|
-|
-___|___
-/ | \.P
-|     | |
----------+----+----+-------->
-|     O| | X
-\___|___/
-|
-|
-|
-|
-
+               ^ 
+   			 Y |
+   			   |
+   			   |
+   			   |
+   			___|___
+   	       /   |   \.P
+   	      |	   |    |
+ ---------+----+----+-------->
+	      |	  O|    |       X
+	       \___|___/
+   			   | 
+   			   |
+   			   |
+   			   |	
+				
 Çizdiğim şey düzensiz bir sekizgen olsa da (ama ASCII karakterleriyle
 daha iyisini yapamadım), biraz hayal gücüyle
 ne demek istediğimi anlayabilirsiniz.Kısacası, kosinüs ve
@@ -261,22 +262,20 @@ Bu, geometrinin temel teoremlerinden biri olan bu teorem hakkında bilgisi olmay
 burada kısa bir açıklama bulunmaktadır:
 Bir dik üçgen (yani 90 derecelik bir açıya sahip) verildiğinde,
 iki kenarın uzunlukları (en kısa kenarlar) biliniyorsa,
-hipotenüs (en uzun kenar) bulunabilir, çünkü bunun iki kenarın karelerinin toplamının kareköküne eşit olduğu bilinmektedir
-.
- 
+hipotenüs (en uzun kenar) bulunabilir, çünkü bunun iki kenarın karelerinin toplamının kareköküne eşit olduğu bilinmektedir.
 
 
-|\
-| \
-| \
-| \ c
-a | \
-| \
-| \
-| \
-|________\
-
-b
+                |\
+                | \
+                |  \
+                |   \  c
+              a |    \ 
+                |     \
+                |      \
+                |       \
+                |________\
+                    
+                    b 
 
 
 Bu durumda a ve b katetlerdir, c'yi bulmak için a*a+b*b'nin karekökünü hesaplamamız gerekir (bunu a^2+b^2 olarak da yazabiliriz).
@@ -290,27 +289,28 @@ P noktasının x ve y koordinatlarını katetler, OP segmentini hipotenüs olara
 varlığını fark ederiz. OP segmenti pratikte yarıçapa eşittir ve
 dolayısıyla 1'e eşittir.
 Önceki örnekte, 30 derecelik sinüs değerini bildiğimizden, karşılık gelen kosinüs değerini (pratikte x ekseni) bulabiliriz:
-
-^
-Y |
-|
-|
-|
-|
-___|___
-/ |___\.P
-| | b |a
--------------+----+----+-------------->
-| O| | X
-\___|___/
-|
-|
-|
-|
-|
-|
-
-
+  
+                 ^
+               Y |
+ 			     |
+ 			     |
+ 			     |
+ 			     |
+ 			  ___|___
+ 			 /   |___\.P 
+ 			|    | b  |a 
+ 	   -------------+----+----+-------------->
+ 			|   O|    |             X
+ 			 \___|___/ 
+ 			     |
+ 			     |
+ 			     |
+ 			     |
+ 			     |
+ 			     |
+ 			     |
+ 			     
+ 			  
 Bu durumda a=0,5 ve OP (grafiksel nedenlerden dolayı çizmedim)
 1'e eşittir. Dolayısıyla a ve b arasındaki açı 90 derecedir ve
 önceki denklemdeki bilinen terimleri yerine koyarsak şunu elde ederiz:

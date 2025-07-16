@@ -42,7 +42,7 @@ Wait:
 
 	move.l   4.w,a6
 	jsr    -$7e(a6)    			; Enable - re-enable Multitasking
-	move.l   gfxbase(PC),a1     ; Base of the library to close
+	move.l   GfxBase(PC),a1     ; Base of the library to close
 								; (libraries must be opened and closed!!!)
 	jsr    -$19e(a6)    		; Closelibrary - close the graphics library
 	rts
@@ -107,7 +107,7 @@ UpDown:
 	dc.b    0,0
 
 GfxName:
-	dc.b    ‘graphics.library’,0,0
+	dc.b    "graphics.library",0,0
 
 GfxBase:        ; Here goes the base address for the Offsets
 	dc.l    0   ; of the graphics.library
@@ -188,18 +188,18 @@ BAR:
 	END
 
 Now the bar moves up and down, using a label that indicates
-whether we are going up or down: if the SuGiu label is reset,
+whether we are going up or down: if the UpDown label is reset,
 the instructions that lower the bar are executed; if it is not reset,
 the instructions that raise it are executed. 
 At the beginning, the label is at zero,
 then the ADDQ instructions are executed, which make it go down until, once
-it reaches the bottom, the SuGiu label is written with a $FF, then
-in the following cycles, when the TST.b SuGiu, the 
+it reaches the bottom, the UpDown label is written with a $FF, then
+in the following cycles, when the TST.b UpDown, the 
 series of SUBQs that raise it are executed until it reaches the top, at which point
-the SuGiu label is reset, then the ADDQs that lower it are executed again, and so on.
-With this routine, you can easily check the effects of the changes: Try putting a ; on the instructions that wait for the $FF line with $dff006: mouse: cmpi.b    #$ff,$dff
+the UpDown label is reset, then the ADDQs that lower it are executed again, and so on.
+With this routine, you can easily check the effects of the changes: Try putting a 
+; on the instructions that wait for the $FF line with $dff006: mouse: cmpi.b    #$ff,$dff
 With this routine, you can clearly see the effects of the changes:
-Try putting a ; on the instructions that wait for the $FF line with $dff006:
 
 mouse:
 cmpi.b    #$ff,$dff006    ; VHPOSR

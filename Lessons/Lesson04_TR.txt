@@ -2,23 +2,23 @@
 ASEMBLER KURSU - DERS 4
 
 Bu derste, copperlist kullanarak çeşitli çözünürlüklerde şekilleri görüntülemeyi öğreneceğiz.
- Şimdiye kadar sadece renk0'ı, yani $dff180'i değiştirebildik ve bununla gölgelendirmeler yaptık, ancak
+Şimdiye kadar sadece renk0'ı, yani $dff180'i değiştirebildik ve bununla gölgelendirmeler yaptık, ancak
 şekiller WAIT komutuyla yapılamaz!!!
- Deluxe Paint ile oluşturulmuş, dijitalleştirilmiş, taranmış veya
+Deluxe Paint ile oluşturulmuş, dijitalleştirilmiş, taranmış veya
 Imagine veya Real 3d gibi bir ışın izleme programı ile renderlenmiş normal bir IFF figürü görüntülemek için WAIT gerekmez!!!!
 Copper'a resmin grafik çözünürlüğünü (renk sayısı,
 yüksek veya düşük çözünürlük, taramalı veya taramasız) BPLCON0 kaydı,
 yani $dff100 aracılığıyla belirtmeniz yeterlidir. Bu değeri şu ana kadar her zaman $200 olarak tuttuk, bu da
 şunu gösterir: “ÜSTÜNE YAZILAN” RESİMLER OLMADAN SADECE ARKA PLAN RENK.
-Bu nedenle, bu tür bir bakır listesinde örneğin
+Bu nedenle, bu tür bir copper listesinde örneğin
 color1, yani $dff182'yi değiştirirsek, hiçbir şey olmaz: çünkü hiçbir
-BITPLANE, yani “bit düzlemi” etkinleştirilmemiştir , sadece “ARKA PLAN” etkinleştirilmiştir ve bunun rengi $dff180 ile
+BITPLANE, yani “bit düzlemi” etkinleştirilmemiştir , sadece “ARKA PLAN” etkinleştirilmiştir 
+ve bunun rengi $dff180 ile
 değiştirilebilir. Renk sayısını ve grafik çözünürlüğünü
 (örneğin 320x200 piksel, burada PIXEL, şekli oluşturan küçük
 noktaların her biri anlamına gelir) belirledikten ve görüntülenecek şeklin yerini
 adresini uygun POINTER 
-(
-$dff080 (COP1LC) gibi kayıtlar, bit düzleminin adresi ise buraya yazılır)
+($dff080 (COP1LC) gibi kayıtlar, bit düzleminin adresi ise buraya yazılır)
 şeklin renklerini, yani PALETTE (yani çizim programı (ör. DeLuxe Paint) tarafından söz konusu şekil için tanımlanan renk “PALETİ”)
 tanımlamanız gerekir, aksi takdirde şekil yanlış renklerle görünecektir.
 Pratik olarak, gerekli renk kayıtlarını copperlist'e koymalıyız,
@@ -34,19 +34,20 @@ Bu copperlist parçası KEFCON tarafından doğrudan kaydedilir
 Şeklin boyutunu “ÖZEL” boyutlara ayarlamak için
 diğer KAYITLAR da vardır, örneğin OVERSCAN şekli büyütür veya
 ekranın sadece bir kısmını kaplayan bir “pencere” yapabilirsiniz.
-Diğer özel kayıtlar, genellikle şekilleri uzatma efektleri için kullanılan MODÜLLER'dir.
+Diğer özel kayıtlar, genellikle şekilleri uzatma efektleri için kullanılan MODULO'dur.
 İlk örneklerde, özel kayıtları sıfırlayacağız veya normal değerlerde bırakacağız,
- böylece bir
-şekil görüntülenebilecek. Öncelikle, bir IFF dosyası,
+böylece bir şekil görüntülenebilecek. Öncelikle, bir IFF dosyası,
 yani DeLuxe Paint tarafından yüklenebilen standart formattaki bir resim ile
 bellekte bulunan ve
-copper tarafından görüntülenen GERÇEK resim (RAW veya BITMAP olarak adlandırılır) arasında fark olduğu açık olmalıdır. Diskte,
-resimleri görüntülemek için gerekli olan IFF formatındaki resimleri RAW formatına dönüştürebilen küçük bir program bulunmaktadır.
-COPPER ile görüntülemek için gerekli olan RAW formatına dönüştürebilen küçük bir program bulunmaktadır. Resimler aslında, bellekteki tüm BINER veriler gibi birçok
+copper tarafından görüntülenen GERÇEK resim (RAW veya BITMAP olarak adlandırılır) arasında 
+fark olduğu açık olmalıdır. Diskte,
+resimleri görüntülemek için gerekli olan IFF formatındaki resimleri RAW formatına 
+dönüştürebilen küçük bir program bulunmaktadır.
+Resimler aslında, bellekteki tüm BINARY veriler gibi birçok
 0 ve 1'den oluşur. Bellekteki her verinin
 BIT, yani 0 ve 1'lerden oluştuğunu ve bunların bellekteki
-olası tek 2 durum (sadece AKIM GEÇİŞİ ve AKIM YOKLUĞU
-olabilir); kolaylık olması için ondalık ve onaltılık sistemi kullanıyoruz, ancak
+olası tek 2 durum (sadece AKIM GEÇİŞİ ve AKIM YOKLUĞU)
+olabilir; kolaylık olması için ondalık ve onaltılık sistemi kullanıyoruz, ancak
 gerçekte her zaman BIT'ler söz konusudur. Öyleyse, bitler sadece 0 ve 1 olabiliyorken,
 32 renkli bir resmi nasıl görüntüleyebiliriz??? 
 Belleğe, kareli bir kağıt sayfası gibi, bazı kareleri siyah
@@ -61,16 +62,17 @@ bu, deniz savaşı oynamak gibi! Örneğin, bir gemi belirli sayıda PIXEL (nokt
 BİR ADAM:
 belirli sayıda PIXEL'den (nokta) oluşur, aynı şekilde her şeyi yapabilirsiniz:
 
-BİR ADAM:                 BİR UÇAK (sıfırları atladım!)
-11
-000011100000     000001100000         1111
-000001000000     000010010000         1111
-000111111000     000010010000     111111111111111111111
+BİR ADAM:         “A” Harfi		BİR UÇAK (sıfırları atladım!)
+
+											 11
+000011100000     000001100000         		1111
+000001000000     000010010000         		1111
+000111111000     000010010000     	111111111111111111111
 000101101000     000111111000     1111111111111111111111111
-000101101000     000100001000		 1111
-000011110000     000100001000         1111
-000010010000                     111111
-000010010000         BİR “A” 11111111
+000101101000     000100001000		 		1111
+000011110000     000100001000         		1111
+000010010000                     		   111111
+000010010000      				     	  11111111
 000010010000
 000110011000
 
@@ -79,19 +81,19 @@ bu diskteki (KEFCON)
 programı ile RAW (0000110101...) formatına dönüştürmek daha uygun olacaktır. Arka plan rengini (sıfırları) tanımlamak için
 dc.w $180,$000 (siyah) yazmanız yeterlidir, 1'lerin rengini tanımlamak için
 dc.w $182,$0f0 (yeşil) yazmanız yeterlidir.
-Çok renkli şekiller için püf noktası şudur: çeşitli BITPLANES, yani BIT DÜŞÜNCELERİ
+Çok renkli şekiller için püf noktası şudur: çeşitli BITPLANES, yani "BIT DÜZLEMLERİ"
 (0001010 vb.) bir tür ŞEFFAFLIK içinde “ÜST ÜSTE YERLEŞTİRİLİR”,
 böylece iki “1” üst üste geldiğinde belirli bir renk,
 üç “1” üst üste geldiğinde başka bir renk vb. görünür. Bunların hiçbiri
 hesaplanmamalıdır!!! Resmi Iffconverter ile yükleyip RAW olarak kaydedin,
 sonra renk sayısını ve çözünürlüğü $dff100 (bplcon0) içine yazın,
-resmin RAW dosyasını koyduğumuz yeri copper'a söyleyin, doğru renkleri (
-iffconverter ayrı olarak kaydeder) yazın ve resim sorunsuz bir şekilde
+resmin RAW dosyasını koyduğumuz yeri copper'a söyleyin, doğru renkleri 
+(iffconverter ayrı olarak kaydeder) yazın ve resim sorunsuz bir şekilde
 görünür. Önemli olan işlemi net bir şekilde anlamaktır, pratikte
 IFF görüntüsünü RAW'a dönüştürmek ve kaynağı değiştirmek iki
 dakika sürer.
 Öncelikle iffconverter'ın ne yaptığını açıklayalım (bizim durumumuzda
-KEFCON adlı programı kullanıyoruz, bunu asmone penceresini taşıyarak ve
+KEFCON adlı programı kullanıyoruz, bunu Asmone penceresini taşıyarak ve
 DOS MENÜSÜNE adını yazarak yükleyebilirsiniz; daha yeni ve
 daha fazla seçeneğe sahip iffconverter'lar da var, bunlardan bazıları genellikle gereksizdir, ancak yer
 ve kickstart 1.3 ile uyumluluk nedenleriyle bunu kursa koymaya karar verdim.
@@ -99,28 +101,28 @@ Ayrıca, işletim sistemi yerine donanım kayıtları kullanılarak programland�
 kursla uyumludur. Başka 
 iffconverters kullanmak isterseniz, kullanabilirsiniz, ancak önce bunu kullanmayı öğrenin, çünkü
 bu, muhteşem oyunlar ve demolar yapmak için kullanıldı). Gerçekte bir görüntünün
-bit planlarından oluştuğunu gördük, daha fazla renk için daha fazla plan,
-sadece 2 renk için. Ayrıca görüntülenebilmesi için
+bitplanes'den oluştuğunu gördük, daha fazla renk için daha fazla bitplane gerekiyor.
+Ayrıca görüntülenebilmesi için
 doğru renklerin (palet) ve $dff100 (bplcon0) içinde doğru çözünürlüğün gerekli olduğunu gördük;
 Amiga programcıları, resimleri depolamak ve bir programdan diğerine aktarmak için özel bir format oluşturmaya karar verdiler:
  Amiga için bu format
-IFF ILBM'dir ve pratikte, daha az yer kaplamak için belirli bir rutinle sıkıştırılmış bit düzlemlerinden
+IFF ILBM'dir ve pratikte, daha az yer kaplamak için belirli bir rutinle sıkıştırılmış bitplane'lerden
 oluşur, palet ve
-çözünürlük eklenir; bir program bir IFF görüntüsünü yüklediğinde, sıkıştırılmış DÜZLEMLERİ
+çözünürlük eklenir; bir program bir IFF görüntüsünü yüklediğinde, sıkıştırılmış plane'leri
 açar, paleti renk kayıtlarına ($dff180,$dff182,
 $dff184 vb.) ve çözünürlüğü $dff100, BPLCON0'a (Özetle) yerleştirir.
 Aynı şekilde, bellekte bir görüntü olduğunda, onu IFF olarak kaydetmek için
 BITPLANES'i IFF formatında sıkıştırmalı, paleti ve geri kalanını eklemelidir.
 Iffconverter şu işlemleri yapar: bir RAW dosyasını yükleyebilir ve IFF olarak kaydedebilir,
-eğer doğru PALETTE ve ÇÖZÜNÜRLÜK verilirse, veya
-bir IFF görüntüsünü yükleyebilir ve RAW olarak kaydedebilir, ve PALETTE'yi
+eğer doğru PALET ve ÇÖZÜNÜRLÜK verilirse, 
+bir IFF görüntüsünü yükleyebilir ve RAW olarak kaydedebilir, ve PALET'i
 dc.b $180,xxx,$182,xxx formatında kaydedebilir, yani
-copperlist'e eklenmesi gereken PALETTE'yi. Diğer bilgisayarlarda resimler için farklı formatlar kullanılır,
+copperlist'e eklenmesi gereken PALET'i. Diğer bilgisayarlarda resimler için farklı formatlar kullanılır,
 örneğin GIF, PCX ve TIFF MSDOS PC'lerde kullanılır;
-RAW+PALETTE resimleri farklı şekilde SIKIŞTIRILMIŞ olmasının yanı sıra, bu bilgisayarlarda
+RAW+PALET resimleri farklı şekilde SIKIŞTIRILMIŞ olmasının yanı sıra, bu bilgisayarlarda
 görüntüleme sistemi de farklıdır, çünkü bitplane yerine CHUNKY sistemine sahiptirler.
  Bu sistem, 256 rengi yönetmek gerektiğinde kullanışlıdır, ancak
-Amiga'nın SCROLL (kaydırma) özelliği kadar yetenekli değildir ve COPPER'ın WAIT ile yaptığı gibi PALETTE'yi değiştirme
+Amiga'nın SCROLL (kaydırma) özelliği kadar yetenekli değildir ve COPPER'ın WAIT ile yaptığı gibi PALET'i değiştirme
 olasılığı yoktur.
 Normal Amiga'nın (AGA değil) olası grafik çözünürlükleri şunlardır:
 
@@ -134,7 +136,7 @@ Genişlik de OVERSCAN ile biraz artırılabilir.
 LOW RES (320 piksel genişliğinde) görüntüler maksimum
 32 renge kadar olabilir, ayrıca EHB (Extra Half Bright) ve
 HAM (Hold And Modify) adlı 2 özel mod vardır ve sırasıyla 64 ve 4096 renk görüntüler, ancak
-görüleceği üzere bazı özel sınırlamaları vardır.
+ilerde görüleceği üzere bazı özel sınırlamaları vardır.
 HIGH RES (yüksek çözünürlük) görüntülerde maksimum 16
 renk olabilir ve özel modları yoktur.
 Oyunların neredeyse tamamı LOW RES'tir, çünkü bu modda mevcut renklerin çoğunu kullanmak
@@ -159,15 +161,14 @@ Dördüncü bir bit düzlemi eklendiğinde, PIKSEL için 4 bit olasılığa ula�
 yani 16 renk için 16 farklı olasılık:
 0000,0001,0010,0011,0100,0101,0110,0111,1000,1001,1010,1011,1100,1101,1110,1111
 Aynı şey beşinci bit düzlemi için de geçerlidir, bu da piksel başına bit sayısını 5'e çıkarır,
- yani 32 olası renk. Dolayısıyla her bit düzlemi renk sayısını ikiye katlar
-:
+ yani 32 olası renk. Dolayısıyla her bit düzlemi renk sayısını ikiye katlar:
 
-0 bit düzlemi = sadece arka plan rengi COLOR00 ($dff180), 1 RENK
-1 bit düzlemi = 2 RENK
-2 bit düzlemi = 4 RENK (2*2, yani 2'nin ikinci kuvveti)
-3 bit düzlemi = 8 RENK (2*2*2, yani 2'nin üçüncü kuvveti)
-4 bit düzlemi = 16 RENK (2*2*2*2, yani 2'nin dördüncü kuvveti)
-5 bit düzlemi = 32 RENK (2*2*2*2*2, yani 2'nin beşinci kuvveti)
+0 bitplane = sadece arka plan rengi COLOR00 ($dff180), 1 RENK
+1 bitplane = 2 RENK
+2 bitplane = 4 RENK (2*2, yani 2'nin ikinci kuvveti)
+3 bitplane = 8 RENK (2*2*2, yani 2'nin üçüncü kuvveti)
+4 bitplane = 16 RENK (2*2*2*2, yani 2'nin dördüncü kuvveti)
+5 bitplane = 32 RENK (2*2*2*2*2, yani 2'nin beşinci kuvveti)
 
 Amiga, LOWRES'te mümkün olan 32 renk için 32 kayıt alanına sahiptir. Bu kayıt alanları
 COLOR0'dan COLOR31'e kadar uzanır (numaralandırma, bitlerde olduğu gibi sıfırdan başlar).

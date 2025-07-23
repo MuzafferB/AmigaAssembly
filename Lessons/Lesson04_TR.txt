@@ -12,13 +12,13 @@ yani $dff100 aracılığıyla belirtmeniz yeterlidir. Bu değeri şu ana kadar h
 şunu gösterir: “ÜSTÜNE YAZILAN” RESİMLER OLMADAN SADECE ARKA PLAN RENK.
 Bu nedenle, bu tür bir copper listesinde örneğin
 color1, yani $dff182'yi değiştirirsek, hiçbir şey olmaz: çünkü hiçbir
-BITPLANE, yani “bit düzlemi” etkinleştirilmemiştir , sadece “ARKA PLAN” etkinleştirilmiştir 
+BITPLANE, yani “bitplane” etkinleştirilmemiştir , sadece “ARKA PLAN” etkinleştirilmiştir 
 ve bunun rengi $dff180 ile
 değiştirilebilir. Renk sayısını ve grafik çözünürlüğünü
 (örneğin 320x200 piksel, burada PIXEL, şekli oluşturan küçük
 noktaların her biri anlamına gelir) belirledikten ve görüntülenecek şeklin yerini
 adresini uygun POINTER 
-($dff080 (COP1LC) gibi kayıtlar, bit düzleminin adresi ise buraya yazılır)
+($dff080 (COP1LC) gibi kayıtlar, bitplanenin adresi ise buraya yazılır)
 şeklin renklerini, yani PALETTE (yani çizim programı (ör. DeLuxe Paint) tarafından söz konusu şekil için tanımlanan renk “PALETİ”)
 tanımlamanız gerekir, aksi takdirde şekil yanlış renklerle görünecektir.
 Pratik olarak, gerekli renk kayıtlarını copperlist'e koymalıyız,
@@ -142,26 +142,26 @@ renk olabilir ve özel modları yoktur.
 Oyunların neredeyse tamamı LOW RES'tir, çünkü bu modda mevcut renklerin çoğunu kullanmak
 mümkün, bellek tasarrufu sağlanıyor (maalesef bellek SINIRLIDIR!) ve
 daha yüksek hız elde edilebiliyor (HIGH RES, LOW RES'e göre işlemleri daha fazla yavaşlatıyor,
- ayrıca görüntü iki kat daha geniş olduğu için daha büyük bellek parçaları taşınması gerekiyor!
+ ayrıca görüntü iki kat daha geniş olduğu için daha büyük bellek parçaları taşınması gerekiyor!)
 Renk görüntüleme tekniğini inceleyelim: lowres'te
 maksimum renk sayısının 32 olduğunu (özel modları saymazsak) söylemiştik;
 2, 4, 8, 16 veya 32 renkli bir video çözünürlüğü seçmek mümkündür. Bunun
-nedeni, bunların BIT'lerin üst üste binmesiyle belirlenmesidir, bu nedenle her bit düzlemine
-“ÜST ÜSTE KADIRDIĞIMIZ” her “PIKSEL”E 2 bit ekleriz ve bu da 2 bit “DAHA DERİN” hale gelir
-: şimdi 2 bit ile sadece 0 ve 1, yani
+nedeni, bunların BIT'lerin üst üste binmesiyle belirlenmesidir, bu nedenle her bitplanene
+“ÜST ÜSTE KOYDUĞUMUZ” her “PIKSEL”E 2 bit ekleriz ve bu da 2 bit “DAHA DERİN” hale gelir: 
+Şimdi 2 bit ile sadece 0 ve 1, yani
 2 renk elde edilebilir, bu nedenle 320x200 çözünürlükte 2 renk tek bir BITPLANE'e sahip olacaktır,
 daha önce de belirttiğimiz gibi. Başka bir bitplane eklendiğinde olası renk sayısı
 4'e çıkar, çünkü her PIXEL için 4 üst üste binme durumu
-olabilir: 00,01,10,11, yani “her iki bit sıfır”, "birinci bit düzlemi
-sıfır ve ikinci 1“, ”birinci bit düzlemi 1 ve ikinci sıfır“, ”her iki
-bit düzlemi 1". Başka bir bit düzlemi eklendiğinde 8
+olabilir: 00,01,10,11, yani “her iki bit sıfır”, "birinci bitplane
+sıfır ve ikinci 1“, ”birinci bitplane 1 ve ikinci sıfır“, ”her iki
+bitplane 1". Başka bir bitplane eklendiğinde 8
 farklı durum (8 farklı renge karşılık gelir) ortaya çıkabilir:
-000,001,010,011,100,101,110,111 (3 bit düzlemi=3 bit/PIKSEL=8 olasılık)
-Dördüncü bir bit düzlemi eklendiğinde, PIKSEL için 4 bit olasılığa ulaşılır,
+000,001,010,011,100,101,110,111 (3 bitplane=3 bit/PIKSEL=8 olasılık)
+Dördüncü bir bitplane eklendiğinde, PIKSEL için 4 bit olasılığa ulaşılır,
 yani 16 renk için 16 farklı olasılık:
 0000,0001,0010,0011,0100,0101,0110,0111,1000,1001,1010,1011,1100,1101,1110,1111
-Aynı şey beşinci bit düzlemi için de geçerlidir, bu da piksel başına bit sayısını 5'e çıkarır,
- yani 32 olası renk. Dolayısıyla her bit düzlemi renk sayısını ikiye katlar:
+Aynı şey beşinci bitplane için de geçerlidir, bu da piksel başına bit sayısını 5'e çıkarır,
+ yani 32 olası renk. Dolayısıyla her bitplane renk sayısını ikiye katlar:
 
 0 bitplane = sadece arka plan rengi COLOR00 ($dff180), 1 RENK
 1 bitplane = 2 RENK
@@ -170,11 +170,11 @@ Aynı şey beşinci bit düzlemi için de geçerlidir, bu da piksel başına bit
 4 bitplane = 16 RENK (2*2*2*2, yani 2'nin dördüncü kuvveti)
 5 bitplane = 32 RENK (2*2*2*2*2, yani 2'nin beşinci kuvveti)
 
-Amiga, LOWRES'te mümkün olan 32 renk için 32 kayıt alanına sahiptir. Bu kayıt alanları
+Amiga, LOWRES'te mümkün olan 32 renk için 32 register'a sahiptir. Bu register'lar
 COLOR0'dan COLOR31'e kadar uzanır (numaralandırma, bitlerde olduğu gibi sıfırdan başlar).
  Color0, $dff180'dir ve onu diğerleri izler:
 
-$dff182 = COLOR1
+$dff182 = RENK1
 $dff184 = RENK2
 $dff186 = RENK3
 $dff188 = RENK4
@@ -183,41 +183,42 @@ vb.
 
 Örneğin, 16 renkli bir düşük çözünürlüklü görüntünün bir pikseli
 “ARKA PLAN”, yani COLOR0 rengindeyse, bu, $dff180 üzerinde değişiklik yaparak değiştirilebilir ve
-4 bit düzleminin tümünün sıfır olduğu anlamına gelir: 0000,
+4 bitplanenin tümünün sıfır olduğu anlamına gelir: 0000,
 COLOR31 olarak adlandırılan 32 rengindeki bir piksel ise bu ikili kombinasyonun sonucudur: 1111.
-Diğer renkler, diğer kombinasyonların sonucudur. Amiga 1200, CHIPSET AGA ile en fazla 8 bit düzlemine sahiptir
+Diğer renkler, diğer kombinasyonların sonucudur. Amiga 1200, CHIPSET AGA ile en fazla 8 bitplane'e sahiptir
 , bu sayede 256
 renk (2'nin sekizinci kuvveti=256) üretebilir, AGA grafik programlarında
-64 renk (6 düzlem), 128 renk (7 düzlem) çözünürlükler de seçilebilir.
+64 renk (6 bitplane), 128 renk (7 bitplane) çözünürlükler de seçilebilir.
 Bir video ekranı PLAYFIELD olarak da adlandırılır.
 320*256 çözünürlükte 2 renkli bir şeklin ne kadar bellek kapladığını hesaplayalım:
 Her satır 320 pikseldir, bir bayt sekiz bitten oluştuğundan, bir satırda
 40 bayt vardır (aslında 8*40=320). O halde, 40'ı, yani
 satır başına bayt sayısını, satır sayısıyla, yani 256 ile çarpmamız yeterlidir: 40*256=10240.
-Dolayısıyla, düşük çözünürlükte bir bit düzlemi 10240 bayt yer kaplar. O halde
+Dolayısıyla, düşük çözünürlükte bir bitplane 10240 bayt yer kaplar. O halde
 4 renkli, yani 2 bit düzlemli bir şekli de hesaplayabiliriz: 40*256*2=20480.
-Dolayısıyla, standart DÜŞÜK ÇÖZÜNÜRLÜKLÜ bir şekil için 40*256*bit düzlemlerini çarpmak yeterlidir.
+Dolayısıyla, standart DÜŞÜK ÇÖZÜNÜRLÜKLÜ bir şekil için 40*256*bitplane'leri çarpmak yeterlidir.
 LOWRES'te satır başına 320 bit, yani 40 bayt olduğu belirlenmiştir, HIRES'te
-genişliği iki katı olduğu için satır başına 80 bayt olacaktır: 80*256*bitplanes.
+genişliği iki katı olduğu için satır başına 80 bayt olacaktır: 80*256*bitplane'ler.
 Sonuç olarak, büyüklüğü hesaplamak için genel formül şöyledir:
 
-Satır başına bayt * oyun alanı satırları * bit düzlemi sayısı
+Satır başına bayt * playfield satırları * bitplane sayısı
 
 Şimdi BPLCON0'ı, çözünürlüğün ve
-renk sayısının belirtildiği kaydı analiz edelim:    ( “=C 100” yazarak bir özeti okuyabilirsiniz )
+renk sayısının belirtildiği kaydı analiz edelim:    
+( “=C 100” yazarak bir özeti okuyabilirsiniz )
 
 $dff100 - BPLCON0
 
-Bit Düzlemi Kontrol Kaydı 0    (1 kelime, yani 16 bit, 0'dan 15'e kadar)
+bitplane Kontrol Kaydı 0    (1 kelime, yani 16 bit, 0'dan 15'e kadar)
 
 BIT SAYISI            (not: bit 1 = AÇIK, bit 0 = KAPALI)
 
 15    -    HIRES    Yüksek çözünürlük modu (1=640x256 , 0=320x256)
 14    -    BPU2    \
-13    -    BPU1     ) 3 bit, bit düzlemlerinin sayısını seçmek için
+13    -    BPU1     ) 3 bit, bitplane'lerin sayısını seçmek için
 12    -    BPU0    /
 11    -    HOMOD    Hold And Modify modu (HAM 4096 renk)
-10    -    DBLPF    Çift oyun alanı
+10    -    DBLPF    Çift playfield
 09    -    COLOR    kompozit video (GENLOCK için)
 08    -    GAUD    Genlock ses
 07    -    X
@@ -226,21 +227,20 @@ BIT SAYISI            (not: bit 1 = AÇIK, bit 0 = KAPALI)
 04    -    X
 03    -    LPEN    Işıklı kalem (Optik kalem)
 02    -    LACE    Aralıklı (320x512 veya 640x512)
-01    -	ERSY    Harici yeniden senkronizasyon (GENLOCK için)
+01    -	   ERSY    Harici yeniden senkronizasyon (GENLOCK için)
 00    -    X
 
 Bu kayıt BITMAPPED'dir, yani her bir biti bir işleve sahiptir:
 
 - Bit 15, yüksek çözünürlük modunu etkinleştirir: bu grafik modu, 320 yerine
-yatay satır başına 640 piksel görüntüler. DDFSTART/STOP
-'u $003c ve $00d4 yerine $0038 ve $00d0'a koymayı unutmayın, aksi takdirde
+yatay satır başına 640 piksel görüntüler. DDFSTART/STOP'u 
+$003c ve $00d4 yerine $0038 ve $00d0'a koymayı unutmayın, aksi takdirde
 sol kenarın ilk satırları görüntülenmez!
-- Bit 14-12, hangi düzlemin değil, kaç düzlemin açılacağını belirlemek için kullanılır
-; aslında 3 bit vardır ve 6 düzlem mümkündür.
-Buraya, hangi düzlemi seçtiğinizi DEĞİL, kaç düzlemi yakmak istediğinizi bir sayı olarak yazmanız gerekir.
-Örneğin: ‘3’, ‘0’, ‘6’.
-3 bit ile 0'dan 7'ye kadar 8 sayı ifade edilebilir.
-Tekrar ediyorum: 3 BIT'LİK BİNER SAYI İLE ÇALIŞIN,
+- Bit 14-12, hangi bitplane'in değil, kaç bitplane'in açılacağını belirlemek için kullanılır
+; aslında 3 bit vardır ve 6 bitplane mümkündür.
+Buraya, hangi bitplane seçtiğinizi DEĞİL, kaç bitplane açmak istediğinizi bir sayı olarak yazmanız gerekir.
+Örneğin: ‘3’, ‘0’, ‘6’. 3 bit ile 0'dan 7'ye kadar 8 sayı ifade edilebilir.
+Tekrar ediyorum: 3 BIT'LİK BINARY SAYI İLE ÇALIŞIN,
 DİĞER BİT'LERDEN FARKLI OLARAK, YAKILACAK VEYA SÖNDÜRÜLECEK TEK TEK BİT'LERLE ÇALIŞMAYIN!
 N.B.: ‘0’ (=%000) yazıldığında tüm düzlemler söner, %101 yazıldığında
 5 tanesi yanar; 6 düzlem ile 64 renkli HALF-BRIGHT modu etkinleştirilir.
@@ -252,20 +252,19 @@ ise Amiga 1200/4000'lerde 262144 renk görüntülenmesini sağlar.
 her biri PlayField1 ve PlayField2 olarak adlandırılır ve birbirinin üzerine şeffaf olarak üst üste bindirilir
 ve üstteki PlayField'ın rengi 0 şeffaf hale gelir.
 Böylece, birçok oyunda bulunan paralaktik bir efekt yaratmak mümkündür.
- Örneğin, oyun alanı için 3 düzlemli bir PlayField
-(8 renk) oyun alanı için ve başka bir PlayField arka plan için, belki
+ Örneğin, playfield için 3 düzlemli bir PlayField
+(8 renk) playfield için ve başka bir PlayField arka plan için, belki
 daha yavaş kayarak daha fazla derinlik hissi vermek için,
  ovaları ve dağları tasvir etmek için.
 Bit ayarlandıktan sonra, tek sayıdaki düzlemler (1,3,5) playfield1'i oluştururken
-çift sayıdaki düzlemler (2,4,6) ikincisini oluşturur: DPF biti etkinleştirildiğinde, donanım
-düzlemleri bağımsız hale getirmek için gruplandırır, çünkü
-daha sonra göreceğimiz gibi, çift ve tek uçlu uçlar için parametreleri ayıran kaydırma kayıtları ve diğer kayıtlar vardır,
- bunlar ayrıca çift modda iki tam oyun alanını bağımsız olarak kontrol etmek için de kullanılır
-!
+çift sayıdaki bitplane'ler (2,4,6) ikincisini oluşturur: DPF biti etkinleştirildiğinde, donanım
+bitplane'leri bağımsız hale getirmek için gruplandırır, çünkü
+daha sonra göreceğimiz gibi, çift ve tek uçlu uçlar için parametreleri ayıran 
+kaydırma kayıtları ve diğer kayıtlar vardır,
+ bunlar ayrıca çift modda iki tam playfieldnı bağımsız olarak kontrol etmek için de kullanılır!
 Not: DualPlayField modu, yalnızca 2 ekranın üst üste bindirilmesine izin verir ve her durumda
 benzer grafik çözünürlüğe sahip olmalıdır (örneğin: Hires+Hires, Lowres+Lowres, vb.).
-- Bit 9, Amiga'nın RGB monitörün yanında bulunan kompozit video çıkışını da etkinleştirir
-.
+- Bit 9, Amiga'nın RGB monitörün yanında bulunan kompozit video çıkışını da etkinleştirir.
  Şahsen, ben bunu her zaman etkinleştiririm,
  böylece ürünlerimi kullanırken standart RGB monitörü olmayanlar da
 monitörde bir şeyler görebilirler. HER ZAMAN 1'E AYARLAYIN.
@@ -291,11 +290,11 @@ Bu modun nasıl çalıştığını daha sonra göreceğiz
 Bunu söyledikten sonra, copperlist'te $100 (BPLCON0) kullanımına ilişkin bazı örnekler verelim:
 
 ; 5432109876543210
-dc.w $100,%0100001000000000    ; ---> 4 düzlem Lowres (320x256)
-dc.w $100,%1011001000000100    ; ---> 3 düzlem Hires+Interlace (640x512)
-dc.w $100,%0110001000000100    ; ---> 6 düzlem HALF-BRIGHT Lowres+Lace
-dc.w $100,%0110101000000000    ; ---> 6 düzlem HAM lowres (4096 renk)
-dc.w $100,%0110011000000000    ; ---> DualPlayField 3+3 düzlem Lowres
+dc.w $100,%0100001000000000    ; ---> 4 bitplane Lowres (320x256)
+dc.w $100,%1011001000000100    ; ---> 3 bitplane Hires+Interlace (640x512)
+dc.w $100,%0110001000000100    ; ---> 6 bitplane HALF-BRIGHT Lowres+Lace
+dc.w $100,%0110101000000000    ; ---> 6 bitplane HAM lowres (4096 renk)
+dc.w $100,%0110011000000000    ; ---> DualPlayField 3+3 bitplane Lowres
 dc.w $100,%1100011000000100    ; ---> DualPlayField 2+2 Hires+interlace
 
 Ders 3'te BPLCON0'ı copperlist'te $200 değeriyle kullandık:
@@ -304,75 +303,75 @@ dc.w    $100,$200
 
 Aslında sadece genlock'u etkinleştirmek için gerekli olan bit 9'u ayarladık:
 
-; 5432109876543210
+			; 5432109876543210
 dc.w	$100,%0000001000000000
 
 Genlock, Amiga ile oluşturulan başlıkları veya grafikleri televizyon ekranına
 üst üste bindirmek için kullanılan bir cihazdır, bu nedenle bu aksesuara sahip olmayanlar
 bit 9'un etkin olduğu bir copperlist ile
-etkinleştirilmiş bir copperlist ile bit devre dışı bırakılmış bir copperlist arasında bir değişiklik göremez, ancak genlock'u bizim copperlist'lerimizle kullanmak isteyenler için ve eski
+bit devre dışı bırakılmış bir copperlist arasında bir değişiklik göremez, ancak genlock'u bizim copperlist'lerimizle kullanmak isteyenler için ve eski
 Amiga 1000'in renkli monitör için bir video kompozit çıkışı olduğu için
 bit'i her zaman 1'de tutmak daha iyidir.
 Dolayısıyla, dc.w $100,0 ile de RGB'de aynı sonucu elde ederdik.
-Gördüğünüz gibi, bit düzlemleri SIFIR'dır, bu nedenle sadece arka plan rengi vardır ve
-üzerine baskı yoktur. Bit düzlemlerini “AÇMAK” için, istediğimiz
-bit düzlemi sayısını ikili olarak, kaydın 12,13,14 bitlerine yazmak yeterlidir.
+Gördüğünüz gibi, bitplane'ler SIFIR'dır, bu nedenle sadece arka plan rengi vardır ve
+üzerine baskı yoktur. Bitplane'leri “AÇMAK” için, istediğimiz
+bitplane sayısını ikili olarak, kaydın 12,13,14 bitlerine yazmak yeterlidir.
 
-Örneğin, 1 bit düzlemli (2 renkli) bir ekran yapmak için: (320x256!)
+Örneğin, 1 bitplane'li (2 renkli) bir ekran yapmak için: (320x256!)
 
-; 5432109876543210
+			; 5432109876543210
 dc.w    $100,%0001001000000000    ; BPLCON0 - bit 12 açık!! (1 = %001)
 
 *
 
 2 bitplane'li bir ekran için: (4 renk)
 
-; 5432109876543210
+			; 5432109876543210
 dc.w    $100,%0010001000000000    ; BPLCON0 - bit 13 açık!! (2 = %010)
 
 *
 
-3 bit düzlemli bir ekran için: (8 renk)
+3 bitplane'li bir ekran için: (8 renk)
 
-; 5432109876543210
+			; 5432109876543210
 dc.w    $100,%0011001000000000    ; bit 13 ve 12 açık!! (3 = %011)
 
 *
 
-4 bit düzlemli ekran için: (16 renk)
+4 bitplane'li ekran için: (16 renk)
 
-; 5432109876543210
+			; 5432109876543210
 dc.w    $100,%0100001000000000    ; BPLCON0 - bit 14 açık!! (4 = %100)
 
 *
 
-5 bit düzlemli bir ekran için: (32 renk)
+5 bitplane'li bir ekran için: (32 renk)
 
-; 5432109876543210
-dc.w    $100,%0101001000000000    ; bitler 14,12 yanıyor!! (5 = %101)
+			; 5432109876543210
+dc.w    $100,%0101001000000000    ; bitler 14,12 açık!! (5 = %101)
 
 *
 
-6 bit düzlemli ekran için: (EHB ve HAM 4096 renk özel modları için)
+6 bitplane'li ekran için: (EHB ve HAM 4096 renk özel modları için)
 
-; 5432109876543210
-dc.w    $100,%0110001000000000    ; bit 14,13 yanıyor!! (6 = %110)
+			; 5432109876543210
+dc.w    $100,%0110001000000000    ; bit 14,13 açık!! (6 = %110)
 
 (Bu modda, HAM bitini (11) 1'e ayarlamazsanız ekran
 Extra Half Bright modunda olur, bit 11 ayarlanırsa ekran HAM modunda olur.
 
 *
 
-Bu durumda, kayıt defterinin 3 bit 12,13,14
-kısımlarına gerekli bit düzlemi sayısını girmeniz yeterlidir. Ekranı yüksek çözünürlükte, 640 piksel genişliğinde
+Bu durumda, register'ın 3 bit 12,13,14
+kısımlarına gerekli bitplane sayısını girmeniz yeterlidir. Ekranı yüksek çözünürlükte, 640 piksel genişliğinde
 320 piksel genişliğinde bir ekran istiyorsanız, soldaki ilk bit olan 15'i 1'e ayarlamanız yeterlidir.
-HIRES'te maksimum bit düzlemi sayısı 4 (16 renk) olduğunu ve
+HIRES'te maksimum bitplane sayısı 4 (16 renk) olduğunu ve
 DFFSTART ($dff092) ve DFFSTOP ($dff094) değerlerini LOWRES'e göre değiştirmeniz gerektiğini unutmayın:
 
 dc.w    $92,$003c    ; DdfStart normal HIRES
 dc.w    $94,$00d4    ; DdfStop normal HIRES
 
-Aynı şey tarama için de geçerlidir (256 yerine 512 satır uzunluğu), 
+Aynı şey interlacing için de geçerlidir (256 yerine 512 satır uzunluğu), 
 bit 2'yi 1'e ayarlamak yeterlidir.
 
 BPLCON0 doğru şekilde ayarlandıktan sonra, “AKTİF” hale getirdiğimiz bitplane'lerin
@@ -380,18 +379,19 @@ yerini belirtmek gerekir. Bunu yapmak için, adreslerini
 uygun kayıtlara girmek yeterlidir. Bunlar şunlardır:
 
 $dff0e0    = BPL0PT (bitplane 1 işaretçisi)
-$dff0e4    = BPL1PT (bit düzlemi 2 işaretçisi)
-$dff0e8    = BPL2PT (bit düzlemi 3 işaretçisi)
-$dff0ec    = BPL3PT (bit düzlemi 4 işaretçisi)
-$dff0f0    = BPL4PT (bit düzlemi 5 işaretçisi)
-$dff0f4    = BPL5PT (bit düzlemi işaretçisi 6)
+$dff0e4    = BPL1PT (bitplane 2 işaretçisi)
+$dff0e8    = BPL2PT (bitplane 3 işaretçisi)
+$dff0ec    = BPL3PT (bitplane 4 işaretçisi)
+$dff0f0    = BPL4PT (bitplane 5 işaretçisi)
+$dff0f4    = BPL5PT (bitplane 6 işaretçisi)
 
 Burada da sıfırdan başlıyoruz, dolayısıyla altıncıyı tanımlamak için 5'e ulaşıyoruz.
 Bazen ise $dff0e0 BPL1PT ile gösterilebilir ve
 sonuç olarak altıncıyı tanımlamak için 6'ya ulaşırız. Asmone'nin yardım bölümü
 BPL0PT'den başlar, “=c 0e0” yazarak kontrol edebilirsiniz
 Bir şekli görüntülemek için, doğru
-BPLCON0 ve doğru renklerle bir bakır listesini işaret etmek yeterlidir, ardından bit düzlemlerini de işaret etmek gerekir,
+BPLCON0 ve doğru renklerle bir copper listesini işaret etmek yeterlidir, 
+ardından bit düzlemlerini de işaret etmek gerekir,
 örneğin şöyle:
 
 MOVE.L    #BITPLANE0,$dff0e0    ; BPL0PT'deki BITPLANE0 adresi
@@ -403,13 +403,13 @@ Ve resim sihirli bir şekilde ortaya çıkacaktır. Bitplanes yine de
 copperlist içinde doğrudan işaretlenir, çünkü işaretçiler her
 kare için yeniden yazılmalıdır.
 
-“Özel” kayıtları bakır listesine eklemeyi asla unutmayın.
+“Özel” kayıtları copper listesine eklemeyi asla unutmayın.
 Şu anda bunları sıfırlanmış veya normal değerleriyle kullanacağız, aksi takdirde
-workbench'in bakır listesinin değerini alırlar ve bu kayıtlar sıfırlanmamışsa görüntüleme bozulabilir
-(örneğin, kickstart 1.3'ün workbench'inde MODULI sıfırlanmıştır, ancak kickstart 2.0'da
+workbench'in copper listesinin değerini alırlar ve bu kayıtlar sıfırlanmamışsa görüntüleme bozulabilir
+(örneğin, kickstart 1.3'ün workbench'inde MODULES sıfırlanmıştır, ancak kickstart 2.0'da
 farklı değerlere sahiptir: kick 1.3'te çalışan oyunlar ve grafik demolar
 kick 2.0'da ise şekilleri yanlış görüntüler, bunlar genellikle
-modül kayıtlarının, $dff108 ve $dff10a'nın eksik olduğu bakır listesiyle yapılmıştır,
+modül kayıtlarının, $dff108 ve $dff10a'nın eksik olduğu copper listesiyle yapılmıştır,
  bunlar kick1.3'te sıfırdır, bu nedenle testte çalışıyordu, ancak kick 2.0'da
 görüntüleme bozuluyor. Bu sorunları önlemek için her
 copperlist'te, kullanmadıklarımız da dahil olmak üzere tüm kayıtları tanımlamak her zaman iyidir
@@ -425,7 +425,7 @@ $dff108 - BPL1MOD, çift bitplanes modülü - normalde $0000
 $dff10A - BPL2MOD, tek bitplanes modülü - normalde $0000
 
 Bu kayıtlar hakkında, özel efektler oluşturmak için kullandığımızda konuşacağız.
-Şimdilik, bakır listesinin başına her zaman
+Şimdilik, copper listesinin başına her zaman
 bu kayıtları standart değerleriyle eklemeyi unutmayın:
 
 COPPERLIST:
@@ -433,18 +433,18 @@ dc.w    $8e,$2c81    ; DiwStrt
 dc.w    $90,$2cc1    ; DiwStop
 dc.w    $92,$0038    ; DdfStart * NOT: HIRES 640x256 için $003c
 dc.w    $94,$00d0    ; DdfStop * NOT: HIRES 640x256 için $00d4
-dc.w    $102,0        ; BplCon1
-dc.w    $104,0        ; BplCon2
-dc.w    $108,0        ; Bpl1Mod
-dc.w    $10a,0        ; Bpl2Mod
+dc.w    $102,0       ; BplCon1
+dc.w    $104,0       ; BplCon2
+dc.w    $108,0       ; Bpl1Mod
+dc.w    $10a,0       ; Bpl2Mod
 
 dc.w    $100,xxxx    ; Bplcon0 - Renkleri ve çözünürlüğü tanımlayalım
 
 ;    Buraya şeklin renklerini koyabiliriz; bu parça
 ;    copperlist doğrudan KEFCON iffconverter tarafından oluşturulur,
 ;    istediğiniz bir adla ayrı olarak kaydedin, daha sonra
-;    örneğin başka bir tampona yükleyerek editörün KES&YAPIŞTIR seçeneği ile buraya ekleyebilirsiniz
-;    .
+;    örneğin başka bir tampona yükleyerek editörün 
+;	 KES&YAPIŞTIR seçeneği ile buraya ekleyebilirsiniz.
 
 dc.w $0180,$0010,$0182,$0111,$0184,$0022,$0186,$0222
 dc.w $0188,$0333,$018a,$0043,$018c,$0333,$018e,$0154
@@ -457,7 +457,7 @@ dc.w $01b8,$0bab,$01ba,$0cbc,$01bc,$0dcd,$01be,$0eef
 
 ;    Gördüğünüz gibi burada Amiga'nın 32 renk kaydı tanımlanmıştır,
 ;    aslında KEFCON ile 32 renkli bir resim yükledim ve bu
-;    RAW formatındaki resimle birlikte oluşturulan PALETTE'dir.
+;    RAW formatındaki resimle birlikte oluşturulan PALET'tir.
 
 ;    Burada WAIT ile video efektleri yapabilirsiniz....
 
@@ -467,8 +467,8 @@ dc.w    $FFFF,$FFFE    ; Copperlist sonu
 Bu copperlist, bir resmi görüntülemek için yeterlidir.
 Şimdi, 3 bit düzlemli, yani 8 renkli bir PLAYFIELD
 görüntüleme örneğiyle devam edelim. Bu dersin ilk örneğinde,
-RAW formatına dönüştürülmüş bir resmi görüntülüyoruz ve bu resim
-: Resmi belleğe “YÜKLEMEK” için, ASMONE'de INCBIN adlı bir komut vardır.
+RAW formatına dönüştürülmüş bir resmi görüntülüyoruz ve bu resmi
+belleğe “YÜKLEMEK” için, ASMONE'de INCBIN adlı bir komut vardır.
 Bu komut, diskten belirli bir veri dosyasını yükleyip
 programımızın incbin'in bulunduğu noktasına kopyalamayı sağlar
 : Örneğin, bir copperlist hazırlayıp bunu
@@ -478,27 +478,25 @@ COPPERLIST:
 incbin    “copper1”
 
 Sonuç, copper1 dosyasında bulunan kelimelere eşdeğer birçok dc.w koymakla aynıdır.
- Bizim durumumuzda, görüntüyü bir
-PIC etiketi altında yükleriz:
+ Bizim durumumuzda, görüntüyü bir PIC etiketi altında yükleriz:
 
 PIC:
 incbin    “amiga.320*256*3”
 
-Resim yine de METİN biçiminde değil, bit düzlemlerini oluşturan baytlar biçimindedir
-: bunu bir metin tamponuna yüklemeyi deneyin, bunun
+Resim yine de METİN biçiminde değil, bit düzlemlerini oluşturan baytlar biçimindedir: 
+bunu bir metin tamponuna yüklemeyi deneyin, bunun
 metin olmadığını göreceksiniz.
 
-Gördüğünüz gibi, resmin adı resmin özelliklerine göre verilmiştir
-; resimleri, özelliklerini yansıtan isimler seçmek, dönüştürdüğünüz RAW resimlerin boyutunu ve
+Gördüğünüz gibi, resmin adı resmin özelliklerine göre verilmiştir; 
+resimleri, özelliklerini yansıtan isimler seçmek, dönüştürdüğünüz RAW resimlerin boyutunu ve
 bitplane sayısını unutmamanız için önemlidir.
- Ancak
-bu ham görüntünün uzunluğundan çözünürlük ve bit düzlemlerinin sayısı
+Ancak bu ham görüntünün uzunluğundan çözünürlük ve bit düzlemlerinin sayısı
 çıkarılabilir: 30720 bayt uzunluğundadır, yani 40*256*3 (40 bayt/satır*256 satır,
-3 bit düzlemi ile çarpıldığında 30720 olur). Bu nedenle COPPER'a resmin PIC etiketinde olduğunu söylemek yeterlidir
-ve işlem tamamdır.
+3 bitplane ile çarpıldığında 30720 olur). Bu nedenle COPPER'a resmin PIC etiketinde 
+olduğunu söylemek yeterlidir ve işlem tamamdır.
 
-Ancak, hata riski olmadan bit düzlemlerini işaretlemek için
-işaretçileri copperlist'e koymak gerekir. Aslında bit düzlemlerinin işaretçileri
+Ancak, hata riski olmadan bitplane'leri işaretlemek için
+işaretçileri copperlist'e koymak gerekir. Aslında bitplane'lerin işaretçileri
 her biri bir kelime, yani bir adresin yarısını içerebilir (aslında bir
 adres bir longword uzunluğundadır! örneğin $00020000). İşlemciyi kullanırsak
 tek bir move.l ile 2 kelimelik kayıt yükleyebiliriz.
@@ -506,11 +504,11 @@ tek bir move.l ile 2 kelimelik kayıt yükleyebiliriz.
 MOVE.L    #BITPLANE00,$dff0e0    ; BPL0PT
 MOVE.L    #BITPLANE01,$dff0e4    ; BPL1PT ($dff0e0'dan 2 kelime ileride)
 
-Ancak bakır listesinde, bilindiği gibi her hareket sadece bir KELİME olabilir:
+Ancak copper listesinde, bilindiği gibi her hareket sadece bir KELİME olabilir:
 
 MOVE.W    #$123,$dff180    dc.w    $180,$123
 
-Bit düzlemlerine işaret eden durumlarda, her adresi
+Bitplane'lere işaret eden durumlarda, her adresi
 bir LONGWORD uzunluğunda 2 kelimeye “BÖLÜMÜŞ” olmalıyız, böylece şunu yapabiliriz:
 
 MOVE.W    #BITPL,$dff0e0    ; BPL0PTH (H=adresin ÜST kelimesi)
@@ -518,20 +516,20 @@ MOVE.W    #ANE00,$dff0e2    ; BPL0PTL (L=adresin ALT kelimesi)
 MOVE.W    #BITPL,$dff0e4    ; BPL1PTH
 MOVE.W    #ANE01,$dff0e6    ; BPL1PTL
 
-BPLxPTH    = BitPLane x PoinTer Yüksek kelime, yüksek kelime işaretçisi
+BPLxPTH = BitPLane x PoinTer high word, yüksek kelime işaretçisi
 BPLxPTL	= BitPLane x PoinTer Low word , düşük kelime işaretçisi
 
 BITPLANE00'ı (bir uzun kelime uzunluğunda) 2 kelime BITPL ve ANE00'a böldük ve
 2 MOVE.W ile MOVE.L ile aynı sonucu elde ettik, bu da
 copperlist'e uygundur, burada şöyle çeviririz:
 
-dc.w    $e0,BITPL	; BPL0PTH \ilk bitplane
+dc.w    $e0,BITPL	; BPL0PTH  \ilk bitplane
 dc.w    $e2,ANE00    ; BPL0PTL /
 
 dc.w    $e4,BITPL    ; BPL1PTH \ikinci bitplane
 dc.w    $e6,ANE01    ; BPL1PTL /
 
-(aslında $dff0e0, bakır listesinde $e0 olarak çevrilir, vb.)
+(aslında $dff0e0, copper listesinde $e0 olarak çevrilir, vb.)
 
 Bu bölme, LONGWORD'ÜN ÜST WORD VE ALT WORD'E BÖLÜNMESİ olarak adlandırılır.
 Burada ÜST word soldaki, BITPL, ALT word ise sağdaki,
@@ -540,66 +538,69 @@ burada ANE00'dır. Gerçek adreslerle bir örnek verelim:
 Bitplane0 $23400'da, bitplane1 $25c00'da bulunur.
 
 dc.w    $e0,$0002    \ilk bitplane (yüksek kelime)    \$00023400
-dc.w    $e2,$3400    /        (alçak kelime)    /
+dc.w    $e2,$3400    /        (düşük kelime)   		  /
 
 dc.w    $e4,$0002    \ikinci bitplane (yüksek kelime)	\$00025c00
-dc.w    $e6,$5c00    /         (düşük kelime)    /
+dc.w    $e6,$5c00    /         (düşük kelime)    		/
 
 Doğru adresleri
 copperlist'e koymak için şeklin hangi adreste olduğunu kontrol etmek ve
-söz konusu kelimeleri elle değiştirmek gerektiğini düşünüyorsunuzdur. Oysa, adresleri “BÖLMEK” vecopperlist'e doğru yere yerleştirmek için yapmamız gereken tek şey, on
+söz konusu kelimeleri elle değiştirmek gerektiğini düşünüyorsunuzdur. 
+Oysa, adresleri “BÖLMEK” ve copperlist'e doğru yere yerleştirmek 
+için yapmamız gereken tek şey, on
 kadar komuttan oluşan küçük bir rutin. Bu rutin,
 istediğimiz bitplane sayısına sahip herhangi bir boyuttaki herhangi bir şekli
-işaretlemek için kullanılabilir, tek yapmamız gereken parametreleri değiştirmek!!! İşin püf noktası, 68000'in
+işaretlemek için kullanılabilir, tek yapmamız gereken parametreleri değiştirmek!!! 
+İşin püf noktası, 68000'in
 özel bir komutunun kullanılmasıdır. SWAP, İngilizce'de DEĞİŞTİR anlamına gelir,
 ve aslında bir longword'daki 2 kelimeyi DEĞİŞTİREREK
-YÜKSEK olanı ALÇAK yapar ve tersini yapar:
+YÜKSEK olanı DÜŞÜK yapar veya tam tersini yapar:
 
 MOVE.L    #CANETOPO,d0    ; d0'a CANETOPO uzun kelimesini koyuyoruz
 
 SWAP    d0        ; KELİMELERİ DEĞİŞTİRİYORUZ: sonuç olarak
-; d0'da TOPOCANE var!!!!
+				  ; d0'da TOPOCANE var!!!!
 
 Bu komut sadece VERİ kayıtlarında çalışır.
 Aynı şekilde $00023400, 34000002 olarak değiştirilir.
 Rutini görelim:
 
 
-MOVE.L    #PIC,d0        ; d0'a PIC'in adresini koyarız,
-; yani ilk bit düzleminin başladığı yeri
+ MOVE.L    #PIC,d0       ; d0'a PIC'in adresini koyarız,
+						; yani ilk bitplanenin başladığı yeri
 
-LEA    BPLPOINTERS,A1    ; a1'e
-; COPPERLIST'teki planes'lerin işaretçilerinin adresini koyar
-MOVEQ    #2,D1        ; bitplanes sayısı -1 (burada 3 tane var)
-; DBRA ile döngüyü gerçekleştirmek için
+ LEA    BPLPOINTERS,A1   ; a1'e
+						; COPPERLIST'teki planes'lerin işaretçilerinin adresini koyar
+ MOVEQ    #2,D1        	; bitplanes sayısı -1 (burada 3 tane var)
+						; DBRA ile döngüyü gerçekleştirmek için
 POINTBP:
-move.w    d0,6(a1)    ; düzlemin adresinin ALT kelimesini
-; copperlist'teki doğru kelimeye kopyalar
-swap    d0        ; d0'daki 2 kelimeyi değiştirir (ör: 1234 > 3412)
-; ALT kelimesinin yerine
-; ALT kelimesini koyarak, move.w ile kopyalanmasını sağlar!!
-move.w    d0,2(a1)    ; plane adresinin ÜST kelimesini
-; copperlist'teki doğru kelimeye kopyalar
-swap    d0        ; d0'daki 2 kelimeyi değiştirir (ör: 3412 > 1234)
-; adresi yerine geri koyar.
-ADD.L    #40*256,d0    ; D0'a 10240 ekleyerek,
-; ikinci bit düzlemine (birinciden sonra bulunur)
-; (yani bir düzlemin uzunluğunu ekleyerek)
-; ilk döngüden sonraki döngülerde
-; üçüncü, dördüncü bit düzlemine vb.
+ move.w    d0,6(a1)     ; düzlemin adresinin ALT kelimesini
+						; copperlist'teki doğru kelimeye kopyalar
+ swap    d0        		; d0'daki 2 kelimeyi değiştirir (ör: 1234 > 3412)
+						; ALT kelimesinin yerine
+						; ALT kelimesini koyarak, move.w ile kopyalanmasını sağlar!!
+ move.w    d0,2(a1)     ; plane adresinin ÜST kelimesini
+						; copperlist'teki doğru kelimeye kopyalar
+ swap    d0        		; d0'daki 2 kelimeyi değiştirir (ör: 3412 > 1234)
+						; adresi yerine geri koyar.
+ ADD.L    #40*256,d0    ; D0'a 10240 ekleyerek,
+						; ikinci bitplanene (birinciden sonra bulunur)
+						; (yani bir düzlemin uzunluğunu ekleyerek)
+						; ilk döngüden sonraki döngülerde
+						; üçüncü, dördüncü bitplanene vb.
 
-addq.w    #8,a1        ; a1 şimdi yazılacak bakır listesindeki
-; bplpointers'ların adreslerini içerir.
-dbra    d1,POINTBP    ; D1 kez POINTBP'yi tekrar yap (D1=bit düzlemlerinin sayısı)
+ addq.w    #8,a1        ; a1 şimdi yazılacak bakır listesindeki
+						; bplpointers'ların adreslerini içerir.
+ dbra    d1,POINTBP    ; D1 kez POINTBP'yi tekrar yap (D1=bit düzlemlerinin sayısı)
 
-burada bakır listesinin bu kısmını değiştiriyoruz:
+burada copper listesinin bu kısmını değiştiriyoruz:
 
 BPLPOINTERS:
-dc.w $e0,$0000,$e2,$0000    ;birinci     bit düzlemi (BPL0PT)
-dc.w $e4,$0000,$e6,$0000    ;ikinci bit düzlemi (BPL1PT)
-dc.w $e8,$0000,$ea,$0000    ;üçüncü     bit düzlemi (BPL2PT)
+ dc.w $e0,$0000,$e2,$0000    ;birinci     bitplane (BPL0PT)
+ dc.w $e4,$0000,$e6,$0000    ;ikinci bitplane (BPL1PT)
+ dc.w $e8,$0000,$ea,$0000    ;üçüncü     bitplane (BPL2PT)
 
-Rutin, bit düzleminin adresini alır ve
+Rutin, bitplanenin adresini alır ve
 BASSA kelimesini copperlist'teki $e2'den sonraki kelimeye, yani adresin
 bassa kelimesinin işaretçisine kopyalar (bu, BPLPOINTERS'tan 6 bayt sonra bulunur, bu nedenle
 move.w    d0,6(a1) kullanılır, burada a1'de BPLPOINTERS'ın adresi bulunur).
@@ -607,63 +608,59 @@ Alt kelimeyi düzelttikten sonra, SWAP ile alt kelimeyi üst kelime ile değişt
 ve ardından move.w d0,2(a1) ile alt kelime yerine üst kelimeyi
 $e0'dan sonraki kelimeye, yani ilk bitplane'in üst kelimesinin işaretçisine kopyalarız.
  Bu, BPLPOINTERS'tan 2 bayt sonra bulunur.
-Bu noktada ilk bit düzlemini İŞARETLEDİK: (ör. $23400)
+Bu noktada ilk bitplaneni İŞARETLEDİK: (ör. $23400)
 
 
 BPLPOINTERS:
-dc.w $00e0,$0002,$00e2,$3400	; BPL0PT - ilk bit düzlemi * İŞARETLENMİŞ *
-dc.w $00e4,$0000,$00e6,$0000    ; BPL1PT - ikinci bit düzlemi
-dc.w $00e8,$0000,$00ea,$0000    ; BPL2PT - üçüncü bit düzlemi
-
-^        ^
-|        |
-2(a1)     6(a1)    ; kelimeleri doğru yere
-; yerleştirmek için ofsetlerin kullanımına dikkat edin
-.
+ dc.w $00e0,$0002,$00e2,$3400	; BPL0PT - ilk bitplane * İŞARETLENMİŞ *
+ dc.w $00e4,$0000,$00e6,$0000   ; BPL1PT - ikinci bitplane
+ dc.w $00e8,$0000,$00ea,$0000   ; BPL2PT - üçüncü bitplane
+ 		 ^        	 ^
+		 |         	 |
+		 2(a1)     	 6(a1)      ; kelimeleri doğru yere
+								; yerleştirmek için ofsetlerin kullanımına dikkat edin.
 
 NOT: move.w d0,x(a1) ile uzun kelimenin alt kelimesini d0'a kopyalarız çünkü
 kopyalama şu şekilde gerçekleşir:
 
 move.w    #CANETOPO,2(a1)    ; 2(a1) 'ye TOPO kopyalanır
 
-Daha sonra, bir ADD ile bir sonraki bit düzlemine geçebilmek için adresi başka bir SWAP ile yerine geri koyarız.
+Daha sonra, bir ADD ile bir sonraki bitplanene geçebilmek için 
+adresi başka bir SWAP ile yerine geri koyarız.
 L #LUNGHEZZABITPLANE,d0.
-Bir addq.w #8,a1 ile ikinci bit düzlemine geçiyoruz, çünkü
+Bir addq.w #8,a1 ile ikinci bitplanene geçiyoruz, çünkü
 a1'de BPLPOINTERS adresi varsa, 8 bayt (4 kelime) ekleyerek
 bu noktaya geçiyoruz:
 
 BPLPOINTERS:
-dc.w $00e0,$0002,$00e2,$3400	; BPL0PT - birinci bit düzlemi * HEDEF *
+ dc.w $00e0,$0002,$00e2,$3400	; BPL0PT - birinci bitplane * HEDEF *
 a1PUNTAQUA:
-dc.w $00e4,$0000,$00e6,$0000    ; BPL1PT - ikinci bit düzlemi
-dc.w $00e8,$0000,$00ea,$0000    ; BPL2PT - üçüncü bit düzlemi
+ dc.w $00e4,$0000,$00e6,$0000    ; BPL1PT - ikinci bitplane
+ dc.w $00e8,$0000,$00ea,$0000    ; BPL2PT - üçüncü bitplane
 
 Bu rutini “DBRA d1,label” döngüsüyle tekrarlayalım, bu durumda
-3 kez, 3 bit düzlemini işaretlemek için. (Hatırlayacağınız gibi, DBRA döngüsünde
+3 kez, 3 bitplaneni işaretlemek için. (Hatırlayacağınız gibi, DBRA döngüsünde
 döngü sayan kayıt defterine istenen sayıdan 1 eksik sayı yazılmalıdır, bu
 sayılmayan ilk sayıdır: burada d1'e 2 değeri yazılır.
 
-Bu rutin, bakırla efektler üreten rutinlerin klasik yapısına sahiptir,
+Bu rutin, copper'la efektler üreten rutinlerin klasik yapısına sahiptir,
  bu nedenle tam olarak anlamak çok önemlidir. Benzer bir rutin
-Lezione3h.s'de bulunabilir, o durumda bakır listesindeki 29 beklemeyi değiştirmek için DBRA döngüleri vardı
-.
+Lesson3h.s'de bulunabilir, o durumda copper listesindeki 29 beklemeyi 
+değiştirmek için DBRA döngüleri vardı.
 
-Lezione4a.s dosyasını yükleyerek bu rutinin çalışmasını DEBUG ile pratikte görebilirsiniz.
-PUNTABITPLANES
+Lesson4a.s dosyasını yükleyerek bu rutinin çalışmasını DEBUG ile pratikte görebilirsiniz.
 
-Bu noktada, görüntünün görüntülenmesinde sorun yaşamamak için listemizde sadece iki “SON DÜZENLEME” kaldı
-: AGA yonga setini devre dışı bırakmak için birkaç komut
-çalışmamızı Amiga 1200 ve 4000 ile uyumlu hale getiren AGA yonga setini devre dışı bırakmak için ve spriteleri ortadan kaldırmak için bakır listesinde birkaç satır daha eklemek
-gerekir, aksi takdirde spriteler çizimimizde rastgele dolaşarak
+Bu noktada, görüntünün görüntülenmesinde sorun yaşamamak için listemizde sadece iki “SON DÜZENLEME” kaldı:
+çalışmamızı Amiga 1200 ve 4000 ile uyumlu hale getiren AGA yonga setini devre dışı bırakmak için ve spriteleri ortadan kaldırmak için copper listesinde birkaç satır daha eklemek
+gerekir, aksi takdirde sprite'lar çizimimizde rastgele dolaşarak
 aralıklı bozukluklara neden olurlar. AGA'yı devre dışı bırakmak için şu 2 satır yeterlidir:
-move.w    #0,$dff1fc        ; FMODE - AGA'yı devre dışı bırak
 
-move.w    #0,$dff1fc        ; FMODE - AGA'yı devre dışı bırak
-move.w    #$c00,$dff106        ; BPLCON3 - AGA'yı devre dışı bırak
+ move.w    #0,$dff1fc        ; FMODE - AGA'yı devre dışı bırak
+ move.w    #$c00,$dff106     ; BPLCON3 - AGA'yı devre dışı bırak
 
 Ve emin olmak istiyorsanız şunu da ekleyebilirsiniz: (palette sprite)
 
-move.w    #$11,$dff10c        ; BPLCON4 - Sprite paletini sıfırla
+ move.w    #$11,$dff10c        ; BPLCON4 - Sprite paletini sıfırla
 
 Yeni copperlist'i işaret ettikten sonra bunları çalıştırmanız yeterlidir.
 Sarhoş sprite'ları durdurmak için ise, bunların işaretçilerini SIFIR'a ayarlamanız yeterlidir:
@@ -681,18 +678,19 @@ copperlist'inize ekleyin. Sprite'lar bitplanes sıfırlandığında görünmüyo
  ancak tek bir bitplane bile açıldığında sprite'lar ortaya çıkıyor.
 
 Sonunda, bir şeklin nasıl görüntülendiğini pratikte görebilirsiniz
-Lezione4b.s dosyasını istediğiniz bir Fx metin tamponuna yükleyin.
+Lesson4b.s dosyasını istediğiniz bir Fx metin tamponuna yükleyin.
 
-Şekle bakır efektleri eklemeyi denediniz mi? Örneği yükleyin
-Lezione4c.s daha önce gördüğümüz bazı efektlerin birleşimini görmek için.
+Şekle copper efektleri eklemeyi denediniz mi? Örneğin 
+daha önce gördüğümüz bazı efektlerin birleşimini görmek için 
+Lesson4c.s yükleyin .
 
-Bit düzlemleri olan bir bakır listesinde WAIT'in önemini şimdi anladınız mı?
+Bitplane'ler olan bir copper listesinde WAIT'in önemini şimdi anladınız mı?
 Her satırın rengini (ve sadece rengini değil) değiştirebiliriz!
 Artık dersin içindeki resim yerine kendi yaptığınız bir resmi görüntüleyebiliriz.
  Bunu yapmak için 320x256 boyutunda 8 renkli bir resme ihtiyacınız var,
  eğer yoksa bir çizim programı ile basitçe yapın
-veya ADPRO veya başka bir programla bir resmi bu formata dönüştürün
-bu formata dönüştürün. Bu görüntüyü IFF formatında (formatlanmış bir diskte)
+veya ADPRO veya başka bir programla bir resmi bu formata dönüştürün. 
+Bu görüntüyü IFF formatında (formatlanmış bir diskte)
  istediğiniz adla kaydettikten sonra, örneğin “FIGURA” adını verdiğinizi varsayalım,
 bunu RAW formatına, yani Copper tarafından okunabilen bitplane'lerin GERÇEK formatına
 dönüştürmeniz gerekir. Bunu, birçok işlevi olan ancak daha sonra bahsedeceğimiz iffconverter ile bu diske,
@@ -708,20 +706,20 @@ KEFCON'u df0: (dahili disk sürücüsü) veya df1: (harici disk sürücüsü)
 Yükledikten sonra, üstte bir komut paneli ve seçenekler görünecektir.
 Bizi ilgilendirenler şunlardır: ( “DÜĞMELER” için bir şema hazırladım)
 
-------          ----------
+ ------      ----------
 | SAVE |    | IFF ILBM |
-------      ----------
+ ------      ----------
 
-------         ----------
+ ------      ----------
 | LOAD |    | READ DIR |
-------      ----------
+ ------      ----------
 
-------
+ ------
 | QUIT |
-------
+ ------
 
 ------------------------------------
-| BURADA KÜÇÜK BİR PENCERE VAR | -Dosya adını yazmanız gereken yer
+| BURADA KÜÇÜK BİR PENCERE VAR 		| -Dosya adını yazmanız gereken yer
 ------------------------------------
 
 LOAD, SAVE ve QUIT doğal olarak YÜKLE, KAYDET ve PROGRAMDAN ÇIK anlamına gelir
@@ -738,8 +736,8 @@ ve copperlist'imize eklenir!
 Dönüştürme yapmak için, sol altta “allocated GFX-buffer” yazan şerit pencereye tıklayın
 ve “df0:” olarak değişecektir
 yani dahili sürücüye dönüşecektir. Eğer iff resminin bulunduğu diski df0:
-'ya taktıysanız, olduğu gibi bırakın veya diski taktığınız sürücünün adını belirtin (
-örneğin df1: veya dh0: sabit disk için). Dosya listesini okumak için
+'ya taktıysanız, olduğu gibi bırakın veya diski taktığınız sürücünün adını belirtin 
+(örneğin df1: veya dh0: sabit disk için). Dosya listesini okumak için
 READ DIR'e basın ve resminizin adının üzerine fare ile tıklayarak
 “LOAD” düğmesine basarak seçin.
 Bu noktada, resmi görebilirsiniz ve
@@ -750,7 +748,7 @@ bitplane 2800 $ uzunluğundadır (yani 10240 ondalık, 40*256) ve toplamda
 RAW şekil 7800 $ uzunluğundadır, yani 30720 (40*256*3).
 Yukarıda diğer özellikler de belirtilmiştir:
 
-WIDTH: 320 (genişlik), HEIGHT 256 (UZUNLUK), DEPTH 3 (BITPLAN SAYISI)
+WIDTH: 320 (genişlik), HEIGHT 256 (UZUNLUK), DEPTH 3 (BITPLANE SAYISI)
 
 Şimdi “IFF ILBM” düğmesine tıklayın ve “RAW NORM” olarak değiştirin;
 resmi RAW olarak kaydetmek için şerit pencerede sol tuşa bir kez daha basın
@@ -764,25 +762,26 @@ ve “SAVE” düğmesine basın. Bu noktada çıkabilirsiniz, çünkü
 hem .RAW hem de paletin metnini dc.w dosyasına kaydettik ve
 copperlist'imize ekleyebiliriz.
 
-Şekli görüntülemek için “Lezione4b.s” örneğini yükleyin ve şu 2
+Şekli görüntülemek için “Lesson4b.s” örneğini yükleyin ve şu 2
 değişikliği yapın: yüklenecek şeklin adını kendi adınızla değiştirin
 ve şeklinizin paletini ekleyerek önceden var olanı silin:
 
 PIC:
-incbin    “amiga.320*256*3”
+ incbin    “amiga.320*256*3”
 
-şunu şekilde değiştirebilirsiniz:
+şu şekilde değiştirebilirsiniz:
 
 PIC:
-incbin    “df0:figura.raw”
+ incbin    “df0:figura.raw”
 
 veya komut satırına “v df0:” yazarak şunu yapabilirsiniz:
 
 PIC:
-incbin    “figura.raw”
+ incbin    “figura.raw”
 
 Palet için 2 yol izleyebilirsiniz: ya “FIGURA.S” dosyasını başka bir
-biffer'e yükleyin ve Amiga+b+c+i ile kopyalayın, ya da Asmone “I” komutunu kullanın, yani INSERT, bu komut, ESC tuşuna basarak komut satırına geçmeden önce
+buffer'a yükleyin ve Amiga+b+c+i ile kopyalayın, ya da Asmone “I” komutunu 
+kullanın, yani INSERT, bu komut, ESC tuşuna basarak komut satırına geçmeden önce
 imlecin bulunduğu yere bir metin ekler.
 Nasıl yaparsanız yapın, eski paleti editörün CUT (KES) komutuyla kaldırın:
 Amiga+b ile bloğu seçin, Amiga+x ile silin.
@@ -792,10 +791,10 @@ ve tüm işlemi tekrarlamanız gerekir.
 
 Güzel bir şekilde devam etmek için şimdi 32 renkli bir şekil görüntülemeyi deneyelim:
 320x256 boyutunda, bu sefer 32 renkli olan normal şekle sahip olmanız yeterlidir
-renkli (eğer yoksa DeLuxe Paint'i yükleyin ve birkaç
+(eğer yoksa DeLuxe Paint'i yükleyin ve birkaç
 müstehcen şey çizin). Önceki resimde yaptığınız gibi dönüştürün, bu
-kez yükleme işleminden sonra özelliklerin tahminlerle aynı olduğunu göreceksiniz
-: “bitplane $2800, total $c800”, çünkü her bitplane her zaman
+kez yükleme işleminden sonra özelliklerin tahminlerle aynı olduğunu göreceksiniz: 
+“bitplane $2800, total $c800”, çünkü her bitplane her zaman
 2800 bayt, toplam ise 800 c, yani 51200 ($2800*5) olur, çünkü bu
 32 renkli ve 5 bitplane'den oluşan bir figürdür. .RAW ve paleti kaydedin,
 örneğin FIGURA32.RAW ve FIGURA32.s gibi isimlerle.
@@ -816,56 +815,57 @@ POINTBP:
 1) MOVEQ #2,d1'i MOVEQ #4,d1 olarak değiştirin, yani daha önce 3
 DBRA döngüsü 3 bitplane için (3-1=2) çalıştırırken, şimdi 5 döngü (5-1=4) 5
 bitplane için çalıştırıyoruz. Ancak bu durumda eksik bitplane işaretçilerini
-bakır listesine eklemek gerekir:
+copper listesine eklemek gerekir:
 
 BPLPOINTERS:
-dc.w $e0,$0000,$e2,$0000    ;birinci     bit düzlemi - BPL0PT
-dc.w $e4,$0000,$e6,$0000    ;ikinci bit düzlemi - BPL1PT
-dc.w $e8,$0000,$ea,$0000	;üçüncü bit düzlemi - BPL2PT
-dc.w $ec,$0000,$ee,$0000    ;dördüncü bit düzlemi (ŞİMDİ EKLENDİ!)
-dc.w $f0,$0000,$f2,$0000    ;beşinci bit düzlemi (ŞİMDİ EKLENDİ!)
+dc.w $e0,$0000,$e2,$0000    ;birinci bitplane - BPL0PT
+dc.w $e4,$0000,$e6,$0000    ;ikinci bitplane - BPL1PT
+dc.w $e8,$0000,$ea,$0000	;üçüncü bitplane - BPL2PT
+dc.w $ec,$0000,$ee,$0000    ;dördüncü bitplane (ŞİMDİ EKLENDİ!)
+dc.w $f0,$0000,$f2,$0000    ;beşinci bitplane (ŞİMDİ EKLENDİ!)
 
 Son ve en önemli değişiklik, 3 yerine 5 bitplane'i “açmak”tır.
 Bu, copperlist'teki $dff100 (bplcon0) değiştirilerek yapılabilir:
 
-
-; 5432109876543210
+			; 5432109876543210
 dc.w    $100,%0101001000000000    ; bitler 14,12 açık!! (5 = %101)
 
 Her şeyi bir araya getirdiğinizde 32 renkli bir resim görünmelidir.
 
-Bu iki örnekten, 2, 4 ve 16 renkli resimleri nasıl görüntüleyebileceğinizi kolayca anlayabilirsiniz
-! 
-bitplanes'i işaret eden rutindeki döngü sayısını değiştirip doğru bitleri $dff100 (BPLCON0) içine yerleştirmeniz yeterlidir.
+Bu iki örnekten, 2, 4 ve 16 renkli resimleri nasıl görüntüleyebileceğinizi kolayca anlayabilirsiniz! 
+Bitplanes'i işaret eden rutindeki döngü sayısını değiştirip doğru 
+bitleri $dff100 (BPLCON0) içine yerleştirmeniz yeterlidir.
 
-Şimdi, iki özel grafik modunu etkinleştirerek 64 renkli EHB ve 4096 renkli HAM formatında bir resim görüntüleyelim.
+Şimdi, iki özel grafik modunu etkinleştirerek 64 renkli EHB ve 
+4096 renkli HAM formatında bir resim görüntüleyelim.
 
 HAM formatındaki resimden başlayalım: HAM'da 320x256 boyutunda bir resim yapın veya
 dergi disklerinde veya
-“SEXY” resim disklerinde sıklıkla bulunan ham resimlerden birini arayın. Bu resimler çoğunlukla HAM'da bulunur, çünkü çıplak bir kadının resminde gerçekçilik
-çok önemlidir. Hatta çıplak bir kadını görmek, bir meyve sepetini görmekten daha
+“SEXY” resim disklerinde sıklıkla bulunan ham resimlerden birini arayın. 
+Bu resimler çoğunlukla HAM'da bulunur, çünkü çıplak bir kadının resminde gerçekçilik
+çok önemlidir. Hatta çıplak bir kadını görmenin, bir meyve sepetini görmekten daha
 hoş olduğunu düşünüyorum.
 Resmi HAM 320x256 formatında KEFCON ile yükleyin ve RAW
 ve COPPERLIST dosyalarını kaydedin.
 Ne yazık ki KEFCON'da bir programlama hatası var, bu nedenle
-A4000'e 6 bitplanes resimler yüklendiğinde, HAM veya EHB olsun,
+A4000'e 6 bitplane resimler yüklendiğinde, HAM veya EHB olsun,
 komut satırındaki siyah ve noktalama işaretleri (,.:) bir tür “parçalanma” meydana geliyor
 (Amiga500/2000/600'de ise çalışıyor!), bu nedenle
 sadece kelimeleri doğru görebilirsiniz, ancak bu bir sorun değildir, çünkü
 çubuk pencereye tıklayıp, örneğin, görünen PIC adının sonuna bir .RAW eklemeniz
 ve ardından copperlist'i kaydetmek için bir .s eklemeniz yeterlidir.
-Yapılması gereken değişiklikler, son işaretçilerin bit düzlemine 6
-, paletin değiştirilmesi ve işaretleme rutininin döngü sayısının
+Yapılması gereken değişiklikler, son işaretçilerin bitplanene 6, 
+paletin değiştirilmesi ve işaretleme rutininin döngü sayısının
 6 olarak ayarlanmasıdır:
 
 
 BPLPOINTERS:
-dc.w $e0,$0000,$e2,$0000    ;birinci     bit düzlemi - BPL0PT
-dc.w $e4,$0000,$e6,$0000	;ikinci bit düzlemi - BPL1PT
-dc.w $e8,$0000,$ea,$0000    ;üçüncü     bit düzlemi - BPL2PT
-dc.w $ec,$0000,$ee,$0000    ;dördüncü     bit düzlemi - BPL3PT
-dc.w $f0,$0000,$f2,$0000    ;beşinci     bit düzlemi - BPL4PT
-dc.w $f4,$0000,$f6,$0000    ;altıncı     bit düzlemi (ŞİMDİ EKLENDİ!)
+dc.w $e0,$0000,$e2,$0000    ;birinci     bitplane - BPL0PT
+dc.w $e4,$0000,$e6,$0000	;ikinci bitplane - BPL1PT
+dc.w $e8,$0000,$ea,$0000    ;üçüncü     bitplane - BPL2PT
+dc.w $ec,$0000,$ee,$0000    ;dördüncü     bitplane - BPL3PT
+dc.w $f0,$0000,$f2,$0000    ;beşinci     bitplane - BPL4PT
+dc.w $f4,$0000,$f6,$0000    ;altıncı     bitplane (ŞİMDİ EKLENDİ!)
 
 
 **->    MOVEQ    #5,D1        ; bit düzlem sayısı -1 (burada 6!!!!!)
@@ -875,7 +875,7 @@ POINTBP:
 
 BPLCON0:
 
-; 5432109876543210
+		 ; 5432109876543210
 dc.w $100,%0110101000000000    ; ---> 6 düzlem HAM düşük çözünürlükte (4096 renk)
 ; BIT 11 ayarlı = HAM!
 
@@ -887,13 +887,13 @@ Bir görüntüyü Extra Half Bright olarak görüntülemek için, görüntüyü
 KEFCON ile dönüştürün, incbin'den yükleyin, paleti değiştirin,
 6 bitplanes'i rutine yönlendirin ve bplcon0'ın 11 bitini sıfırlayın:
 
-; 5432109876543210
+		 ; 5432109876543210
 dc.w $100,%0110001000000000    ; ---> 6 düzlem EHB düşük çözünürlükte (64 renk)
-; BIT 11 sıfırlandı = Ekstra Yarım Parlak
+; BIT 11 sıfırlandı = Extra Half Bright
 
 NOT: EHB modunda 64 renk vardır, ancak bunların hepsi serbestçe seçilemez
 çünkü Amiga sadece 32 renk kaydı vardır; diğer 32
 renk ilk 32 renk gibidir ancak daha koyu, “YARIM IŞIK” yani “HALF BRIGHT”tır.
 
 Şimdi şekilleri görüntüleyebildiğimize göre, kaydırma kayıtlarıyla ne tür efektler yapabileceğimizi görelim.
-“r” ile LEZIONE5.TXT dosyasını yükleyin.
+“r” ile Lesson5.TXT dosyasını yükleyin.

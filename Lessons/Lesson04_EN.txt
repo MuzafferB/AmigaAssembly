@@ -63,16 +63,17 @@ composed similarly to the graph paper described above, with
 it's like playing battleship! A ship, for example, would be made up of a
 certain number of PIXELS (dots), and in the same way you can make anything:
 
-A MAN:                 AN AIRPLANE (I saved the zeros!)
-11
-000011100000	 000001100000         1111
-000001000000     000010010000         1111
-000111111000	 000010010000	 111111111111111111111
-000101101000	 000111111000	 111111111111111111111111
-000101101000     000100001000         1111
-000011110000     000100001000         1111
-000010010000                     111111
-000010010000         ONE ‘A’ 11111111
+  A MAN:           One 'A'      AN AIRPLANE (I saved the zeros!)
+
+											 11
+000011100000     000001100000         		1111
+000001000000     000010010000         		1111
+000111111000     000010010000     	111111111111111111111
+000101101000     000111111000     1111111111111111111111111
+000101101000     000100001000		 		1111
+000011110000     000100001000         		1111
+000010010000                     		   111111
+000010010000      				     	  11111111
 000010010000
 000110011000
 
@@ -220,7 +221,7 @@ BIT NUMBER            (note: bit at 1 = ON, bit at 0 = OFF)
 15    -    HIRES    Hires mode (1=640x256 , 0=320x256)
 14    -    BPU2    \
 13    -    BPU1     ) 3 bits to choose the number of bitplanes
-12    -    BPU0	/
+12    -    BPU0	   /
 11    -    HOMOD    Hold And Modify mode (HAM 4096 colours)
 10    -    DBLPF    Double playfield
 09    -    COLOR    composite video (for GENLOCK)
@@ -296,7 +297,7 @@ Having said that, let's look at some examples of the use of $100 (BPLCON0) in th
 
 ; 5432109876543210
 dc.w $100,%0100001000000000    ; ---> 4 planes in Lowres (320x256)
-dc.w $100,%1011001000000100	; ---> 3 planes in Hires+Interlace (640x512)
+dc.w $100,%1011001000000100	   ; ---> 3 planes in Hires+Interlace (640x512)
 dc.w $100,%0110001000000100    ; ---> 6 planes in HALF-BRIGHT Lowres+Lace
 dc.w $100,%0110101000000000    ; ---> 6 planes in HAM lowres (4096 colours)
 dc.w $100,%0110011000000000    ; ---> DualPlayField 3+3 planes in Lowres
@@ -308,7 +309,7 @@ dc.w    $100,$200
 
 In fact, we only set bit 9, which is used to activate the genlock:
 
-; 5432109876543210
+			; 5432109876543210
 dc.w    $100,%0000001000000000
 
 Genlock is a device used to superimpose
@@ -324,42 +325,42 @@ number of bitplanes you want, in binary, in bits 12, 13 and 14 of the register.
 
 For example, to make a screen with 1 bitplane (2 colours): (320x256!)
 
-; 5432109876543210
+			; 5432109876543210
 dc.w    $100,%0001001000000000    ; BPLCON0 - bit 12 on!! (1 = %001)
 
 *
 
 For a screen with 2 bitplanes: (4 colours)
 
-; 5432109876543210
+			; 5432109876543210
 dc.w    $100,%0010001000000000    ; BPLCON0 - bit 13 on!! (2 = %010)
 
 *
 
 For a screen with 3 bitplanes: (8 colours)
 
-; 5432109876543210
+			; 5432109876543210
 dc.w    $100,%0011001000000000    ; bits 13 and 12 on!! (3 = %011)
 
 *
 
 For a 4-bitplane screen: (16 colours)
 
-; 5432109876543210
+			; 5432109876543210
 dc.w    $100,%0100001000000000    ; BPLCON0 - bit 14 on!! (4 = %100)
 
 *
 
 For a 5-bitplane screen: (32 colours)
 
-; 5432109876543210
+			; 5432109876543210
 dc.w    $100,%0101001000000000    ; bits 14,12 on!! (5 = %101)
 
 *
 
 For a 6-bitplane screen: (for special modes EHB and HAM 4096 colours)
 
-; 5432109876543210
+			; 5432109876543210
 dc.w    $100,%0110001000000000    ; bits 14,13 on!! (6 = %110)
 
 (In this mode, if the HAM bit (11) is not set to 1, the screen
@@ -430,8 +431,8 @@ $dff108 - BPL1MOD, even bitplanes module - normally at $0000
 $dff10A - BPL2MOD, odd bitplanes module - normally at $0000
 
 We will talk about these registers when we use them to create special effects.
-For now, just remember to always put these registers with their standard values at the beginning of the copperlist
-:
+For now, just remember to always put these registers with their standard 
+values at the beginning of the copperlist:
 
 COPPERLIST:
 dc.w    $8e,$2c81    ; DiwStrt
@@ -445,7 +446,7 @@ dc.w    $10a,0        ; Bpl2Mod
 
 dc.w    $100,xxxx    ; Bplcon0 - Let's define the colours and resolution
 
-;	Here we can put the colours of the figure; this piece of
+;	 Here we can put the colours of the figure; this piece of
 ;    copperlist is generated directly by the KEFCON iffconverter,
 ;    save it separately with a name of your choice, then you can
 ;    include it here with the CUT&PASTE option of the editor by loading it
@@ -545,10 +546,10 @@ here ANE00. Let's take an example with real addresses:
 Bitplane0 is located at $23400, bitplane1 at $25c00
 
 dc.w    $e0,$0002    \first bitplane (high word)    \$00023400
-dc.w    $e2,$3400    /		(low word)    /
+dc.w    $e2,$3400    /		(low word)    			/
 
 dc.w    $e4,$0002    \second bitplane (high word)    \$00025c00
-dc.w    $e6,$5c00    /         (low word)    /
+dc.w    $e6,$5c00    /         (low word)    		 /
 
 You may already be thinking that in order to put the correct addresses in the
 copperlist, you need to check the address of the image and change
@@ -621,11 +622,10 @@ dc.w $00e0,$0002,$00e2,$3400    ; BPL0PT - first bitplane * POINTED *
 dc.w $00e4,$0000,$00e6,$0000    ; BPL1PT - second bitplane
 dc.w $00e8,$0000,$00ea,$0000    ; BPL2PT - third bitplane
 
-^        ^
-|        |
-2(a1)     6(a1)    ; note the use of offsets to
-; insert the words in the right place
-;.
+		^           ^
+		|           |
+		2(a1)       6(a1)    ; note the use of offsets to
+		; insert the words in the right place.
 
 NOTE: with move.w d0,x(a1) we copy the low word of the long into d0 because
 the copy is done in this way:
@@ -714,21 +714,21 @@ loading KEFCON into df0: (internal disk drive) or df1: (external disk drive)
 Once loaded, a command box will appear at the top with several options.
 The ones we are interested in are: (here is a diagram of the ‘BUTTONS’)
 
-------          ----------
+ ------      ----------
 | SAVE |    | IFF ILBM |
-------      ----------
+ ------      ----------
 
-------         ----------
+ ------      ----------
 | LOAD |    | READ DIR |
-------      ----------
+ ------      ----------
 
-------
+ ------
 | QUIT |
-------
+ ------
 
-------------------------------------
-| HERE IS A SMALL WINDOW | -Where you must write the file name
-------------------------------------
+ ------------------------------------
+| HERE IS A SMALL WINDOW 			| -Where you must write the file name
+ ------------------------------------
 
 LOAD, SAVE and QUIT mean, of course, LOAD, SAVE and EXIT THE PROGRAM
 READ DIR is used to display the list of files
@@ -838,7 +838,7 @@ The last and most important change is to ‘turn on’ 5 bitplanes instead of 3.
 This can be done by modifying $dff100 (bplcon0) in the copperlist:
 
 
-; 5432109876543210
+			; 5432109876543210
 dc.w    $100,%0101001000000000    ; bits 14,12 turned on!! (5 = %101)
 
 Assembling everything should produce the 32-colour image.
@@ -885,7 +885,7 @@ POINTBP:
 
 As well as BPLCON0:
 
-; 5432109876543210
+		 ; 5432109876543210
 dc.w $100,%0110101000000000    ; ---> 6 planes in HAM lowres (4096 colours)
 ; BIT 11 set = HAM!
 
@@ -897,7 +897,7 @@ To view an image in Extra Half Bright, convert one
 with KEFCON, load it from incbin, replace the palette, leave
 6 bitplanes pointing to the routine and reset bit 11 of bplcon0:
 
-; 5432109876543210
+		 ; 5432109876543210
 dc.w $100,%0110001000000000    ; ---> 6 planes in EHB lowres (64 colours)
 ; BIT 11 reset = Extra Half Bright
 
